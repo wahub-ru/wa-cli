@@ -1,0 +1,1287 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Variables *}
+    {$wa->globals('market.main.only_content', true)}
+    {if $theme_settings['shop_home_variant'] == 2}
+        {$wa->globals('is_show_sidebar', true)}
+    {/if}
+
+    {function home_banners is_col=false}
+        {* Home Banners Start *}
+        {* Theme Settings *}
+        {$banners_block_setting = $theme_settings["shop_banners_enabled"]}
+        {$is_enabled = $banners_block_setting !== 'disabled'}
+
+        {if $is_enabled && $banners_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $banners_block_setting === 'mobile') || (!$wa->globals('is_mobile') && $banners_block_setting === 'desktop')}
+        {/if}
+
+        {$banners_count = 3}
+        {$is_show_sidebar = $is_show_sidebar|default:false}
+        {if $is_show_sidebar}
+            {$banners_count = 2}
+        {/if}
+        {$banners = []}
+        {for $i=1 to $banners_count}
+            {$link_url = $theme_settings["shop_banners_banner_{$i}_link_url"]|default:'javascript://'}
+            {$image_url = $theme_settings["shop_banners_banner_{$i}_image"]|default:''}
+
+            {if !empty($image_url)}
+                {$banners[] = [
+                'link' => $link_url,
+                'img_url' => "{$wa->shop->themeUrl(waRequest::getTheme())}{$image_url}"
+                ]}
+            {/if}
+        {/for}
+
+        {* Template *}
+        {if $is_enabled && !empty($banners)}
+            {capture assign="block_content"}
+                <div class="banners{if $is_col} banners_col{elseif count($banners) < 3} banners_less{/if}">
+                    {foreach $banners as $banner}
+                        <div class="banners__item">
+                            <div class="banner">
+                                <a class="banner__link image-box" href="{$banner.link}">
+                                    {call image
+                                        src=$banner.img_url
+                                        classes='banner__background-image'
+                                        alt=$slide.title|default:''
+                                    }
+                                </a>
+                            </div>
+                        </div>
+                    {/foreach}
+                </div>
+            {/capture}
+            {if $is_col}
+                {$block_content}
+            {else}
+                <div class="block">
+                    <div class="block__content">
+                        {$block_content}
+                    </div>
+                </div>
+            {/if}
+        {/if}
+        {* Home Banners End *}
+    {/function}
+
+    {function home_advantages}
+        {if $theme_settings['shop_advantages_enabled'] === 'both'}
+            {call advantages}
+        {elseif $theme_settings['shop_advantages_enabled'] === 'mobile' && $wa->globals('is_mobile')}
+            {call advantages}
+        {elseif $theme_settings['shop_advantages_enabled'] === 'desktop' && !$wa->globals('is_mobile')}
+            {call advantages}
+        {/if}
+    {/function}
+
+    {function home_recently_viewed}
+        {* Home RecentlyViewed Start *}
+        {* Theme Settings *}
+        {$recently_viewed_block_setting = $theme_settings["shop_home_recently_viewed_enabled"]}
+        {$is_enabled = $recently_viewed_block_setting !== 'disabled'}
+
+        {if $is_enabled && $recently_viewed_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $recently_viewed_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $recently_viewed_block_setting === 'desktop')}
+        {/if}
+
+        {$limit = max(-1, intval($theme_settings["shop_home_recently_viewed_limit"]))}
+        {$header_text = $theme_settings['shop_home_recently_viewed_header']}
+
+        {* Variables *}
+        {$viewed_products = explode(',', $wa->cookie('shop_recently')|default:'')}
+        {$visible_products_ids = []}
+        {foreach $viewed_products as $p}
+            {if $limit !=-1 && $p@iteration > $limit}
+                {break}
+            {/if}
+            {if !empty($p)}
+                {$visible_products_ids[] = $p}
+            {/if}
+        {/foreach}
+
+        {$products = []}
+        {foreach $visible_products_ids as $p_id}
+            {$products[$p_id] = $wa->shop->product($p_id)}
+        {/foreach}
+
+        {* Template *}
+        {if $is_enabled && count($products) > 0}
+            {function name="home_recently_viewed_slider_block"}
+                <article class="block slider-block">
+                    <div class="block__header">
+                        <div class="slider-block__header-container">
+                            <div class="slider-block__header-text-container">
+                                {$header_text|escape}
+                            </div>
+                            <div class="slider-block__buttons-container">
+                                {call slider_arrows}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="block__content">
+                        {call products_mini is_slider=true products=$products}
+                    </div>
+                </article>
+            {/function}
+            {call home_recently_viewed_slider_block}
+        {/if}
+
+        {* Home RecentlyViewed End *}
+    {/function}
+
+    {function home_categories number=1}
+        {* Home Categories *}
+        {* Theme Settings *}
+        {$category_block_setting = $theme_settings["shop_home_categories_{$number}_enabled"]}
+        {$is_enabled = $category_block_setting !== 'disabled'}
+
+        {if $is_enabled && $category_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $category_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $category_block_setting === 'desktop')}
+        {/if}
+
+        {$header_text = $theme_settings["shop_home_categories_{$number}_header"]}
+        {$show_products_count = !!$theme_settings["shop_home_categories_{$number}_count_enabled"]}
+        {$shown_categories_ids_str = $theme_settings["shop_home_categories_{$number}_shown_categories_ids"]}
+        {$show_logo = !!$theme_settings["shop_home_categories_{$number}_logo_enabled"]}
+        {$limit = max(-1, intval($theme_settings["shop_home_categories_{$number}_limit"]))}
+        {$limit_adaptive = max(-1, intval($theme_settings["shop_home_categories_subcategories_limit_adaptive"]|default:$limit))}
+        {$subcategories_limit = max(-1, intval($theme_settings["shop_home_categories_{$number}_subcategories_limit"]))}
+        {$variant = $theme_settings["shop_home_categories_{$number}_variant"]}
+        {$is_extend_header_bold = $theme_settings["shop_home_categories_{$number}_header_weight"]}
+
+        {$variant_mobile = $theme_settings["shop_home_categories_variant_adaptive"]}
+        {$show_products_count_mobile = !!$theme_settings["shop_home_categories_count_enabled_adaptive"]}
+        {$show_logo_mobile = !!$theme_settings["shop_home_categories_logo_enabled_adaptive"]}
+
+        {* Variables *}
+        {$is_show_sidebar = $wa->globals('is_show_sidebar')}
+        {$sidebar_side = $wa->globals('sidebar_side')}
+
+        {if $wa->globals('market.theme_exists.shop')}
+            {if !empty($shown_categories_ids_str)}
+                {call get_catalog_categories args=['filter_hidden'=>false]}
+                {$all_categories = $wa->globals('market.return')|default:[]}
+                {$categories = []}
+
+                {$shown_categories_ids = explode(',', $shown_categories_ids_str)}
+                {foreach $shown_categories_ids as $key => $shown_categories_id}
+                    {$shown_categories_ids[$key] = trim($shown_categories_id)}
+                {/foreach}
+
+                {$wa->globals('filtered_categories', [])}
+                {function filter_categories_by_ids}
+                    {foreach $all_categories as $category}
+                        {if in_array($category.id, $shown_categories_ids)}
+                            {$filtered_categories = $wa->globals('filtered_categories')}
+                            {$filtered_categories[$category.id] = $category}
+                            {$wa->globals('filtered_categories', $filtered_categories)}
+                        {/if}
+                        {if $category.childs}
+                            {call filter_categories_by_ids all_categories=$category.childs}
+                        {/if}
+                    {/foreach}
+                {/function}
+
+                {call filter_categories_by_ids all_categories=$all_categories}
+                {$filtered_categories = $wa->globals('filtered_categories')}
+
+                {foreach $shown_categories_ids as $shown_category_id}
+                    {if array_key_exists($shown_category_id, $filtered_categories)}
+                        {$categories[] = $filtered_categories[$shown_category_id]}
+                    {/if}
+                {/foreach}
+            {else}
+                {call get_catalog_categories}
+                {$categories = $wa->globals('market.return')|default:[]}
+            {/if}
+            {$has_categories = count($categories) > 0}
+        {/if}
+
+        {* Template *}
+        {if $is_enabled && $has_categories}
+            <div class="block">
+                {if $header_text}
+                    <div class="block__header block__header_text">
+                        {$header_text|escape}
+                    </div>
+                {/if}
+                {if !$wa->globals('is_mobile')}
+                    <div class="block__content">
+                        {if $variant === 'extend'}
+                            {if $is_show_sidebar}
+                                {$size = 's'}
+                            {else}
+                                {$size = null}
+                            {/if}
+
+                            {call categories_extend
+                            categories=$categories
+                            size=$size
+                            show_logo=$show_logo
+                            show_products_count=$show_products_count
+                            limit=$limit
+                            is_extend_header_bold=$is_extend_header_bold
+                            subcategories_limit=$subcategories_limit
+                            }
+                        {elseif $variant === 'thumbs'}
+                            {call categories_thumbs
+                            categories=$categories
+                            show_logo=$show_logo
+                            show_products_count=$show_products_count
+                            limit=$limit
+                            subcategories_limit=$subcategories_limit
+                            show_badge=true
+                            is_sidebar=$is_show_sidebar
+                            }
+                        {elseif $variant === 'compact'}
+                            {call categories_compact
+                            categories=$categories
+                            show_logo=$show_logo
+                            show_count=$show_products_count
+                            limit=$limit
+                            subcategories_limit=$subcategories_limit
+                            }
+                        {elseif $variant === 'mini'}
+                            {call categories_mini
+                            categories=$categories
+                            show_count=$show_products_count
+                            limit=$limit
+                            subcategories_limit=$subcategories_limit
+                            }
+                        {/if}
+                    </div>
+                {else}
+                    <div class="block__content">
+                        {if $variant_mobile === 'thumbs'}
+                            {call categories_thumbs
+                            categories=$categories
+                            show_logo=$show_logo_mobile
+                            show_products_count=$show_products_count_mobile
+                            limit=$limit
+                            subcategories_limit=$subcategories_limit
+                            show_badge=true
+                            is_mobile=true
+                            }
+                        {else}
+                            {call categories_r
+                            categories=$categories
+                            limit=$limit_adaptive
+                            classes="r-home-categories"
+                            show_logo=$show_logo_mobile
+                            show_count=$show_products_count_mobile
+                            }
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        {/if}
+        {* Home Categories End *}
+    {/function}
+
+    {function home_products number=1 is_bg=false}
+        {$products = $wa->shop->productSet($theme_settings["shop_home_products_{$number}_set_id"])}
+
+        {if $theme_settings["shop_home_products_{$number}_limit"]}
+            {$products = array_slice($products, 0, intval($theme_settings["shop_home_products_{$number}_limit"]), true)}
+        {/if}
+
+        {$products_by_product_id = $wa->shop->products(array_keys($products), ['fields' => '*,skus'])}
+
+        {foreach $products as $p_id => $p}
+            {if isset($products_by_product_id[$p_id]['skus'])}
+                {$products[$p_id]['skus'] = $products_by_product_id[$p_id]['skus']}
+            {/if}
+        {/foreach}
+
+        {$products_type = $theme_settings["shop_home_products_{$number}_type"]}
+        {$list_type = $theme_settings["shop_home_products_{$number}_type_list"]}
+
+        {if count($products) > 0}
+            {if !empty($theme_settings["shop_home_products_{$number}_features_ids"])}
+                {$feature_codes = explode(',', $theme_settings["shop_home_products_{$number}_features_ids"])}
+            {else}
+                {$feature_codes = null}
+            {/if}
+
+            {$listfeatures_plugin_set_id = $theme_settings["shop_home_products_{$number}_listfeatures_set_id"]|default:1}
+
+            {if $products_type === 'slider' || ($list_type === 'slider' && $products_type === 'list')}
+                {$is_mobile_view = $theme_settings["shop_home_products_variant_adaptive"] === 'cols' && $wa->globals('is_mobile')}
+
+                <div class="block slider-block {$block_classes|default:''}">
+                    <div class="block__header">
+                        <div class="slider-block__header-container">
+                            <div class="slider-block__header-text-container">
+                                {$theme_settings["shop_home_products_{$number}_header"]|escape}
+                            </div>
+
+                            <div class="slider-block__buttons-container">
+                                {call slider_arrows}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block__content home-block_slider-wrapper">
+                        {call products_thumbs
+                            products=$products
+                            features_variant=$theme_settings["shop_home_products_{$number}_features_variant"]
+                            feature_codes=$feature_codes
+                            listfeatures_plugin_set_id=$listfeatures_plugin_set_id
+                            is_mobile=$is_mobile_view
+                            is_slider=true
+                            is_sidebar=$wa->globals('is_show_sidebar')
+                            is_bg=$is_bg
+                        }
+                    </div>
+                </div>
+            {elseif $products_type === 'list'}
+                <div class="block">
+                    <div class="block__header block__header_text">
+                        {"{eval var=$theme_settings["shop_home_products_{$number}_header"]}"|escape}
+                    </div>
+
+                    <div class="block__content">
+                        {call products_thumbs
+                            products=$products
+                            feature_codes=$feature_codes
+                            listfeatures_plugin_set_id=$listfeatures_plugin_set_id
+                            features_variant=$theme_settings["shop_home_products_{$number}_features_variant"]
+                            is_adaptive=true
+                            is_sidebar=$wa->globals('is_show_sidebar')
+                            is_bg=$is_bg
+                            list_type=$list_type
+                        }
+                    </div>
+                </div>
+            {/if}
+        {/if}
+    {/function}
+
+    {function home_reviews}
+        {* Home Reviews Start *}
+        {* Theme Settings *}
+        {$reviews_block_setting = $theme_settings['shop_home_reviews_enabled']}
+        {$is_enabled = $reviews_block_setting !== 'disabled'}
+
+        {if $is_enabled && $reviews_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $reviews_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $reviews_block_setting === 'desktop')}
+        {/if}
+
+        {$header_text = $theme_settings['shop_home_reviews_header']}
+        {$type = $theme_settings['shop_home_reviews_type']}
+        {$limit = $theme_settings['shop_home_reviews_limit']}
+
+        {* Variables *}
+        {$is_show_sidebar = $wa->globals('is_show_sidebar')}
+        {$reviews = $wa->shop->reviews($limit)}
+
+        {* Template *}
+        {if $is_enabled && count($reviews) > 0}
+            {function name="home_reviews_slider_block" reviews=[]}
+                <div class="block slider-block {$block_classes|default:''}">
+                    <div class="block__header">
+                        <div class="slider-block__header-container">
+                            <div class="slider-block__header-text-container">
+                                {$header_text|escape}
+                            </div>
+                            <div class="slider-block__buttons-container">
+                                {call slider_arrows}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="block__content home-block_slider-wrapper">
+                        {call reviews_thumbs reviews=$reviews is_slider=true size='s' is_sidebar=$wa->globals('is_show_sidebar')}
+                    </div>
+                </div>
+            {/function}
+
+            {if $type === 'slider'}
+                {call home_reviews_slider_block reviews=$reviews}
+            {elseif $type === 'list'}
+                {if !$wa->globals('is_mobile')}
+                    <div class="block">
+                        <div class="block__header block__header_text">
+                            {$header_text|escape}
+                        </div>
+                        <div class="block__content">
+                            {call reviews_thumbs reviews=$reviews size='s' is_sidebar=$wa->globals('is_show_sidebar')}
+                        </div>
+                    </div>
+                {else}
+                    {call home_reviews_slider_block reviews=$reviews}
+                {/if}
+            {/if}
+        {/if}
+        {* Home Reviews End *}
+    {/function}
+
+    {function home_brands}
+        {* Home Brands Start *}
+        {* Theme Settings *}
+        {$brands_block_setting = $theme_settings['shop_home_brands_enabled']}
+        {$is_enabled = $brands_block_setting !== 'disabled'}
+
+        {if $is_enabled && $brands_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $brands_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $brands_block_setting === 'desktop')}
+        {/if}
+
+        {$header_text = $theme_settings['shop_home_brands_header']}
+        {$type = $theme_settings['shop_home_brands_type']}
+        {$limit = $theme_settings['shop_home_brands_limit']}
+
+        {* Variables *}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_brands = $plugins['shop_brand'] || $plugins['shop_productbrands']}
+        {$is_show_sidebar = $wa->globals('is_show_sidebar')}
+        {$sidebar_side = $wa->globals('sidebar_side')}
+
+        {$brands = []}
+        {$brands_url = ''}
+        {if $is_enabled_brands}
+            {if $plugins['shop_brand']}
+                {if $theme_settings['shop_home_brands_with_logo']}
+                    {if is_callable(['shopBrandViewHelper', 'getAllBrandsWithImages'], false)}
+                        {$brands = shopBrandViewHelper::getAllBrandsWithImages()}
+                    {/if}
+                {else}
+                    {if is_callable(['shopBrandViewHelper', 'getAllBrands'], false)}
+                        {$brands = shopBrandViewHelper::getAllBrands()}
+                    {/if}
+                {/if}
+
+                {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'brand'])|escape}
+            {elseif $plugins['shop_productbrands']}
+                {if is_callable(['shopProductbrandsPlugin', 'getBrands'], false)}
+                    {$_brands = shopProductbrandsPlugin::getBrands()}
+                    {foreach $_brands as $brand}
+                        {$brands[] = [
+                        'name' => $brand.name,
+                        'frontend_url' => $brand.url,
+                        'image_url' => "{$wa_url}wa-data/public/shop/brands/{$brand.id}/{$brand.id}{$brand.image}"
+                        ]}
+                    {/foreach}
+                {/if}
+
+                {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'productbrands'])|escape}
+            {/if}
+        {/if}
+
+        {if wa_is_int($limit) && $limit != -1}
+            {$brands = array_slice($brands, 0, $limit)}
+        {/if}
+
+        {* Template *}
+        {if $is_enabled && count($brands) > 0}
+            {if $type === 'slider'}
+                <div class="block slider-block">
+                    <div class="block__header">
+                        <div class="slider-block__header-container">
+                            <div class="slider-block__header-text-container">
+                                {$header_text|escape}
+                            </div>
+                            <div class="slider-block__buttons-container">
+                                {call slider_arrows}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="block__content">
+                        {call brands_thumbs brands=$brands is_slider=true is_sidebar=$wa->globals('is_show_sidebar')}
+                    </div>
+                    <div class="block__footer">
+                        <a class="button button_style_inverse button_size_l" href="{$brands_url}">
+                            <span class="icon-box">
+                                <span class="icon-box__content">
+                                    [`Смотреть все`]
+                                </span>
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='dict-arrow-right' width=12 height=12 fill='currentColor'}
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            {elseif $type === 'list'}
+                <div class="block">
+                    <div class="block__header block__header_text">
+                        {$header_text|escape}
+                    </div>
+                    <div class="block__content">
+                        {call brands_thumbs brands=$brands is_sidebar=$wa->globals('is_show_sidebar') is_thumbs=true}
+                    </div>
+                    <div class="block__footer">
+                        <a class="button button_style_inverse button_size_l" href="{$wa->getUrl('shop/frontend/brands')|escape}">
+                            <span class="icon-box">
+                                <span class="icon-box__content">
+                                    [`Смотреть все`]
+                                </span>
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='dict-arrow-right' width=12 height=12 fill='currentColor'}
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            {/if}
+        {/if}
+        {* Home Brands End *}
+    {/function}
+
+    {function home_news}
+        {* Home News Start *}
+        {if $wa->globals('market.theme_exists.blog')}
+            {* Theme Settings *}
+            {$news_block_setting = $theme_settings['shop_home_news_enabled']}
+            {$is_enabled = $news_block_setting !== 'disabled'}
+
+            {if $is_enabled && $news_block_setting !== 'both'}
+                {$is_enabled = ($wa->globals('is_mobile') && $news_block_setting === 'mobile')
+                || (!$wa->globals('is_mobile') && $news_block_setting === 'desktop')}
+            {/if}
+
+            {$header_text = $theme_settings['shop_home_news_header']}
+            {$blog_id = $theme_settings['shop_home_news_blog_id']|default:''}
+            {$limit = $theme_settings['shop_home_news_limit']}
+            {$is_slider_type = $theme_settings['shop_home_news_type'] === 'slider' || $wa->globals('is_mobile')}
+            {$show_image = $theme_settings['shop_home_news_show_post_image']}
+
+            {* Variables *}
+            {if !empty($blog_id)}
+                {$is_show_sidebar = $wa->globals('is_show_sidebar')}
+                {$blog = $wa->blog->blog($blog_id)}
+                {$posts = $wa->blog->posts($blog_id, $limit)}
+
+                {* Template *}
+                {if $is_enabled && is_array($posts) && count($posts) > 0}
+                    {function name="home_news_slider_block" is_slider=false}
+                        <div class="block{if $is_slider} slider-block{/if} {$block_classes|default:''}">
+                            {if !$is_slider}
+                                <div class="block__header block__header_text">
+                                    {$header_text|escape}
+                                </div>
+                            {else}
+                                <div class="block__header">
+                                    <div class="slider-block__header-container">
+                                        <div class="slider-block__header-text-container">
+                                            {$header_text|escape}
+                                        </div>
+                                        <div class="slider-block__buttons-container">
+                                            {call slider_arrows}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                            <div class="block__content{if $is_slider} home-block_slider-wrapper{/if}">
+                                {call posts_thumbs posts=$posts size='s' is_sidebar=$is_show_sidebar show_image=$show_image is_slider=$is_slider}
+                            </div>
+                            <div class="block__footer">
+                                <a class="button button_style_inverse button_size_l" href="{blogBlog::getUrl($blog)|escape}">
+                                    <span class="icon-box">
+                                        <span class="icon-box__content">
+                                            [`Смотреть все`]
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='dict-arrow-right' width=12 height=12 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+                    {/function}
+
+                    {call home_news_slider_block is_slider=$is_slider_type}
+                {/if}
+            {/if}
+        {/if}
+        {* Home News End *}
+    {/function}
+
+    {function home_description}
+        {* Home Description Start *}
+        {* Theme Settings *}
+        {$description_block_setting = $theme_settings['shop_home_description_enabled']}
+        {$is_enabled = $description_block_setting !== 'disabled'}
+
+        {if $is_enabled && $description_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $description_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $description_block_setting === 'desktop')}
+        {/if}
+
+        {* Variables *}
+        {if $theme_settings['block_home_about']}
+            {$text = $wa->block("market.home.about")}
+        {else}
+            {$text = null}
+        {/if}
+
+        {$has_text = !empty($text)}
+
+        {* Template *}
+        {if $has_text && $is_enabled}
+            <div class="home-description content-decorator">
+                {$text}
+            </div>
+        {/if}
+        {* Home Description End *}
+    {/function}
+
+    {function home_other_info}
+        {* Home OtherInfo Start *}
+        {* Theme Settings *}
+        {$other_info_block_setting = $theme_settings['shop_home_other_info_enabled']}
+        {$is_enabled = $other_info_block_setting !== 'disabled'}
+
+        {if $is_enabled && $other_info_block_setting !== 'both'}
+            {$is_enabled = ($wa->globals('is_mobile') && $other_info_block_setting === 'mobile')
+            || (!$wa->globals('is_mobile') && $other_info_block_setting === 'desktop')}
+        {/if}
+
+        {* Variables *}
+        {if $theme_settings['block_home_about2']}
+            {$text = $wa->block("market.home.about2")}
+        {else}
+            {$text = null}
+        {/if}
+        {$has_text = !empty($text)}
+
+        {* Template *}
+        {if $has_text && $is_enabled}
+            <div class="home-description content-decorator">
+                {$text}
+            </div>
+        {/if}
+        {* Home OtherInfo End *}
+    {/function}
+
+    {function home_slider size=null}
+        {if $theme_settings['shop_slider_enabled'] === 'both'}
+            {$is_enabled = true}
+        {elseif $theme_settings['shop_slider_enabled'] === 'mobile' && $wa->globals('is_mobile')}
+            {$is_enabled = true}
+        {elseif $theme_settings['shop_slider_enabled'] === 'desktop' && !$wa->globals('is_mobile')}
+            {$is_enabled = true}
+        {else}
+            {$is_enabled = false}
+        {/if}
+
+        {$image_size = $wa->shop->config('image_max_size')}
+
+        {if $theme_settings['shop_slider_products_id']}
+            {$slides = $wa->shop->productSet($theme_settings['shop_slider_products_id'])}
+        {else}
+            {$slides = $wa->shop->promos()}
+
+            {if $wa->photos && !empty($adaptive_album) && $wa->globals('is_mobile')}
+                {$album_photos = $wa->photos->photos("album/{$adaptive_album}")}
+
+                {if !empty($album_photos)}
+                    {$adaptive_images = []}
+                    {foreach $album_photos as $photo}
+                        {if !empty($photo.description) && preg_match('/^promo_id=\d+/', $photo.description)}
+                            {$promo_id = explode('=', $photo.description)}
+                            {$promo_id = $promo_id[1]}
+                            {$adaptive_images[$promo_id] = photosPhoto::getPhotoUrl($photo, $wa->photos->config('max_size'), false)}
+                        {/if}
+                    {/foreach}
+                {/if}
+            {/if}
+
+            {$_slides = $slides}
+
+            {foreach $_slides as $i => $slide}
+                {$slide['title'] = "{include "string:{$slide['title']}"}"}
+                {$slide['body'] = "{include "string:{$slide['body']}"}"}
+
+                {if isset($adaptive_images) && !empty($adaptive_images) && !empty($adaptive_images[$i])}
+                    {$slide['image'] = $adaptive_images[$i]}
+                {/if}
+                {$slides[$i] = $slide}
+            {/foreach}
+
+            {if isset($adaptive_images) && empty($adaptive_images[$id])}
+                {$size = 's'}
+            {/if}
+        {/if}
+
+        {if empty($slides)}
+            {$is_enabled = false}
+        {/if}
+
+        {if $is_enabled}
+            {$align = $theme_settings['shop_slider_position']}
+            {$link_zone = $theme_settings['shop_slider_link_zone']}
+            {$button_text = $theme_settings['shop_slider_button_text']}
+            {$allow_html_break = $theme_settings['shop_slider_allow_html_break']}
+            {$slider_height_adaptive = $theme_settings['shop_slider_height_adaptive']}
+            {if $wa->globals('is_mobile')}
+                {$is_auto_height = empty($slider_height_adaptive)}
+            {else}
+                {$is_auto_height = empty($theme_settings['shop_slider_height'])}
+            {/if}
+
+            {$effect = $theme_settings['shop_slider_effect']}
+            {$autoplay = $theme_settings['shop_slider_autoplay']}
+            {$autoplay_delay = $theme_settings['shop_slider_autoplay_delay']}
+            {$adaptive_album = $theme_settings['shop_slider_album_id_adaptive']}
+
+            {$slider_classes = "slider"}
+
+            {if $theme_settings['shop_slider_products_id']}
+                {$slider_classes = "{$slider_classes} slider_products"}
+            {/if}
+
+            {if $size}
+                {$slider_classes = "{$slider_classes} slider_size_{$size}"}
+            {/if}
+
+            {if $is_auto_height}
+                {$slider_classes = "{$slider_classes} slider_autoheight"}
+            {else}
+                {$slider_classes = "{$slider_classes} slider_adaptive"}
+            {/if}
+
+            {capture assign='content'}
+                <div class="{$slider_classes}"
+                    data-effect="{$effect|escape}"
+                    data-autoplay="{$autoplay|escape}"
+                    data-autoplay_delay="{$autoplay_delay|escape}"
+                    data-autoheight="{$is_auto_height|escape}"
+                    data-image_size="{$slide__image_size|default:null}"
+                    data-is-products="{!!$theme_settings['shop_slider_products_id']}">
+                    <div class="slider__slider swiper">
+                        <div class="slider__wrapper swiper-wrapper">
+                            {if $theme_settings['shop_slider_products_id']}
+                                {call products_slides products=$slides}
+                            {else}
+                                {foreach $slides as $id => $slide}
+                                    {if isset($adaptive_images) && empty($adaptive_images[$id])}
+                                        {continue}
+                                    {/if}
+                                    {if strpos($slide.image, '?') !== false}
+                                        {$slide_image = substr($slide.image, 0, strpos($slide.image, '?'))}
+                                    {else}
+                                        {$slide_image = $slide.image}
+                                    {/if}
+                                    <div class="slider__slide swiper-slide">
+                                        {$is_dark = false}
+                                        {$styles = []}
+
+                                        {if isset($slide.background_color) && !empty($slide.background_color)}
+                                            {$styles[] = "background-color: {$slide.background_color|escape};"}
+                                        {/if}
+
+                                        {if $slide.color}
+                                            {$styles[] = "color: {$slide.color|escape};"}
+                                            {$is_dark = !!"{call is_dark hex=$slide.color}"}
+                                        {/if}
+
+                                        {$styles_str = implode(' ', $styles)}
+
+                                        {$has_countdown = !empty($slide.countdown_datetime)}
+                                        {$has_button = !empty($button_text)}
+
+                                        {capture assign='content'}
+                                            <div class="slide__text{if !$size} container{/if}">
+                                                {if $slide.title}
+                                                    <span class="slide__title" data-swiper-parallax-x="-100">
+                                                        <span class="slide__title-text">
+                                                            {if $allow_html_break}
+                                                                {$slide_title = $slide.title|escape}
+                                                                {$slide_title|regex_replace:'/&lt;br( ?\/?)&gt;/':'<br>'}
+                                                            {else}
+                                                                {$slide.title|escape}
+                                                            {/if}
+                                                        </span>
+                                                    </span>
+                                                {/if}
+
+                                                {if $slide.body}
+                                                    <span class="slide__body" data-swiper-parallax-x="-300">
+                                                        <span class="slide__body-text">
+                                                            {if $allow_html_break}
+                                                                {$slide_body = $slide.body|escape}
+                                                                {$slide_body|regex_replace:'/&lt;br( ?\/?)&gt;/':'<br>'}
+                                                            {else}
+                                                                {$slide.body|escape}
+                                                            {/if}
+                                                        </span>
+                                                    </span>
+                                                {/if}
+
+                                                {if $has_countdown}
+                                                    <div class="slide__countdown-container" data-swiper-parallax-x="-600">
+                                                        <div class="slide__countdown{if $is_dark} slide__countdown_dark{/if} countdown" data-datetime="{$slide.countdown_datetime|escape}">
+                                                            <div class="countdown__item">
+                                                                <div class="countdown__item-value">99</div>
+                                                                <div class="countdown__item-text">дней</div>
+                                                            </div>
+                                                            <div class="countdown__item">
+                                                                <div class="countdown__item-value">99</div>
+                                                                <div class="countdown__item-text">часов</div>
+                                                            </div>
+                                                            <div class="countdown__item">
+                                                                <div class="countdown__item-value">99</div>
+                                                                <div class="countdown__item-text">минут</div>
+                                                            </div>
+                                                            <div class="countdown__item">
+                                                                <div class="countdown__item-value">99</div>
+                                                                <div class="countdown__item-text">секунд</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {/if}
+
+                                                {if $link_zone === 'button' && $has_button}
+                                                    <div class="slide__button-container" data-swiper-parallax-x="-1000">
+                                                        <a class="button button_size_xl" href="{$slide.link|escape}" style="color: {$slide.color|escape};">
+                                                            {$button_text|escape}
+                                                        </a>
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        {/capture}
+
+                                        {$slide_classes = "slide slide_home slide_align_{$align}"}
+
+                                        {if $size}
+                                            {$slide_classes = "{$slide_classes} slide_size_{$size}"}
+                                        {/if}
+
+                                        {if $is_auto_height}
+                                            {$slide_classes = "{$slide_classes} slide_autoheight"}
+                                        {/if}
+
+                                        {if $theme_settings['shop_slider_title_back'] != 'none'}
+                                            {$slide_classes = "{$slide_classes} slide_title-back_{$theme_settings['shop_slider_title_back']}"}
+                                        {/if}
+
+                                        {if $theme_settings['shop_slider_body_back'] != 'none'}
+                                            {$slide_classes = "{$slide_classes} slide_body-back_{$theme_settings['shop_slider_body_back']}"}
+                                        {/if}
+
+                                        {capture assign='content'}
+                                            <div class="slide__background">
+                                                {$regexp = '/^(.*)(\.[A-z]{3,4}(?:\?.*)?)$/'}
+                                                {$match = null}
+                                                {$match_result = preg_match($regexp, $slide_image, $match)}
+
+                                                {if $slide@iteration == 1}
+                                                    {$priority = 'high'}
+                                                    {$lazy = false}
+                                                {else}
+                                                    {$priority = null}
+                                                    {$lazy = true}
+                                                {/if}
+
+                                                <picture>
+                                                    {if !empty($slider_height_adaptive) && $match_result}
+                                                        <source media="(max-width: 450px)"
+                                                                {if $lazy}data-{/if}srcset="{$match[1]}.0x{$slider_height_adaptive}{$match[2]}, {$match[1]}.0x{$slider_height_adaptive * 2}{$match[2]} 2x">
+                                                    {/if}
+                                                    {if !empty($theme_settings['shop_slider_height']) && $match_result}
+                                                        <source {if $lazy}data-{/if}srcset="{$match[1]}.0x{$theme_settings['shop_slider_height']}{$match[2]}, {$match[1]}.0x{$theme_settings['shop_slider_height'] * 2}{$match[2]} 2x">
+                                                    {/if}
+                                                    <img {if $lazy}data-{/if}src="{$slide_image}" alt="{$slide.title|escape}" class="slide__background-image {if $lazy}lazy-image{/if}" {if $priority}fetchpriority="{$priority}"{/if}/>
+                                                </picture>
+                                            </div>
+                                            {$content}
+                                        {/capture}
+
+                                        {if $link_zone === 'slide'}
+                                            <a class="{$slide_classes}" href="{$slide.link|escape}" style="{$styles_str|escape}" data-effect="{$effect|escape}">
+                                                {$content}
+                                            </a>
+                                        {else}
+                                            <div class="{$slide_classes}" style="{$styles_str|escape}">
+                                                {$content}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/foreach}
+                            {/if}
+                        </div>
+                    </div>
+                    {if count($slides) > 1}
+                        <div class="slider__arrows">
+                            <div class="slider__prev-arrow">
+                                {call svg_icon
+                                classes='slider__arrow-icon'
+                                icon='arrow-left' width=16 height=26 fill='currentColor'}
+                            </div>
+                            <div class="slider__next-arrow">
+                                {call svg_icon
+                                classes='slider__arrow-icon'
+                                icon='arrow-right' width=16 height=26 fill='currentColor'}
+                            </div>
+                        </div>
+                        <div class="slider__dots"></div>
+                    {/if}
+                </div>
+            {/capture}
+
+            {$slider_variant = $theme_settings['shop_slider_variant']}
+
+            {if $theme_settings['shop_slider_variant'] === 'in_container_with_banners'}
+                {$banners = []}
+                {for $i = 1; $i <= 3; $i++}
+                    {if !$theme_settings["shop_slider_banner_{$i}_image"]}
+                        {continue}
+                    {/if}
+                    {$banners[] = [
+                        'image' => $theme_settings["shop_slider_banner_{$i}_image"],
+                        'header' => $theme_settings["shop_slider_banner_{$i}_header"],
+                        'text' => $theme_settings["shop_slider_banner_{$i}_text"],
+                        'link' => $theme_settings["shop_slider_banner_{$i}_link"]
+                    ]}
+                {/for}
+
+                {if !$banners}
+                    {$slider_variant = 'in_container'}
+                {/if}
+            {/if}
+
+            {if $slider_variant == 'in_container_with_banners'}
+                <div class="home-slider {if $wa->globals('is_show_sidebar')}home-slider_offset-sidebar{/if} {if $theme_settings['shop_slider_banners_hide_adaptive']}home-slider_hide-banners-adaptive{/if}">
+                    <div class="home-slider__slider">
+                        {$content}
+                    </div>
+                    {$banners_html = ''}
+                    {$is_all_banners_with_text = true}
+                    {foreach $banners as $banner}
+                        {$has_text_content = !empty($banner['header']) || !empty($banner['text'])}
+
+                        {if $is_all_banners_with_text && !$has_text_content}
+                            {$is_all_banners_with_text = false}
+                        {/if}
+
+                        {capture assign="banner_html"}
+                            <div class="home-slider__banner">
+                                {capture assign='content'}
+                                    <span class="home-slider-banner__image">
+                                        {call image
+                                            src="{$wa_theme_url}{$banner['image']}"
+                                            alt=$banner['header']
+                                        }
+                                    </span>
+                                    {if $banner['header']}
+                                        <span class="home-slider-banner__header">
+                                            {$banner['header']}
+                                        </span>
+                                    {/if}
+                                    {if $banner['text']}
+                                        <span class="home-slider-banner__text">
+                                            {$banner['text']}
+                                        </span>
+                                    {/if}
+                                {/capture}
+
+                                {if $banner['link']}
+                                    <a class="home-slider-banner{if !$has_text_content} home-slider-banner_image{/if}" href="{$banner['link']|escape}">
+                                        {$content}
+                                    </a>
+                                {else}
+                                    <div class="home-slider-banner{if !$has_text_content} home-slider-banner_image{/if}">
+                                        {$content}
+                                    </div>
+                                {/if}
+                            </div>
+                        {/capture}
+                        {$banners_html = $banners_html|cat:$banner_html}
+                    {/foreach}
+                    <div class="home-slider__banners{if !$is_all_banners_with_text && $wa->globals('is_mobile')} home-slider__banners_row{/if}">
+                        {$banners_html}
+                    </div>
+                </div>
+            {else}
+                {$content}
+            {/if}
+        {/if}
+    {/function}
+
+
+    {$has_content = false}
+    {$content_blocks = [
+        'shop_home_categories_1', 'shop_home_categories_2', 'shop_home_categories_3',
+        'shop_home_products_1', 'shop_home_products_2', 'shop_home_products_3',
+        'shop_home_reviews', 'shop_home_brands', 'shop_home_description'
+    ]}
+
+    {$blocks_groups = []}
+    {$block_names = [
+        'shop_advantages' => 'advantages',
+        'shop_banners' => 'banners',
+        'shop_home_recently_viewed' => 'recently_viewed',
+        'shop_home_categories_1' => 'categories',
+        'shop_home_categories_2' => 'categories',
+        'shop_home_categories_3' => 'categories',
+        'shop_home_products_1' => 'products',
+        'shop_home_products_2' => 'products',
+        'shop_home_products_3' => 'products',
+        'shop_home_reviews' => 'reviews',
+        'shop_home_brands' => 'brands',
+        'shop_home_news' => 'news',
+        'shop_home_description' => 'description',
+        'shop_home_other_info' => 'other_info'
+    ]}
+    {foreach [
+        'shop_banners',
+        'shop_advantages',
+        'shop_home_recently_viewed',
+        'shop_home_categories_1',
+        'shop_home_categories_2',
+        'shop_home_categories_3',
+        'shop_home_products_1',
+        'shop_home_products_2',
+        'shop_home_products_3',
+        'shop_home_reviews',
+        'shop_home_brands',
+        'shop_home_news',
+        'shop_home_description',
+        'shop_home_other_info'
+    ] as $i => $block_key}
+        {if $theme_settings["{$block_key}_enabled"] === 'disabled'}
+            {continue}
+        {elseif $theme_settings["{$block_key}_enabled"] === 'mobile' && !$wa->globals('is_mobile')}
+            {continue}
+        {elseif $theme_settings["{$block_key}_enabled"] === 'desktop' && $wa->globals('is_mobile')}
+            {continue}
+        {/if}
+
+        {$bg_color = $theme_settings["{$block_key}_bg_color"]|default:''}
+
+        {if $bg_color && preg_match('/^[0-9A-Fa-f]{6}$/', $bg_color)}
+            {$bg_color = "#{$bg_color}"}
+        {/if}
+
+        {$is_block_bg = !empty($bg_color) && $bg_color !== '#ffffff'}
+
+        {capture assign='content'}
+            {if $block_key == 'shop_banners'}
+                {call home_banners}
+            {elseif $block_key == 'shop_advantages'}
+                {call home_advantages}
+            {elseif $block_key == 'shop_home_recently_viewed'}
+                {call home_recently_viewed}
+            {elseif $block_key == 'shop_home_categories_1'}
+                {call home_categories number=1}
+            {elseif $block_key == 'shop_home_categories_2'}
+                {call home_categories number=2}
+            {elseif $block_key == 'shop_home_categories_3'}
+                {call home_categories number=3}
+            {elseif $block_key == 'shop_home_products_1'}
+                {call home_products number=1 is_bg=$is_block_bg}
+            {elseif $block_key == 'shop_home_products_2'}
+                {call home_products number=2 is_bg=$is_block_bg}
+            {elseif $block_key == 'shop_home_products_3'}
+                {call home_products number=3 is_bg=$is_block_bg}
+            {elseif $block_key == 'shop_home_reviews'}
+                {call home_reviews}
+            {elseif $block_key == 'shop_home_brands'}
+                {call home_brands}
+            {elseif $block_key == 'shop_home_news'}
+                {call home_news}
+            {elseif $block_key == 'shop_home_description'}
+                {call home_description}
+            {elseif $block_key == 'shop_home_other_info'}
+                {call home_other_info}
+            {/if}
+        {/capture}
+
+        {if !$content}
+            {continue}
+        {/if}
+
+        {if in_array($block_key, $content_blocks)}
+            {$has_content = true}
+        {/if}
+
+        {if $theme_settings["{$block_key}_sort"]}
+            {$sort = $theme_settings["{$block_key}_sort"]}
+        {else}
+            {$sort = 9001 + $i}
+        {/if}
+
+        {if !isset($blocks[$sort])}
+            {$blocks_groups[$sort] = []}
+        {/if}
+
+        {$blocks_groups[$sort][] = [
+            'key' => $block_key,
+            'name' => $block_names[$block_key],
+            'bg_color' => $bg_color,
+            'sort' => $sort,
+            'content' => $content
+        ]}
+    {/foreach}
+
+    {$_ = ksort($blocks_groups)}
+
+    {$blocks = []}
+
+    {foreach $blocks_groups as $sort => $group}
+        {foreach $group as $block}
+            {$blocks[] = $block}
+        {/foreach}
+    {/foreach}
+
+    {$r_hidden_block_names = []}
+
+	{if $theme_settings['shop_advantages_enabled'] !== 'mobile' && $theme_settings['shop_advantages_enabled'] !== 'both'}
+		{$r_hidden_block_names[] = 'shop_advantages'}
+	{/if}
+
+	{$gray_blocks = ['shop_home_reviews', 'shop_home_news']}
+
+	{if $theme_settings['shop_home_variant'] == 1}
+        {if $theme_settings['shop_slider_variant'] === 'full_width'}
+            {call home_slider}
+
+            <div class="content-container">
+                <section class="blocks">
+                    {$prev_is_gray = false}
+
+                    {foreach $blocks as $block}
+                        {$is_gray = !$block@last && !$prev_is_gray && in_array($block['name'], $gray_blocks)}
+                        {$prev_is_gray = $is_gray}
+
+                        <section class="blocks__item blocks__item_home{if in_array($block['name'], $r_hidden_block_names)} r-hidden-md{/if} blocks__item-{$block['name']}">
+                            <div class="home-block home-block_size_l {if $is_gray}home-block_style_gray{/if} {if $block['bg_color']}home-block_custom_bg{/if}" {if $block['bg_color']}style="--home-block-bg-color: {$block['bg_color']}; background-color: {$block['bg_color']};"{/if}>
+                                <div class="container">
+                                    {$block['content']}
+                                </div>
+                            </div>
+                        </section>
+                    {/foreach}
+                </section>
+            </div>
+        {else}
+            <div class="content-container">
+                <section class="blocks">
+                    {$slider_html = "{call home_slider size='s'}"}
+
+                    {if $slider_html}
+                        <section class="blocks__item blocks__item_slider">
+                            <div class="container">
+                                {$slider_html}
+                            </div>
+                        </section>
+                    {/if}
+
+                    {$prev_is_gray = false}
+
+                    {foreach $blocks as $block}
+                        {$is_gray = !$block@last && !$prev_is_gray && in_array($block['name'], $gray_blocks)}
+                        {$prev_is_gray = $is_gray}
+
+                        <section class="blocks__item blocks__item_home{if in_array($block['name'], $r_hidden_block_names)} r-hidden-md{/if} blocks__item-{$block['name']}">
+                            <div class="home-block home-block_size_l {if $is_gray}home-block_style_gray{/if} {if $block['bg_color']}home-block_custom_bg{/if}" {if $block['bg_color']}style="--home-block-bg-color: {$block['bg_color']}; background-color: {$block['bg_color']};"{/if}>
+                                <div class="container">
+                                    {$block['content']}
+                                </div>
+                            </div>
+                        </section>
+                    {/foreach}
+                </section>
+            </div>
+        {/if}
+	{elseif $theme_settings['shop_home_variant'] == 2}
+        {if $theme_settings['shop_slider_variant'] === 'full_width'}
+            {$slider_html = "{call home_slider}"}
+
+            {if $slider_html}
+                <div class="index__slider">
+                    {$slider_html}
+                </div>
+            {/if}
+            <div class="container container_content">
+                <div class="content-container">
+                    <div class="content-columns">
+                        <div class="content-columns__content">
+                            <div class="blocks">
+                                {foreach $blocks as $block}
+                                    <section class="blocks__item blocks__item_home{if in_array($block['name'], $r_hidden_block_names)} r-hidden-md{/if} blocks__item-{$block['name']}">
+                                        <div class="home-block">
+                                            {$block['content']}
+                                        </div>
+                                    </section>
+                                {/foreach}
+                            </div>
+                        </div>
+                        {if !$wa->globals('is_mobile')}
+                            <aside class="content-columns__sidebar r-hidden-md">
+                                {include "./sidebar.html"}
+                            </aside>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        {else}
+            <div class="container container_content">
+                <div class="content-container">
+                    <div class="content-columns">
+                        <div class="content-columns__content">
+                            <div class="blocks">
+                                {$slider_html = "{call home_slider size='s'}"}
+
+                                {if $slider_html}
+                                    <section class="blocks__item blocks__item_slider">
+                                        {$slider_html}
+                                    </section>
+                                {/if}
+                                {foreach $blocks as $block}
+                                    <section class="blocks__item blocks__item_home{if in_array($block['name'], $r_hidden_block_names)} r-hidden-md{/if} blocks__item-{$block['name']}">
+                                        <div class="home-block">
+                                            {$block['content']}
+                                        </div>
+                                    </section>
+                                {/foreach}
+                            </div>
+                        </div>
+                        {if !$wa->globals('is_mobile')}
+                            <aside class="content-columns__sidebar r-hidden-md">
+                                {include "./sidebar.html"}
+                            </aside>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        {/if}
+	{/if}
+
+	{if !$has_content}
+		<div class="container container_padded-bottom">
+			<div class="not-found-block">
+				<div class="not-found-block__header">
+					[`Благодарим за выбор темы дизайна Market!`]
+				</div>
+				<div class="not-found-block__content">
+					<div class="not-found-block__content-row">
+						[`Начните настройку интернет-магазина с добавления категорий, товаров и информационных страниц.`]
+					</div>
+					<div class="not-found-block__content-row">
+						<a class="link" href="{$wa_backend_url}shop/?action=products#/products/">
+							[`Перейти к добавлению товаров`]
+						</a>
+					</div>
+					<div class="not-found-block__content-row">
+						<a class="link" href="{$wa_backend_url}shop/?action=storefronts#/design/theme=market3">
+							[`Перейти к настройкам темы дизайна`]
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<!-- plugin hook: 'frontend_homepage' -->
+	{foreach $frontend_homepage as $plugin => $_}
+		<!-- frontend_homepage.{$plugin} -->
+		{$_}
+	{/foreach}
+{/strip}

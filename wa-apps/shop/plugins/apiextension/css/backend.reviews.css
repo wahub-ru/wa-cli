@@ -1,0 +1,32 @@
+.apiextension-review__edit .icon16,
+.apiextension-review__save .icon16 {
+ cursor:pointer;
+ margin: 1px 0 0 5px!important;
+}
+.apiextension-review {
+    margin:15px 0;
+    padding:10px 15px;
+    border:1px solid #eee;
+}
+.apiextension-review__item {
+    margin:0.5em 0;
+    line-height:1.5em;
+}
+.apiextension-review__textarea {
+    padding:10px;
+    vertical-align:top;
+    width:100%;
+    max-width:500px;
+    min-height:100px;
+}
+.apiextension-review__recommend {
+    color:green;
+}
+.apiextension-review__not-recommend {
+    color:red;
+}
+.apiextension-review__edit,
+.apiextension-review__save {
+    cursor: pointer;
+    color: green;
+}

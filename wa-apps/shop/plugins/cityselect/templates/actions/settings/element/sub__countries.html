@@ -1,0 +1,28 @@
+<p>
+    Данная вкладка предназначена для сопостовления найденной области при вводе города с областями заведенными в
+    WebAsyst
+</p>
+<p>"Российская Федерация" - сопоставление областей идет по коду кладр</p>
+<p>"Соединенные Штаты Америки", "Канада" и другие страны, у которых коды регионов заданы в международном ISO формате - заполнение в данной вкладке не требуется</p>
+<p>
+    Для остальных стран необходимо на данной вкладке указать <a href="https://www.iso.org/obp/ui/ru/#iso:pub:PUB500001:en" target="_blank">ISO код каждой области</a>,
+    сами страны и регионы создаются в <b>Настройки</b> &gt; <b>Страны и регионы</b>
+</p>
+
+<select class="i-settings__change_country" name="selected_country">
+
+    <option value="">[s`Select a country`]</option>
+    {foreach $countries as $c}
+        {if $c.name}
+            <option value="{$c.iso3letter|escape}">{$c.name|escape}</option>
+        {else}
+            <option disabled></option>
+        {/if}
+    {/foreach}
+</select>
+
+<p class="hint">Если вы не видете страну в списке - значит у нее нет регионов, заведите их в <b>Настройки</b> &gt; <b>Страны и регионы</b></p>
+
+<div class="i-settings__regions_insert">
+
+</div>

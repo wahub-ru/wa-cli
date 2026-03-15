@@ -1,0 +1,15 @@
+<tr class="s-summary-row js-skcallback-status-row">
+    <td class="js-skcallback-title shop-skcallback__title">
+        <a href="javascript:void(0)" class="inline-link">{$status.title}</a>
+        <input type="hidden" name="shop_skcallback_status[{$status.id}][title]" value="{$status.title|escape}">
+    </td>
+    <td>
+        <input type="color" name="shop_skcallback_status[{$status.id}][color]" value="{$status.color}" class="shop-sk-statuses__color" />
+    </td>
+    <td>
+        {if $status.id != 1}
+        <a href="javascript:void(0)" class="gray inline-link js-skcallback-status-delete" data-id="{$status.id}" title="Удалить статус"><i class="icon16 delete"></i></a>
+        {/if}
+        <input type="hidden" name="shop_skcallback_status[{$status.id}][starter]" value="{$status.starter}" />
+    </td>
+</tr>

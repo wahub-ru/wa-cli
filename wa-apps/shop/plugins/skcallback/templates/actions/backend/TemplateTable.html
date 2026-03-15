@@ -1,0 +1,149 @@
+<table class="shop-skcallback-request__table js-skcallback-request-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Контакты</th>
+            <th>Дата</th>
+            {foreach $skcallback_data.controls as $control}
+                {if $control.type_name == "text" || $control.type_name == "textarea" || $control.type_name == "slider"}
+                <th>{$control.title}</th>
+                {/if}
+            {/foreach}
+            {if (int)$skcallback_settings.search_region}
+            <th>Регион</th>
+            {/if}
+            <th>Корзина</th>
+            <th>Страница заявки</th>
+            <th>Статус</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody class="js-skcallback-request-tbody">
+        {foreach $skcallback_data.requests as $request_id => $request}
+        {$status_request = []}
+        {if isset($skcallback_data.statuses[$request.status_id])}
+            {$status_request = $skcallback_data.statuses[$request.status_id]}
+        {/if}
+        <tr class="shop-skcallback-request__row js-skcallback-request-row" data-request-id="{$request_id}" data-status-id="{if $status_request}{$status_request.id}{/if}">
+            <td class="nowrap">
+                <span class="shop-skcallback-request__marker">&#9679;</span>
+                <span class="shop-skcallback-request__id">{$request_id}</span>
+            </td>
+            <td class="shop-skcallback-request__contacts">
+                {$is_name = false}
+                {foreach $request.values as $value}
+                    {if $value.type_name == "name"}
+                        <div class="shop-skcallback-request__value">
+                            {if $request.customer_id}
+                                <a href="{$wa_backend_url}shop/?action=customers#/id/{$request.customer_id}" target="_blank">{$value.value|escape}</a>
+                            {else}
+                                <span>{$value.value|escape}</span>
+                            {/if}
+                        </div>
+                        {$is_name = true}
+                    {/if}
+                {/foreach}
+                {if !$is_name && $request.customer_id}
+                    <div class="shop-skcallback-request__value">
+                        <a href="{$wa_backend_url}shop/?action=customers#/id/{$request.customer_id}" target="_blank">Покупатель</a>
+                    </div>
+                {/if}
+                {foreach $request.values as $value}
+                    {if $value.type_name == "phone"}
+                        <div class="shop-skcallback-request__value">
+                            <a href="tel: {$value.value|replace:'-':''|replace:' ':''|replace:')':''|replace:'(':''}" class="nowrap inline-link">{$value.value|escape}</a>
+                        </div>
+                    {elseif $value.type_name == "email"}
+                        <div class="shop-skcallback-request__value">
+                            <a href="mailto: {$value.value}" class="nowrap inline-link">{$value.value|escape}</a>
+                        </div>
+                    {/if}
+                {/foreach}
+            </td>
+            <td>
+                <div class="shop-skcallback-request__value">{$request.date|date_format:'d.m.Y'}</div>
+                <div class="shop-skcallback-request__value">{$request.date|date_format:'H:i'}</div>
+            </td>
+            {foreach $skcallback_data.controls as $control_id=>$control}
+                {if $control.type_name == "text" || $control.type_name == "textarea" || $control.type_name == "slider"}
+                    {$value = [ "type_name" => null ]}
+                    {if isset($request.values[$control_id])}
+                        {$value = $request.values[$control_id]}
+                    {/if}
+                    <td class="shop-skcallback-request__td-text">
+                        {if $value.type_name == "text"}
+                            {if mb_strlen($value.value, 'utf-8') > 100}
+                                <a href="javascript:void(0)" title="{$value.value|escape}" class="inline-link js-sk-tooltip shop-skcallback-request__filltext">{$value.value|mb_substr:0:100:'utf-8'|escape}...</a>
+                            {else}
+                                <span>{$value.value|escape}</span>
+                            {/if}
+                        {elseif $value.type_name == "textarea"}
+                            {if mb_strlen($value.value, 'utf-8') > 100}
+                                <a href="javascript:void(0)" title="{$value.value|escape}" class="inline-link js-sk-tooltip shop-skcallback-request__filltext">{$value.value|mb_substr:0:100:'utf-8'|escape}...</a>
+                            {else}
+                                <span>{$value.value|escape}</span>
+                            {/if}
+                        {elseif $value.type_name == "slider"}
+                            <span>{$value.value|escape|replace:',':':00 - '}:00</span>
+                        {/if}
+                    </td>
+                {/if}
+            {/foreach}
+            {if (int)$skcallback_settings.search_region}
+            <td>
+                {if $request.region}
+                    <div class="shop-skcallback-request__value">{$request.region}</div>
+                {/if}
+                {if $request.city}
+                    <div class="shop-skcallback-request__value">{$request.city}</div>
+                {/if}
+            </td>
+            {/if}
+            <td>
+                {if isset($request.cart) && count($request.cart)}
+                    <a href="javascript:void(0)" class="inline-link js-skcallback-request-cart" data-request-id="{$request.id}">{count($request.cart)} тов.</a>
+                {else}
+                -
+                {/if}
+            </td>
+            <td>
+                {if $request.referrer}
+                <a href="{$request.referrer|escape}" target="_blank" title="{$request.referrer|escape}" class="js-sk-tooltip">{if mb_strlen($request.referrer, 'utf-8') > 32}{$request.referrer|mb_substr:0:32:'utf-8'|escape}...{else}{$request.referrer|escape}{/if}</a>
+                {/if}
+            </td>
+            <td>
+                <div class="shop-skcallback-select js-skcallback-select">
+                    <div class="shop-skcallback-select__link js-skcallback-select-link">
+                        <div class="shop-skcallback-select__wrap">
+                            <div class="shop-skcallback-select__current">
+                                {if $status_request}
+                                <span class="shop-skcallback-select__current-link js-skcallback-select-current-link">{$status_request.title}</span>
+                                {/if}
+                            </div>
+                            <div class="shop-skcallback-select__open">
+                                &#9660;
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shop-skcallback-select__list js-skcallback-select-list _hide">
+                        {foreach $skcallback_data.statuses as $status}
+                        <a data-status-id="{$status.id}" class="shop-skcallback-select__list-link js-skcallback-select-list-link" style="color: {$status.color} !important;">{$status.title|escape}</a>
+                        {/foreach}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <a href="javascript:void(0)" class="gray js-skcallback-request-delete" data-request-id="{$request.id}" title="Удалить запрос?"><i class="icon16 delete"></i></a>
+            </td>
+        </tr>
+        {/foreach}
+    </tbody>
+</table>
+{if $skcallback_data.is_add}
+    <div class="shop-skcallback-request__add-block">
+        <a href="javascript:void(0)" class="shop-skcallback-request__add-link js-skcallback-request-add">Загрузить еще</a>
+    </div>
+{/if}
+<script>
+    $(".js-sk-tooltip").tooltipster();
+</script>

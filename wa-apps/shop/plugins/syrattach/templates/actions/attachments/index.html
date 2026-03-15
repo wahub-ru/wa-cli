@@ -1,0 +1,183 @@
+<div id="js-product-attachments-section-wrapper">
+    {if $product->id}
+    <div class="article s-product-attachments-section js-product-attachments-section" style="visibility: hidden;">
+        <div class="s-section-body">
+            <upload-section :product-id="{$product.id|intval}" @add-file="files.push($event)"></upload-section>{literal}
+            <div class="s-attachments-wrapper">
+                {/literal}<h3 style="margin-top: 1.5rem">{_wp('Attached files')}</h3>{literal}
+                <div class="s-attachments-list" v-if="files.length">
+                    <div class="s-attachments-wrapper" v-for="file in files" :key="file.id" :data-id="file.id">
+                        <div class="s-column s-column-file wide">
+                            <div class="s-column-file-name">
+                                <a :href="file.url" target="_blank"><b>{{ file.name }}</b></a>
+                                <span class="s-syrattach-filesize-hint">({{ file.size|filesize }})</span>
+                            </div>
+                            <description-field :file-id="file.id" v-model="file.description"></description-field>
+                        </div>
+                        <div class="s-column s-column-actions nowrap">
+                            <button class="wa-button wa-small transparent-gray" type="button" @click.prevent="confirmDelete(file.id)">
+                                <span class="s-icon"><i class="fas fa-trash-alt"></i></span>
+                                <span class="s-name">{/literal}{_wp('Delete')}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {else}
+    <div class="article s-product-attachments-section js-product-attachments-section">
+        <div class="s-section-header">
+            <h3 style="margin-top: 1.5rem">{_wp('Attached files')}</h3>
+            <p>{_wp("You can't upload files to a new product. First, save the product.")}</p>
+        </div>
+    </div>
+    {/if}
+</div>
+
+{if $product->id}
+
+{capture assign="_component_description_field"}
+    <div class="s-column-file-description">
+        <div v-if="!edit_mode" class="s-column-file-description__content" @click.prevent="edit_mode=true">
+            <template v-if="description && description.length">{literal}{{ description }}{/literal}</template><em v-else>{_wp('Add file description')}</em>
+        </div>
+        <description-editor v-else
+                            v-model="description"
+                            :file-id="fileId"
+                            @cancel-edit="edit_mode=false"
+                            @input="edit_mode=false"></description-editor>
+    </div>
+{/capture}
+{$_component_templates["description-field"]=$_component_description_field|trim}
+
+{capture assign="_component_description_editor"}
+    <div class="s-column-file-description__editor">
+        <div class="s-syrattach-editable-field">
+            <textarea style="width: 100%" v-model="description"></textarea>
+        </div>
+        <button class="wa-button wa-small" @click.prevent="saveDescription()" :disabled="saving"><i v-if="saving" class="fas fa-spinner fa-spin"></i> {_wp('Save')}</button>
+        <button class="wa-button wa-small transparent-gray" @click.prevent="$emit('cancel-edit')" :disabled="saving">{_wp('Cancel')}</button>
+    </div>
+{/capture}
+{$_component_templates["description-editor"]=$_component_description_editor|trim}
+
+{capture assign='_component_upload_section'}
+    <div class="s-syrattach-upload-section">
+        {literal}<div class="s-drop-area box dragndrop"
+             :class="{'is-over': is_over}"
+             @dragenter.prevent="is_over=true"
+             @dragleave.prevent="is_over=false"
+             @dragover.prevent="is_over=true"
+             @drop.prevent="uploadFiles($event, 'drop')"
+        >{/literal}
+            <div class="s-text">{_wp('Upload or drag & drop files here')}<br>{_wp("Max. file size for upload:")} {literal}{{ {/literal}{$max_upload_size}{literal}|filesize }}{/literal}</div>
+            <input class="s-field" type="file" multiple
+                   title="{_wp("Drag & drop files here or click this area to upload files.")|escape}"
+                   @change.prevent="uploadFiles($event, 'input')">
+        </div>
+        <div class="s-syrattach-upload-files" v-show="uploads.length">
+            <h4 style="margin-top: 1rem">{_wp('Loading files')}</h4>
+            <uploading-file v-for="file in uploads"
+                            :key="file.id"
+                            :file="file"
+                            :product-id="productId"
+                            :max-size="{$max_upload_size|intval}"
+                            @upload-complete="uploadComplete($event)"
+                            @cancel="removeFileFromListById($event)"
+                            ></uploading-file>
+        </div>
+    </div>
+{/capture}
+{$_component_templates["upload-section"]=$_component_upload_section|trim}
+
+{capture assign='_components_uploading_file'}
+    <div class="s-syrattach-uploading-file" {literal}:class="{'s-syrattach-uploading-file__error':!!errors}"{/literal}>
+        <div class="s-syrattach-uploading-file__main">
+            <div class="s-syrattach-uploading-file__name">
+                {literal}{{ file.name }}{/literal}
+            </div>
+            <div class="s-syrattach-uploading-file__progress" v-if="uploading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <progress v-if="total_size === null"></progress>
+                {literal}<template v-else><progress :max="total_size" :value="uploaded"></progress> <span class="s-syrattach-filesize-hint">{{ total_size|filesize }} {{ 'of'|localize }} {{ uploaded|filesize }}</span> </template>{/literal}
+            </div>
+            <div class="s-syrattach-uploading-file__error-text" v-if="errors && errors.length" key="error_div">{literal}
+                {{ Array.isArray(errors) ? errors[0] : errors }}
+            {/literal}</div>
+        </div>
+        <div class="s-syrattach-uploading-file__actions">
+            {literal}<button href="#" class="s-syrattach-dismiss wa-button wa-small transparent-red"
+                             v-if="!!errors"
+                             @click.prevent="$emit('cancel', file.id)"><i class="fas fa-times"></i> {/literal}{_wp('Cancel')}{literal}</button><template v-else>&nbsp;</template>{/literal}
+        </div>
+    </div>
+{/capture}
+{$_component_templates["uploading-file"]=$_components_uploading_file|trim}
+
+{capture assign='_components_delete_dialog'}
+    <div class="wa-dialog">
+        <div class="dialog-background"></div>
+        <div class="dialog-body">
+            <div class="js-vue-node-wrapper" style="visibility: hidden;">
+                <div class="dialog-header">
+                    <h3>{_wp('File deletion confirmation')}</h3>
+                </div>
+                <div class="dialog-content">
+                    <p>{_wp('Do you really want to delete this file?')}</p>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <button class="wa-button red" type="button" :disabled="deleting" @click.prevent="deleteFile()">
+                    <span v-if="deleting"><i class="fas fa-spinner fa-spin"></i></span>
+                    {_wp('Delete')}
+                </button>
+                <button class="wa-button gray-light" type="button" @click.prevent="dialog.close()" :disabled="deleting">{_wp('Cancel')}</button>
+            </div>
+        </div>
+    </div>
+{/capture}
+{$_component_templates["delete-dialog"]=$_components_delete_dialog|trim}
+
+<script>
+    (function ($) {
+        const sources = [
+            {
+                id: "vue-js",
+                type: "js",
+                uri: "{$wa_app_static_url}js/backend/products/vue/vue.min.js?v={$wa->version()}"
+            },
+            {
+                id: "syrattach-shop-plugin-js",
+                type: "js",
+                uri: "{$wa_app_static_url}plugins/syrattach/js/prod_syrattach.{if !$wa->debug()}min.{/if}js?v={$plugin_version}"
+            },
+            {
+                id: "syrattach-shop-plugin-css",
+                type: "css",
+                uri: "{$wa_app_static_url}plugins/syrattach/css/syrattach-prod.css?v={$plugin_version}"
+            }
+        ];
+
+        $.wa.loadSources(sources).then(init);
+
+        function init() {
+            $.wa_shop_products.init.initProductAttachmentsSection({
+                '$wrapper': $("#js-product-attachments-section-wrapper"),
+                files: {$attachments|json_encode:256},
+                component_templates: {$_component_templates|json_encode:256},
+                l10n: {
+                    'GB': '{_wp('GB')}',
+                    'MB': '{_wp('MB')}',
+                    'KB': '{_wp('KB')}',
+                    'bytes': '{_wp('bytes')}',
+                    'of': '{_wp('of')}',
+                    'Size of %name% exceeds maximum upload size limit': '{_wp('Size of %name% exceeds maximum upload size limit')}',
+                    "Upload error": '{_wp("Upload error")}'
+                }
+            });
+        }
+    })(jQuery);
+</script>
+
+{/if}

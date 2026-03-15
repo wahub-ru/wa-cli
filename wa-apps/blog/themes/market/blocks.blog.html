@@ -1,0 +1,46 @@
+{strip}
+    {function blog_comment comment=null}
+        {$is_reply = $comment.depth > 0}
+        {$contact_size = null}
+
+        {if $is_reply}
+            {$contact_size = 's'}
+        {/if}
+
+        {$comment.comments = $comment.comments|default:[]}
+        {$has_reply = count($comment.comments) > 0}
+
+        <div class="blog-comment {if $is_reply}blog-comment_reply{/if} {if $has_reply}blog-comment_has-reply{/if}" data-comment_id="{$comment.id|escape}">
+            <div class="blog-comment__author-container">
+                {$author = $comment.user}
+
+                {if !empty($author.id)}
+                    {$author = $wa->contact($author.id)}
+                {/if}
+
+                {call contact_block contact=$author size=$contact_size}
+            </div>
+            <div class="blog-comment__content-container">
+                <div class="content-decorator">
+                    {$comment.text}
+                </div>
+            </div>
+            <div class="blog-comment__info-container">
+                <div class="blog-comment__date-container">
+                    {$comment.datetime|wa_datetime:'j f Y / H:i'}
+                </div>
+                <div class="blog-comment__reply-button-container">
+                    <span class="blog-comment__reply-button pseudo-link">[`Ответить`]</span>
+                </div>
+            </div>
+            <div class="blog-comment__comments-container">
+                {foreach $comment.comments as $_comment}
+                    <div class="blog-comment__comment-container">
+                        {call blog_comment comment=$_comment}
+                    </div>
+                {/foreach}
+            </div>
+        </div>
+    {/function}
+
+{/strip}

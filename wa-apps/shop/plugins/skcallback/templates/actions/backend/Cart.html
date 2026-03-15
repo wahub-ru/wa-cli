@@ -1,0 +1,20 @@
+<h1>Корзина</h1>
+<div class="shop-skcallback-cart">
+    {foreach $skcallback_products as $product}
+        <div class="shop-skcallback-cart__item">
+            <div class="shop-skcallback-cart__img-block">
+                <a href="{$product.frontend_url}" target="_blank" >
+                    {$wa->shop->productImgHtml($product, '50')}
+                </a>
+            </div>
+            <div class="shop-skcallback-cart__right">
+                <div class="shop-skcallback-cart__name">
+                    <a href="{$product.frontend_url}" target="_blank">{$product.name}</a>
+                    {if $product.sku_name}<span class="shop-skcallback-cart__sku">{$product.sku_name}</span>{/if}
+                    <span class="hint">( x {$product.quantity} )</span>
+                </div>
+                <div class="shop-skcallback-cart__price">{shop_currency_html($product.price)}</div>
+            </div>
+        </div>
+    {/foreach}
+</div>

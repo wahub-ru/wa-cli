@@ -1,0 +1,540 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Arguments *}
+    {$disable_wrapper = $args['disable_wrapper']|default:false}
+    {$disable_breadcrumbs = $args['disable_breadcrumbs']|default:false}
+    {$product = $args['product']|default:$product|default:null}
+    {$reviews = $args['reviews']|default:$reviews|default:[]}
+    {$is_tree = $args['is_tree']|default:false}
+    {$show_header = $args['show_header']|default:true}
+
+    {* Variables *}
+    {if !$disable_breadcrumbs}
+        {$wa->globals('is_show_breadcrumbs', true)}
+        {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Отзывы")}"])}
+        {$wa->title(sprintf('[`%s reviews`]', $product.name))}
+    {/if}
+
+    {if !$is_tree}
+        {function to_tree_comments review=null comments=[]}
+            {$review.comments = []}
+
+            {foreach $comments as $comment}
+                {if $comment.parent_id == $review.id}
+                    {call to_tree_comments review=$comment comments=$comments}
+                    {$review.comments[$comment.id] = $wa->globals('market.return')}
+                {/if}
+            {/foreach}
+
+            {$wa->globals('market.return', $review)}
+        {/function}
+
+        {foreach $reviews as $review_id => $review}
+            {$review.comments = $review.comments|default:[]}
+
+            {call to_tree_comments review=$review comments=$review.comments}
+            {$reviews[$review_id] = $wa->globals('market.return')}
+        {/foreach}
+    {/if}
+    {$_max_post_size = waRequest::getPostMaxSize()}
+    {$_max_file_size = waRequest::getUploadMaxFilesize()}
+
+    {function review_form is_reply=false}
+        {$hide_title_site = $theme_settings['shop_product_reviews_hide_title_site']}
+
+        {$shop_settings = $wa->setting(null, '', 'shop')}
+        {$require_authorization = !empty($shop_settings['require_authorization'])}
+        {$require_captcha = !empty($shop_settings['require_captcha'])}
+        {$review_service_agreement = $shop_settings['review_service_agreement']|default:''}
+        {$review_service_agreement_hint = $shop_settings['review_service_agreement_hint']|default:''}
+        {$current_user_id = $wa->userId()}
+        {$is_auth = !empty($current_user_id)}
+        {$is_images_enabled = !empty($wa->setting("allow_image_upload", false, "shop")) && !$is_reply}
+        {$is_moderate_enabled = $wa->setting('moderation_reviews', 0, 'shop')}
+        {$field_classes = ''}
+        {if $is_reply}
+            {$field_classes = 'form-field_size_s'}
+        {/if}
+
+        <div class="product-review-form{if $is_reply} product-review-form_reply{if $is_images_enabled} product-review-form_images{/if}{/if}">
+            {if $is_reply}
+                <div class="product-review-form__close-button">
+                    <span class="image-box">
+                        {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                    </span>
+                </div>
+            {/if}
+            {if !$is_auth && $require_authorization}
+                <div class="content-decorator">
+                    {sprintf(
+                    '[`To add a review please <a href="%s">sign up</a> or <a href="%s">login</a>`]',
+                    $wa->signupUrl(),
+                    $wa->loginUrl())
+                    }
+                </div>
+            {else}
+                <form class="form{if $is_reply} form_size_s{/if} ajax-form add-review-form" action="{$wa->shop->productUrl($product, 'reviewsAdd')|escape}" method="post">
+                    {if $is_reply}
+                        <input class="product-review-form__parent-id" type="hidden" name="parent_id" value="" />
+                    {elseif $hide_title_site}
+                        <input type="hidden" name="title" value="{_wp("Отзыв")}" />
+                    {/if}
+
+                    {if $is_auth}
+                        <div class="form__group">
+                            {$size = null}
+                            {if $is_reply}
+                                {$size = 's'}
+                            {/if}
+                            {call contact_block contact=$wa->user() size=$size}
+                        </div>
+                    {/if}
+                    <div class="form__group">
+                        <div class="form__fields">
+                            {if !$is_auth}
+                                <div class="form__field form-field {$field_classes}" data-field_name="name">
+                                    <div class="form-field__name">
+                                        {_wp("Ваше имя")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <input class="input-text" type="text" name="name" value="" placeholder="{_wp("Ваше имя")}" />
+                                    </div>
+                                </div>
+
+                                <div class="form__field form-field {$field_classes}" data-field_name="email">
+                                    <div class="form-field__name">
+                                        E-mail:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <input class="input-text" type="text" name="email" value="" placeholder="E-mail" />
+                                    </div>
+                                </div>
+
+                                {if !$hide_title_site}
+                                    <div class="form__field form-field" data-field_name="site">
+                                        <div class="form-field__name">
+                                            {_wp("Сайт")}:
+                                        </div>
+                                        <div class="form-field__value">
+                                            <input class="input-text" type="text" name="site" value="" placeholder="{_wp("Сайт")}" />
+                                        </div>
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            {if !$is_reply}
+                                {if !$hide_title_site}
+                                    <div class="form__field form-field" data-field_name="title">
+                                        <div class="form-field__name">
+                                            {_wp("Заголовок")}:
+                                        </div>
+                                        <div class="form-field__value">
+                                            <input class="input-text" type="text" name="title" value="" placeholder="{_wp("Заголовок")}" />
+                                        </div>
+                                    </div>
+                                {/if}
+                                <div class="form__field form-field" data-field_name="rate">
+                                    <div class="form-field__name">
+                                        {_wp("Оцените товар")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <div class="rating-select">
+                                            <input type="hidden" class="rating-select__input" name="rate" value="" />
+                                            <div class="rating-select__stars-container">
+                                                <span class="rating-select__stars">
+                                                    <span class="rating-select__star" data-text="{_wp("Ужасный")}" data-value="1"></span>
+                                                    <span class="rating-select__star" data-text="{_wp("Плохой")}" data-value="2"></span>
+                                                    <span class="rating-select__star" data-text="{_wp("Обычный")}" data-value="3"></span>
+                                                    <span class="rating-select__star" data-text="{_wp("Хороший")}" data-value="4"></span>
+                                                    <span class="rating-select__star" data-text="{_wp("Отличный")}" data-value="5"></span>
+                                                </span>
+                                            </div>
+                                            <div class="rating-select__value-container">
+                                                <span class="rating-select__hover-value"></span>
+                                                <span class="rating-select__active-value"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            <div class="form__field form-field {$field_classes}" data-field_name="text">
+                                <div class="form-field__name">
+                                    {if !$is_reply}
+                                        {_wp("Отзыв")}:
+                                    {else}
+                                        {_wp("Комментарий")}:
+                                    {/if}
+                                </div>
+                                <div class="form-field__value">
+                                    <textarea class="textarea textarea_fill" name="text" placeholder="{if !$is_reply}{_wp("Ваш отзыв о товаре")}{else}{_wp("Комментарий")}{/if}"></textarea>
+                                </div>
+                            </div>
+
+                            {if $is_images_enabled}
+                                <div class="form__field form-field" data-field_name="image">
+                                    <div class="form-field__name">
+                                        {_wp("Изображения")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        {call add_images_section max_post_size=$_max_post_size max_file_size=$_max_file_size max_files=10}
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {if $require_captcha && !$is_auth}
+                                <div class="form__field form-field {$field_classes}" data-field_name="captcha">
+                                    <div class="form-field__name">
+                                        {_wp("Капча")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <div class="captcha-decorator">
+                                            {$wa->captcha()}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                            {if !$is_auth && $review_service_agreement}
+                                <div class="form__field form-field {$field_classes}" data-field_name="service_agreement">
+                                    <div class="form-field__name">
+                                    </div>
+                                    <div class="form-field__value">
+                                        {if $review_service_agreement === 'checkbox'}
+                                            {$is_agree = $wa->post('service_agreement') || $wa->storage('shop_review_agreement')}
+
+                                            <input type="hidden" name="service_agreement" value="" />
+                                            <label class="checkbox">
+                                                <input class="checkbox__control" type="checkbox" name="service_agreement" value="1" {if $is_agree}checked="checked"{/if} />
+                                                <span class="checkbox__mark"></span>
+                                                <span class="checkbox__label">
+                                                    <span class="link-decorator">{$review_service_agreement_hint}</span>
+                                                </span>
+                                            </label>
+                                        {elseif $review_service_agreement === 'notice'}
+                                            <span class="link-decorator">{$review_service_agreement_hint}</span>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                    {if $is_moderate_enabled}
+                        <input type="hidden" name="moderate">
+                    {/if}
+                    <div class="form__group">
+                        <div class="form-row{if $is_reply} form-row_size_s{/if}">
+                            <button class="button button_wide">[`Отправить`]</button>
+
+                            {if $is_reply && $wa->globals('is_mobile')}
+                                <button class="product-review-form__responsive-close-button button button_style_transparent" type="button">[`Отменить`]</button>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="form__loader">
+                        <span class="spinner">
+                            <span class="image-box">
+                                {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                            </span>
+                        </span>
+
+                    </div>
+                </form>
+                {if $is_moderate_enabled}
+                    <div class="product-review-form__notice">
+                        [`Thank you!`]
+                        [`Your review will be published after moderation.`]
+                    </div>
+                {/if}
+            {/if}
+        </div>
+    {/function}
+
+    {capture assign='reviews_template'}
+        {* Product Reviews Start *}
+            {* Theme Settings *}
+            {$is_enabled_filter = $theme_settings['shop_product_reviews_filter_enabled']}
+            {$is_all_images = $theme_settings['shop_product_reviews_show_all_images']}
+
+            {* Variables *}
+            {$count_reviews_rates_by_rate = [0, 0, 0, 0, 0, 0]}
+
+            {foreach $reviews as $review}
+                {$review.rate = floatval($review.rate)}
+
+                {if !$review.rate}
+                    {continue}
+                {/if}
+
+                {$count_reviews_rates_by_rate[$review.rate] = $count_reviews_rates_by_rate[$review.rate] + 1}
+            {/foreach}
+
+            {$total_reviews_rates = 0}
+
+            {foreach $count_reviews_rates_by_rate as $count_reviews_rates}
+                {$total_reviews_rates = $total_reviews_rates + $count_reviews_rates}
+            {/foreach}
+
+            {$has_reviews = count($reviews) > 0}
+            {$has_hidden = count($reviews) > 5}
+
+            {* Template *}
+            <div class="product-reviews {if !$has_reviews}product-reviews_empty{/if} {if $has_hidden}product-reviews_has-hidden{/if} toggle-block">
+                {capture assign="review_form_html"}
+                    {call review_form}
+                {/capture}
+                <input type="hidden" name="product_review_form" value="{$review_form_html|escape}">
+                {capture assign="review_reply_form_html"}
+                    {call review_form is_reply=true}
+                {/capture}
+                <input type="hidden" name="product_review_reply_form" value="{$review_reply_form_html|escape}">
+
+                <div class="product-reviews__empty-container">
+                    <div class="not-found-block">
+                        <div class="not-found-block__header">
+                            [`Отзывов ещё нет`] — [`ваш может стать первым.`]
+                        </div>
+                        <div class="not-found-block__buttons">
+                            <button class="button button_size_l product-review-add-button">[`Написать отзыв`]</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="product-reviews__reviews-container">
+                    <div class="block">
+                        <div class="block__header{if !$show_header} block__header_hide{/if}">
+                            {if $show_header && !$wa->globals('is_mobile')}
+                                <div class="product-reviews__header-container">
+                                    <span class="title title_h2">
+                                        <span class="product-reviews__header">
+                                            [`Все отзывы`] <span class="product-reviews__count">{count($reviews)}</span>
+                                        </span>
+                                    </span>
+                                </div>
+                            {/if}
+
+                            {if $wa->globals('is_mobile')}
+                                <div class="product-reviews__responsive-header-container">
+                                    <div class="product-reviews__responsive-header-text-container">
+                                        <span class="title title_h2">
+                                            <span class="product-reviews__header">
+                                                [`Все отзывы`] <span class="product-reviews__count">{count($reviews)}</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="product-reviews__responsive-header-bottom-container">
+                                        <div class="product-reviews__responsive-header-rating-container">
+                                            <div class="product-reviews__responsive-header-rating-stars">
+                                                <span class="rating">
+                                                    {$rating_stars = explode(',', "{call rating_stars rating=$product.rate}")}
+                                                    {foreach $rating_stars as $star}
+                                                        <span class="rating__star rating__star_{$star}"></span>
+                                                    {/foreach}
+                                                </span>
+
+                                            </div>
+                                            <div class="product-reviews__responsive-header-rating-text">
+                                                [`общий рейтинг`]
+                                            </div>
+                                        </div>
+                                        <div class="product-reviews__responsive-header-button-container">
+                                            <button class="button button_size_l product-review-add-button">[`Написать отзыв`]</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                        {if $is_all_images}
+                            {$all_reviews_images = []}
+                            {foreach $reviews as $review}
+                                {if !empty($review.images)}
+                                    {foreach $review.images as $image}
+                                        {$all_reviews_images[] = $image}
+                                    {/foreach}
+                                {/if}
+                            {/foreach}
+                            {if !empty($all_reviews_images)}
+                                {capture assign='gallery_content'}
+                                    <div class="popup-gallery" data-popup-gallery-id="all" style="max-width: 100%;width: 1300px;">
+                                        <div class="popup-gallery__images-container">
+                                            <div class="popup-gallery__images swiper">
+                                                <div class="popup-gallery__images-wrapper swiper-wrapper">
+                                                    {foreach $all_reviews_images as $image}
+                                                        <div class="popup-gallery__image swiper-slide image-box image-box_contain" data-image_id="{$image.id|escape}"{if $image@iteration > 1} style="margin-left: -4px" {/if}>
+                                                            <img src="{$image.url_1|escape}" alt="{$image.description}" />
+                                                        </div>
+                                                    {/foreach}
+                                                </div>
+                                            </div>
+                                            <div class="popup-gallery__arrow popup-gallery__arrow_prev">
+                                                {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-left' width=16 height=26}
+                                            </div>
+                                            <div class="popup-gallery__arrow popup-gallery__arrow_next">
+                                                {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-right' width=16 height=26}
+                                            </div>
+                                        </div>
+                                        {if $wa->globals('is_mobile') && count($all_reviews_images) > 1}
+                                            <div class="popup-gallery__pagination gallery-pagination gallery-pagination_product"></div>
+                                        {/if}
+                                    </div>
+                                {/capture}
+                                <span class="title title_h3">
+                                    <span class="product-reviews__header">
+                                        Фотографии покупателей
+                                    </span>
+                                </span>
+                                <div class="product-reviews__all-images review-images open-popup-gallery" data-gallery="{$gallery_content|escape}" data-popup-gallery-id="all">
+                                    <div class="review-images__slider swiper">
+                                        <div class="review-images__wrapper swiper-wrapper">
+                                            {foreach $all_reviews_images as $image}
+                                                <a class="product-review__images-link open-popup-gallery__item review-images__slide swiper-slide" href="{$image.url_1|escape}" data-index="{$image@index}">
+                                                    <span class="review-images__slide-image">
+                                                        {call image
+                                                            src=$image.url_3
+                                                            alt=$image.description
+                                                        }
+                                                    </span>
+                                                </a>
+                                            {/foreach}
+                                        </div>
+                                    </div>
+                                    <div class="review-images__arrow review-images__arrow_prev">
+                                        {call svg_icon classes='review-images__arrow-icon' icon='arrow-left' width=10 height=6}
+                                    </div>
+                                    <div class="review-images__arrow review-images__arrow_next">
+                                        {call svg_icon classes='review-images__arrow-icon' icon='arrow-right' width=10 height=6}
+                                    </div>
+                                </div>
+                            {/if}
+                        {/if}
+                        <div class="block__content">
+                            <div class="product-reviews__reviews">
+                                {foreach $reviews as $review}
+                                    {$is_hidden = $review@iteration > 5}
+
+                                    <div class="product-reviews__review {if $is_hidden}product-reviews__review_hidden{/if}">
+                                        {call review review=$review id=$review@iteration}
+                                    </div>
+                                {/foreach}
+                            </div>
+                            <div class="product-reviews__more">
+                                <button class="button button_style_inverse button_size_l toggle-block__button">
+                                    <span class="icon-box">
+                                        <span class="icon-box__content">
+                                            [`Показать ещё`]
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {if !$wa->globals('is_mobile')}
+                    <div class="product-reviews__summary-container">
+                        <div class="product-reviews-summary">
+                            <div class="product-reviews-summary__block">
+                                <div class="product-reviews-summary__summary-container">
+                                    <div class="product-reviews-summary__rating">
+                                        <div class="product-reviews-summary__rating-stars">
+                                            <span class="rating">
+                                                {$rating_stars = explode(',', "{call rating_stars rating=$product.rating}")}
+                                                {foreach $rating_stars as $star}
+                                                    <span class="rating__star rating__star_{$star}"></span>
+                                                {/foreach}
+                                            </span>
+
+                                        </div>
+                                        <div class="product-reviews-summary__rating-text">
+                                            [`общий рейтинг`]
+                                        </div>
+                                    </div>
+                                    <div class="product-reviews-summary__button-container">
+                                        <button class="button button_size_l product-review-add-button">[`Написать отзыв`]</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {if $is_enabled_filter && $total_reviews_rates > 0}
+                                <div class="product-reviews-summary__block product-reviews-summary__block_overview">
+                                    <div class="product-reviews-overview">
+                                        <div class="product-reviews-overview__header">
+                                            [`Отзывы с оценкой`]
+                                        </div>
+                                        <div class="product-reviews-overview__content">
+                        					<div class="product-reviews-overview__rates">
+												{for $rate = 5; 0 < $rate; $rate = $rate - 1}
+													{$count_reviews = $count_reviews_rates_by_rate[$rate]}
+
+													{if $count_reviews == 0}
+														{continue}
+													{/if}
+
+													{$percent = 0}
+
+													{if $total_reviews_rates != 0}
+														{$percent = $count_reviews / $total_reviews_rates}
+													{/if}
+
+													<div class="product-reviews-overview__rate">
+														<div class="product-reviews-overview__rate-rating">
+															<span class="rating">
+															    {$rating_stars = explode(',', "{call rating_stars rating=$rate}")}
+															    {foreach $rating_stars as $star}
+															        <span class="rating__star rating__star_{$star}"></span>
+															    {/foreach}
+															</span>
+
+														</div>
+														<div class="product-reviews-overview__rate-percent">
+															{round($percent * 100)}%
+														</div>
+														<div class="product-reviews-overview__rate-count">
+															<span class="product-reviews-overview__rate-button pseudo-link pseudo-link_link" data-rate="{$rate|escape}">
+																{$count_reviews} {call plural n=$count_reviews forms=["{_wp("отзыв")}", "{_wp("отзыва")}", "{_wp("отзывов")}"]}
+															</span>
+														</div>
+													</div>
+												{/for}
+											</div>
+										</div>
+										<div class="product-reviews-overview__reset-container">
+											<span class="pseudo-link product-reviews-overview__reset-button">[`Показать все отзывы`]</span>
+										</div>
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		{* Product Reviews End *}
+	{/capture}
+
+	{if $disable_wrapper}
+		{$reviews_template}
+	{else}
+		<div class="content-wrapper__block">
+			<div class="product-reviews-page block">
+				<h1 class="block__header block__header_text product-page__header">
+					[`Отзывы`]
+				</h1>
+				<div class="block__content">
+					<a class="button product-reviews-page__product-link" href="{call get_product_url product=$product}">
+						<span class="icon-box">
+							<span class="icon-box__content">
+								[`Перейти в карточку товара`]
+							</span>
+							<span class="icon-box__icon">
+								{call svg_icon icon='arrow-right' width=12 height=12 fill='currentColor'}
+							</span>
+						</span>
+					</a>
+
+					{$reviews_template}
+				</div>
+			</div>
+		</div>
+	{/if}
+{/strip}

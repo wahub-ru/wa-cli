@@ -1,0 +1,81 @@
+<div id="dzen-post-fields" class="b-post dzen-post-card custom-mt-16">
+    <div class="dzen-post-card__header">
+        <h6 class="heading custom-mt-0">Дзен</h6>
+        <label class="dzen-switch">
+            <input type="hidden" name="plugin[dzen][publish_in_dzen]" value="0">
+            <input type="checkbox" name="plugin[dzen][publish_in_dzen]" value="1" class="js-dzen-publish-switch" {if $dzen.publish_in_dzen}checked{/if}>
+            <span class="dzen-switch__slider" aria-hidden="true"></span>
+            <span class="dzen-switch__label">Публиковать в Дзен</span>
+        </label>
+    </div>
+
+    <div class="dzen-post-card__body js-dzen-post-fields-body">
+
+
+        <section class="dzen-post-section">
+            <h6 class="dzen-post-section__title">Карточка публикации</h6>
+            <div class="dzen-field">
+                <label class="dzen-label" for="dzen-description">Описание карточки</label>
+                <textarea id="dzen-description" name="plugin[dzen][description]" maxlength="240" class="js-dzen-description">{$dzen.description|escape}</textarea>
+                <div class="dzen-counter"><span class="js-dzen-description-count">0</span> / 240</div>
+                <p class="hint">Краткое описание без HTML-тегов.</p>
+            </div>
+        </section>
+
+
+        <section class="dzen-post-section">
+            <h6 class="dzen-post-section__title">Идентификаторы и ссылки</h6>
+            <div class="dzen-field-grid">
+                <div class="dzen-field">
+                    <label class="dzen-label">GUID</label>
+                    <input type="text" name="plugin[dzen][guid]" value="{$dzen.guid|escape}" data-preview-type="guid">
+                    <p class="hint">Если поле пустое, идентификатор формируется автоматически.</p>
+                </div>
+                <div class="dzen-field">
+                    <label class="dzen-label">PDA Link</label>
+                    <input type="text" name="plugin[dzen][pdalink]" value="{$dzen.pdalink|escape}">
+                    <p class="hint">Если значение не указано, используется URL записи блога.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="dzen-post-section">
+            <h6 class="dzen-post-section__title">Медиа</h6>
+            <div class="dzen-field-grid">
+                <div class="dzen-field dzen-media-box">
+                    <label class="dzen-label">URL обложки (enclosure)</label>
+                    <input type="text" name="plugin[dzen][enclosure_url]" value="{$dzen.enclosure_url|escape}" class="js-dzen-enclosure-input" placeholder="{$site_example_image_url|escape}" data-preview-type="enclosure">
+                    <input type="hidden" name="plugin[dzen][enclosure_delete]" value="0" class="js-dzen-enclosure-delete">
+                    <div class="dzen-upload-actions">
+                        <input type="file" id="dzen-enclosure-file" style="display:none" accept="image/jpeg,image/png,image/gif">
+                        <a href="#" class="button small js-dzen-upload-btn">Загрузить файл</a>
+                        <a href="#" class="button small light-gray js-dzen-remove-cover" {if !$dzen.enclosure_url}style="display:none"{/if}>Удалить</a>
+                        <span class="hint js-dzen-upload-status" style="display:none"></span>
+                    </div>
+                    <img src="{$dzen.enclosure_url|escape}" alt="cover" class="dzen-cover-preview js-dzen-cover-preview" {if !$dzen.enclosure_url}style="display:none"{/if}>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="dzen-post-section">
+            <h6 class="dzen-post-section__title">Проверка перед публикацией</h6>
+            <div class="dzen-validate">
+                <a href="#" class="button small blue js-dzen-validate-btn">Запустить проверку</a>
+                <span class="hint js-dzen-validate-status" style="display:none"></span>
+                <ul class="dzen-validate-list dzen-validate-list--checks js-dzen-validate-checks" style="display:none"></ul>
+                <ul class="dzen-validate-list dzen-validate-list--errors js-dzen-validate-errors" style="display:none"></ul>
+                <ul class="dzen-validate-list dzen-validate-list--warnings js-dzen-validate-warnings" style="display:none"></ul>
+                <div class="dzen-rss-preview js-dzen-validate-preview" style="display:none"></div>
+            </div>
+        </section>
+
+        <section class="dzen-post-section">
+            <h6 class="dzen-post-section__title">Что попадёт в RSS</h6>
+            <div class="dzen-rss-preview js-dzen-rss-preview">
+                <p><strong>GUID:</strong> <span class="js-dzen-preview-guid">—</span></p>
+                <p><strong>Enclosure:</strong> <span class="js-dzen-preview-enclosure">—</span></p>
+            </div>
+        </section>
+    </div>
+</div>

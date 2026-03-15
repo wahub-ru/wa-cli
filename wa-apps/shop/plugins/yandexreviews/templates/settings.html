@@ -1,0 +1,495 @@
+{capture assign=_url_hint}Например: https://yandex.ru/maps/org/xxxxxxx/1029259666/reviews/{/capture}
+<div class="block double-padded">
+  <h1>Отзывы с Яндекс Карт</h1>
+  <form id="yreviews-settings-form" method="post" action="?plugin=yandexreviews&module=settings&action=save" data-settings-fetch-url="{$settings_fetch_url|escape}" data-settings-reset-url="{$settings_reset_url|escape}" data-settings-delete-reviews-url="{$settings_delete_reviews_url|escape}">
+    {$wa->csrf()}
+<div class="fields">
+    <div class="field">
+      <div class="name">Витрина</div>
+      <div class="value">
+        <select id="yreviews-storefront-select" name="storefront">
+          <option value="">Общие настройки / Для всех витрин</option>
+          {foreach $storefronts as $storefront_value => $storefront_label}
+            <option value="{$storefront_value|escape}"{if $current_storefront == $storefront_value} selected{/if}{if !empty($storefronts_custom[$storefront_value])} class="yreviews-storefront-custom" style="color:#c62828;font-weight:600"{/if}>{$storefront_label|escape}</option>
+          {/foreach}
+        </select>
+        <div class="hint">Настройки сохраняются для всех витрин или только для выбранной витрины.</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Включить плагин</div>
+      <div class="value">
+        <label>
+          <input type="checkbox" name="settings[enabled]" value="1"{if !empty($settings.enabled)} checked{/if}>
+          Включает загрузку и вывод отзывов
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Ссылка на компанию на Яндекс.Картах</div>
+      <div class="value">
+        <input type="text" class="long" name="settings[company_url]" value="{$settings.company_url|escape}">
+        <div class="hint">{$_url_hint }</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Вид отображения</div>
+      <div class="value">
+        <select name="settings[view_mode]">
+          <option value="tiles"{if $settings.view_mode=='tiles'} selected{/if}>Плитки</option>
+          <option value="list"{if $settings.view_mode=='list'} selected{/if}>Список</option>
+        </select>
+        <div class="hint">Определяет раскладку на витрине.</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Количество отзывов до «Показать ещё»</div>
+      <div class="value">
+        <input type="number" min="1" max="50" name="settings[initial_limit]" value="{$settings.initial_limit|default:8|intval}">
+        <div class="hint">Рекомендуем 20–40; максимум 50 за один запрос.</div>
+      </div>
+    </div>
+    
+    <div class="field">
+  <div class="name">Сколько загружать за один запуск CRON</div>
+  <div class="value">
+    <input type="number" min="1" max="200" name="settings[cron_batch_limit]" value="{$settings.cron_batch_limit|default:30|intval}">
+    <div class="hint">Рекомендуем 20–50. Каждый запуск добавит только новые отзывы.</div>
+  </div>
+</div>
+    <div class="field">
+      <div class="name">Скрывать отзывы с оценкой 1–3</div>
+      <div class="value">
+        <label>
+          <input type="checkbox" name="settings[hide_low_ratings]" value="1"{if !empty($settings.hide_low_ratings)} checked{/if}>
+          При выводе на витрине отзывы с рейтингом &lt; 4 будут скрыты
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Кнопка «Оставить отзыв на Яндекс Картах»</div>
+      <div class="value">
+        <label>
+          <input type="checkbox" name="settings[show_review_button]" value="1"{if !empty($settings.show_review_button)} checked{/if}>
+          Показать кнопку вверху блока с отзывами
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Текст на кнопке</div>
+      <div class="value">
+        <input type="text" class="long" name="settings[review_button_text]" value="{$settings.review_button_text|default:'Оставить отзыв на Яндекс Картах'|escape}">
+        <div class="hint">Например: «Оставить отзыв».</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Цвет фона кнопки</div>
+      <div class="value">
+        <input type="color" name="settings[review_button_bg_color]" value="{$settings.review_button_bg_color|default:'#ffd400'|escape}">
+        <label style="margin-left:10px;">
+          <input type="checkbox" name="settings[review_button_bg_color__default]" value="1"{if empty($settings.review_button_bg_color)} checked{/if}>
+          Использовать по умолчанию
+        </label>
+        <div class="hint">Если включено «по умолчанию», значение не переопределяется.</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Цвет текста кнопки</div>
+      <div class="value">
+        <input type="color" name="settings[review_button_text_color]" value="{$settings.review_button_text_color|default:'#000000'|escape}">
+        <label style="margin-left:10px;">
+          <input type="checkbox" name="settings[review_button_text_color__default]" value="1"{if empty($settings.review_button_text_color)} checked{/if}>
+          Использовать по умолчанию
+        </label>
+        <div class="hint">Если включено «по умолчанию», значение не переопределяется.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Цвет фона кнопки при наведении</div>
+      <div class="value">
+        <input type="color" name="settings[review_button_bg_color_hover]" value="{$settings.review_button_bg_color_hover|default:'#ffea00'|escape}">
+        <label style="margin-left:10px;">
+          <input type="checkbox" name="settings[review_button_bg_color_hover__default]" value="1"{if empty($settings.review_button_bg_color_hover)} checked{/if}>
+          Использовать по умолчанию
+        </label>
+        <div class="hint">Если включено «по умолчанию», значение не переопределяется.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Цвет текста кнопки при наведении</div>
+      <div class="value">
+        <input type="color" name="settings[review_button_text_color_hover]" value="{$settings.review_button_text_color_hover|default:'#000000'|escape}">
+        <label style="margin-left:10px;">
+          <input type="checkbox" name="settings[review_button_text_color_hover__default]" value="1"{if empty($settings.review_button_text_color_hover)} checked{/if}>
+          Использовать по умолчанию
+        </label>
+        <div class="hint">Если включено «по умолчанию», значение не переопределяется.</div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="name">Скругление кнопки (border-radius)</div>
+      <div class="value">
+        <input type="number" min="0" max="60" name="settings[review_button_radius]" value="{$settings.review_button_radius|default:''|escape}" placeholder="по умолчанию 10">
+        <div class="hint">Укажите число в пикселях (0–60). Пусто — оставить стили по умолчанию.</div>
+      </div>
+    </div>
+    
+    <div class="field">
+      <div class="value">
+        <button id="yreviews-save-btn" type="submit" class="button green">Сохранить</button>
+        {if $has_storefront_overrides}
+          <button id="yreviews-reset-btn" type="button" class="button red">Сбросить настройки витрин</button>
+        {/if}
+        {if $reviews_total > 0}
+          <button id="yreviews-delete-reviews-btn" type="button" class="button red">Удалить все отзывы</button>
+        {/if}
+        <span id="yreviews-inline-ok" class="y-inline-ok" hidden>Сохранено</span>
+        <span id="yreviews-delete-ok" class="y-inline-ok" hidden>Отзывы удалены</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="value">
+<br><br>
+      </div>
+    </div>
+<div class="field">
+  <div class="value">
+    <div style="margin-bottom:10px">
+      <div style="font-weight:600;margin-bottom:6px">Пример CRON задания</div>
+      <div class="cron-line">
+        <pre class="cron-pre"><code id="cron-import">{$cron_import_cmd|escape}</code></pre>
+        <a href="#" class="cron-copy js-copy-cron" data-target="#cron-import">Копировать</a>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:8px">
+      Пример расписания в crontab: <code>0 * * * *</code> — раз в час.
+    </p>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+  </form>
+</div>
+{literal}
+<style>
+  .fields.form .field{display:flex;align-items:flex-start;gap:16px;margin:12px 0}
+  .fields.form .field .name{flex:0 0 260px;max-width:260px;color:#6b7280;font-weight:600}
+  .fields.form .field .value{flex:1}
+  .fields.form input[type="text"],
+  .fields.form input[type="number"],
+  .fields.form select{max-width:460px}
+  .cron-line{display:flex;align-items:center;gap:12px}
+  .cron-pre{margin:0;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;flex:1;overflow:auto}
+  .cron-copy{white-space:nowrap;text-decoration:none;border-bottom:1px dashed currentColor;cursor:pointer}
+  .cron-copy:hover{border-bottom-color:transparent}
+  .y-inline-ok{
+    margin-left:10px;
+    color:#0a7d24;
+    opacity:0;
+    transition:opacity .2s ease;
+    font-weight:600;
+  }
+  .y-inline-ok.y-show{
+    opacity:1;
+  }
+  #yreviews-storefront-select option.yreviews-storefront-custom{
+    color:#c62828;
+    font-weight:600;
+  }
+</style>
+<script>
+(function(){
+  var form = document.getElementById('yreviews-settings-form');
+  if (!form) return;
+  var storefrontSelect = document.getElementById('yreviews-storefront-select');
+  function setFieldValue(selector, value) {
+    var el = form.querySelector(selector);
+    if (!el) return;
+    el.value = value == null ? '' : value;
+  }
+
+  function setCheckbox(selector, isChecked) {
+    var el = form.querySelector(selector);
+    if (!el) return;
+    el.checked = !!isChecked;
+  }
+
+  function toInt(value, fallback) {
+    var n = parseInt(value, 10);
+    return isNaN(n) ? fallback : n;
+  }
+
+  function toBool(value) {
+    return value === true || value === 1 || value === '1';
+  }
+
+  function applySettings(settings) {
+    settings = settings || {};
+
+    setCheckbox('input[name="settings[enabled]"]', toBool(settings.enabled));
+    setFieldValue('input[name="settings[company_url]"]', settings.company_url || '');
+    setFieldValue('select[name="settings[view_mode]"]', settings.view_mode || 'tiles');
+    setFieldValue('input[name="settings[initial_limit]"]', toInt(settings.initial_limit, 8));
+    setFieldValue('input[name="settings[cron_batch_limit]"]', toInt(settings.cron_batch_limit, 30));
+    setCheckbox('input[name="settings[hide_low_ratings]"]', toBool(settings.hide_low_ratings));
+    setCheckbox('input[name="settings[show_review_button]"]', toBool(settings.show_review_button));
+
+    setFieldValue('input[name="settings[review_button_text]"]', settings.review_button_text || '');
+    setFieldValue('input[name="settings[review_button_bg_color]"]', settings.review_button_bg_color || '#ffd400');
+    setFieldValue('input[name="settings[review_button_text_color]"]', settings.review_button_text_color || '#000000');
+    setFieldValue('input[name="settings[review_button_bg_color_hover]"]', settings.review_button_bg_color_hover || '#ffea00');
+    setFieldValue('input[name="settings[review_button_text_color_hover]"]', settings.review_button_text_color_hover || '#000000');
+    var radius = settings.review_button_radius;
+    if (radius === '' || radius === null || typeof radius === 'undefined') {
+      radius = '';
+    }
+    setFieldValue('input[name="settings[review_button_radius]"]', radius);
+
+    setCheckbox('input[name="settings[review_button_bg_color__default]"]', !settings.review_button_bg_color);
+    setCheckbox('input[name="settings[review_button_text_color__default]"]', !settings.review_button_text_color);
+    setCheckbox('input[name="settings[review_button_bg_color_hover__default]"]', !settings.review_button_bg_color_hover);
+    setCheckbox('input[name="settings[review_button_text_color_hover__default]"]', !settings.review_button_text_color_hover);
+  }
+
+  function syncDefaultToggles() {
+    var bgDef  = form.querySelector('input[name="settings[review_button_bg_color__default]"]');
+    var txDef  = form.querySelector('input[name="settings[review_button_text_color__default]"]');
+    var bgHDef = form.querySelector('input[name="settings[review_button_bg_color_hover__default]"]');
+    var txHDef = form.querySelector('input[name="settings[review_button_text_color_hover__default]"]');
+
+    var bgInp  = form.querySelector('input[name="settings[review_button_bg_color]"]');
+    var txInp  = form.querySelector('input[name="settings[review_button_text_color]"]');
+    var bgHInp = form.querySelector('input[name="settings[review_button_bg_color_hover]"]');
+    var txHInp = form.querySelector('input[name="settings[review_button_text_color_hover]"]');
+
+    function toggle(def, inp){
+      if (!def || !inp) return;
+      inp.disabled = !!def.checked;
+      inp.style.opacity = inp.disabled ? '0.5' : '1';
+    }
+    toggle(bgDef,  bgInp);
+    toggle(txDef,  txInp);
+    toggle(bgHDef, bgHInp);
+    toggle(txHDef, txHInp);
+  }
+
+  if (storefrontSelect) {
+    storefrontSelect.addEventListener('change', function(){
+      var value = storefrontSelect.value || '';
+      var baseUrl = (form.getAttribute('data-settings-fetch-url') || '?plugin=yandexreviews&module=settings&action=fetch');
+      var url = baseUrl + (baseUrl.indexOf('?') !== -1 ? '&' : '?') + 'storefront=' + encodeURIComponent(value);
+
+      storefrontSelect.disabled = true;
+      fetch(url, { method:'GET', credentials:'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(json){
+          storefrontSelect.disabled = false;
+          var payload = (json && json.status === 'ok') ? (json.data || {}) : null;
+          if (payload) {
+            applySettings(payload.settings || {});
+            syncDefaultToggles();
+          } else {
+            alert('Не удалось загрузить настройки витрины.');
+          }
+        })
+        .catch(function(){
+          storefrontSelect.disabled = false;
+          alert('Ошибка соединения. Попробуйте ещё раз.');
+        });
+    });
+  }
+  var btn   = document.getElementById('yreviews-save-btn');
+  var resetBtn = document.getElementById('yreviews-reset-btn');
+  var deleteBtn = document.getElementById('yreviews-delete-reviews-btn');
+  var deleteOk = document.getElementById('yreviews-delete-ok');
+  function ensureResetVisible() {
+    if (!resetBtn) {
+      var wrapper = document.querySelector('#yreviews-save-btn') ? document.querySelector('#yreviews-save-btn').parentNode : null;
+      if (!wrapper) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'yreviews-reset-btn';
+      btn.className = 'button red';
+      btn.textContent = 'Сбросить настройки витрин';
+      wrapper.insertBefore(btn, document.getElementById('yreviews-inline-ok'));
+      resetBtn = btn;
+      bindResetButton();
+    }
+  }
+  var okLbl = document.getElementById('yreviews-inline-ok');
+  var hideTimer = null;
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var fd  = new FormData(form);
+    var url = form.getAttribute('action');
+    btn.disabled = true;
+    fetch(url, { method:'POST', body: fd, credentials:'same-origin' })
+      .then(function(r){ return r.json().catch(function(){ return {status:'fail'}; }); })
+      .then(function(json){
+        btn.disabled = false;
+        if (json && json.status === 'ok') {
+          var selected = storefrontSelect ? storefrontSelect.value : '';
+          if (storefrontSelect && selected) {
+            Array.prototype.forEach.call(storefrontSelect.options, function(option){
+              if (option.value === selected) {
+                option.classList.add('yreviews-storefront-custom');
+                option.style.color = '#c62828';
+                option.style.fontWeight = '600';
+              }
+            });
+            ensureResetVisible();
+          }
+          // показать «Сохранено» у кнопки и убрать через 2 сек.
+          if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+          okLbl.hidden = false;
+          okLbl.classList.add('y-show');
+          hideTimer = setTimeout(function(){
+            okLbl.classList.remove('y-show');
+            // дождёмся плавного скрытия и уберём из потока
+            setTimeout(function(){ okLbl.hidden = true; }, 250);
+          }, 2000);
+        } else {
+          // на ошибку можно всплыть alert, чтобы не усложнять
+          alert('Ошибка сохранения. Попробуйте ещё раз.');
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        alert('Ошибка соединения. Попробуйте ещё раз.');
+      });
+  }, false);
+
+  function bindResetButton() {
+    if (!resetBtn) return;
+    resetBtn.addEventListener('click', function(){
+      if (!confirm('Удалить все индивидуальные настройки витрин и оставить только общие?')) {
+        return;
+      }
+      var resetUrl = form.getAttribute('data-settings-reset-url') || '?plugin=yandexreviews&module=settings&action=resetStorefronts';
+      var fd = new FormData(form);
+      resetBtn.disabled = true;
+      fetch(resetUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(json){
+          resetBtn.disabled = false;
+          if (!json || json.status !== 'ok') {
+            alert('Не удалось сбросить настройки витрин.');
+            return;
+          }
+          if (storefrontSelect) {
+            storefrontSelect.value = '';
+            Array.prototype.forEach.call(storefrontSelect.options, function(option){
+              option.classList.remove('yreviews-storefront-custom');
+              option.style.color = '';
+              option.style.fontWeight = '';
+            });
+          }
+          var baseUrl = (form.getAttribute('data-settings-fetch-url') || '?plugin=yandexreviews&module=settings&action=fetch');
+          fetch(baseUrl, { method:'GET', credentials:'same-origin' })
+            .then(function(r){ return r.json(); })
+            .then(function(payload){
+              var data = (payload && payload.status === 'ok') ? (payload.data || {}) : null;
+              if (data) {
+                applySettings(data.settings || {});
+                syncDefaultToggles();
+              }
+            });
+          if (resetBtn && resetBtn.parentNode) {
+            resetBtn.parentNode.removeChild(resetBtn);
+            resetBtn = null;
+          }
+        })
+        .catch(function(){
+          resetBtn.disabled = false;
+          alert('Ошибка соединения. Попробуйте ещё раз.');
+        });
+    });
+  }
+  if (resetBtn) {
+    bindResetButton();
+  }
+  function bindDeleteButton() {
+    if (!deleteBtn) return;
+    deleteBtn.addEventListener('click', function(){
+      if (!confirm('Удалить все отзывы? Действие необратимо.')) {
+        return;
+      }
+      var deleteUrl = form.getAttribute('data-settings-delete-reviews-url') || '?plugin=yandexreviews&module=settings&action=deleteReviews';
+      var fd = new FormData(form);
+      deleteBtn.disabled = true;
+      fetch(deleteUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function(r){ return r.json(); })
+        .then(function(json){
+          deleteBtn.disabled = false;
+          if (!json || json.status !== 'ok') {
+            alert((json && json.message) ? json.message : 'Не удалось удалить отзывы.');
+            return;
+          }
+          var currentStorefront = storefrontSelect ? (storefrontSelect.value || '') : '';
+          if (currentStorefront === '' && deleteBtn && deleteBtn.parentNode) {
+            deleteBtn.parentNode.removeChild(deleteBtn);
+            deleteBtn = null;
+          }
+          if (deleteOk) {
+            deleteOk.hidden = false;
+            deleteOk.classList.add('y-show');
+            setTimeout(function(){
+              deleteOk.classList.remove('y-show');
+              setTimeout(function(){ deleteOk.hidden = true; }, 250);
+            }, 2000);
+          }
+        })
+        .catch(function(){
+          deleteBtn.disabled = false;
+          alert('Ошибка соединения. Попробуйте ещё раз.');
+        });
+    });
+  }
+  if (deleteBtn) {
+    bindDeleteButton();
+  }
+  // Кастомизация кнопки: чекбоксы «использовать по умолчанию» отключают color-picker
+  (function(){
+    var toggles = [
+      'input[name="settings[review_button_bg_color__default]"]',
+      'input[name="settings[review_button_text_color__default]"]',
+      'input[name="settings[review_button_bg_color_hover__default]"]',
+      'input[name="settings[review_button_text_color_hover__default]"]'
+    ];
+
+    toggles.forEach(function(sel){
+      var el = form.querySelector(sel);
+      if (el) el.addEventListener('change', syncDefaultToggles);
+    });
+    syncDefaultToggles();
+  })();
+})();
+</script>
+<script>
+document.addEventListener('click', function(e){
+  var btn = e.target.closest('.js-copy-cron');
+  if (!btn) return;
+  var sel = btn.getAttribute('data-target');
+  var el  = document.querySelector(sel);
+  if (!el) return;
+  var text = el.textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+    .then(ok)
+    .catch(function(){
+      var ta = document.createElement('textarea');
+      ta.style.position='fixed'; ta.style.opacity='0'; ta.value=text;
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta); ok();
+    });
+  function ok(){
+    var old = btn.textContent;
+    btn.textContent = 'Скопировано';
+    setTimeout(function(){ btn.textContent = old; }, 1500);
+  }
+});
+</script>
+{/literal}

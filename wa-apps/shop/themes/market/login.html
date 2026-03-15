@@ -1,0 +1,86 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Вход в личный кабинет")}"])}
+    {$wa->globals('is_auth', true)}
+
+    {capture assign="auth_adapters_block"}
+        {$auth_adapters = $wa->authAdapters(true)}
+        {if count($auth_adapters) > 0}
+            <div class="auth-adapters">
+                {foreach $auth_adapters as $adapter_id => $adapter}
+                    {$custom_icons_adapters = [
+                        'facebook',
+                        'google',
+                        'twitter',
+                        'vkontakte',
+                        'yandex',
+                        'mailru'
+                    ]}
+
+                    {$styles = null}
+                    {if !in_array($adapter_id, $custom_icons_adapters)}
+                        {$adapter_icon = $adapter->getIcon()}
+                        {$styles = 'style="background-image: url('|cat:{$adapter_icon}|cat:')"'}
+                    {/if}
+
+                    <div class="auth-adapters__item">
+                        
+                        <a class="auth-adapter auth-adapter_{$adapter_id}" href="{$adapter->getUrl()}" {$styles}></a>
+                    </div>
+                {/foreach}
+            </div>
+        {/if}
+
+    {/capture}
+
+    {$is_modal = !!$wa->get('modal', false)}
+
+    {$type = 2}
+
+    {if !empty($without_form)}
+        {$type = 0}
+    {/if}
+
+    {$form = $wa->loginForm($error, ['include_css' => false])}
+    {$form = $form|replace:'Зарегистрироваться':'Регистрация'}
+
+    {if $is_modal}
+        <div class="login-modal login-page">
+            <div class="login-modal__header modal__header">
+                <span class="title title_h3">[`Вход в личный кабинет`]</span>
+            </div>
+            {if $auth_adapters_block}
+                <div class="login-page__auth-adapters login-modal__auth-adapters">
+                    {$auth_adapters_block}
+                </div>
+            {/if}
+
+            <div class="login-page__form form-decorator" data-form_size="s" data-field_size="s">
+                {$form}
+                <div class="form-decorator__trigger"></div>
+            </div>
+            <div class="login-page__trigger"></div>
+        </div>
+    {else}
+        <div class="login-page block">
+            <h1 class="block__header block__header_text">
+                [`Вход в личный кабинет`]
+            </h1>
+            <div class="block__content">
+                {if $auth_adapters_block}
+                    <div class="login-page__auth-adapters">
+                        {$auth_adapters_block}
+                    </div>
+                {/if}
+
+                <div class="login-page__form form-decorator" data-form_size="s" data-field_size="s">
+                    {$form}
+                    <div class="form-decorator__trigger"></div>
+                </div>
+            </div>
+            <div class="login-page__trigger"></div>
+        </div>
+    {/if}
+
+{/strip}

@@ -1,0 +1,97 @@
+<table class="zebra js_table js_table_{$prefix} {$table_classes}">
+  <tr>
+    <th>Параметр</th>
+    <th>Выбор способа обработки canonical</th>
+    <th></th>
+  </tr>
+  {for $i=0 to count($text_inputs_templates)-1}
+    <tr class="js_table_row">
+      <td>
+        {(isset($text_inputs_templates[$i])) ? $text_inputs_templates[$i] : ''}
+      </td>
+      <td>
+        {if isset($dropdown_input_templates[$i])}
+          {$dropdown_input_templates[$i]}
+          <br />
+        {/if}
+        {(isset($custom_text_inputs_templates[$i])) ? $custom_text_inputs_templates[$i] : ''}
+      </td>
+      <td>
+
+        <button href="#" class="button yellow js_delete_row"><i class="fas fa-minus"></i></button>
+      </td>
+    </tr>
+  {/for}
+  <input type="hidden" value="{(isset($last_row_index)) ? $last_row_index : 0 }" class="js_last_row_index_{$prefix}"
+    name="last_row_index">
+</table>
+<button href="#" class="button green js_add_row_{$prefix} mt-1"><i class="fas fa-plus"></i></button>
+
+<script>
+  $(() => {
+    $('.disabled').prop('readonly', true);
+    //
+    $(".js_onchange_dropdown").each(function(index) {
+      UpdateCustomInput(this);
+    });
+    //
+    $("body").on("change", ".js_onchange_dropdown", function(e) {
+      UpdateCustomInput(e.target);
+    });
+
+    $("body").on("click", ".js_delete_row", function(e) {
+      const tableRow = $(this).parent().parent();
+      // we assume that the first collumn holds all the row of data and
+      // server will delete the entire row if we set it empty
+      tableRow.find('input').first().val("");
+      tableRow.toggle();
+    });
+
+    $(".js_add_row_{$prefix}").on("click", function(e) {
+    const table = $('.js_table_{$prefix}');
+    const tableTemplateRow = table.find('tr.js_table_row:nth-child(2)');
+
+    const newRowIndex = parseInt(table.find('.js_last_row_index_{$prefix}').val()) + 1;
+
+    const newRow = tableTemplateRow.clone();
+    // modify the row
+
+    // inputs
+    const rowInputs = newRow.find('input');
+    rowInputs.each(function() {
+      $(this).attr('id', this.id.replace("template", newRowIndex));
+      $(this).attr('name', $(this).attr('name').replace("template", newRowIndex));
+    });
+    // labels
+    const rowLabels = newRow.find('label');
+    rowLabels.each(function() {
+      $(this).attr('for', $(this).attr('for').replace("template", newRowIndex));
+    });
+    // selects
+    const rowSelects = newRow.find('select');
+    rowSelects.each(function() {
+      $(this).attr('id', this.id.replace("template", newRowIndex));
+      $(this).attr('name', $(this).attr('name').replace("template", newRowIndex));
+    });
+    //
+    newRow.appendTo(table);
+    $('.js_last_row_index_{$prefix}').val(newRowIndex);
+  });
+
+  //
+  function UpdateCustomInput(dropdown) {
+    const selectedType = $(dropdown).val();
+    // same block but different branch
+    const customTextInput = $(dropdown).parent().parent().parent().find(
+      '.js_custom_on_dropdown');
+    //
+    const customSettingType = 3;
+    if (selectedType == customSettingType) {
+      customTextInput.prop('readonly', false);
+    } else {
+      customTextInput.prop('readonly', true);
+    }
+    //
+  }
+  });
+</script>

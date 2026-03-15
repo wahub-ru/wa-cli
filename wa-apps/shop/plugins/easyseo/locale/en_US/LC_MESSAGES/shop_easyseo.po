@@ -1,0 +1,100 @@
+msgid ""
+msgstr ""
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Language-Team: shop/plugins/easyseo\n"
+"Last-Translator: shop/plugins/easyseo\n"
+"MIME-Version: 1.0\n"
+"PO-Revision-Date: \n"
+"POT-Creation-Date: 2024-05-13 17:13+0300\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Project-Id-Version: shop/plugins/easyseo\n"
+"X-Poedit-Basepath: utf-8\n"
+"X-Poedit-Language: en_US\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+msgid "Easy SEO"
+msgstr "Easy SEO"
+
+msgid "meta title"
+msgstr "meta title"
+
+msgid "meta description"
+msgstr "meta description"
+
+msgid "description"
+msgstr "description"
+
+msgid "meta description pagination"
+msgstr "meta description pagination"
+
+msgid "description pagination"
+msgstr "description pagination"
+
+msgid "Главная страница"
+msgstr "Main page"
+
+msgid "Категории"
+msgstr "Categories"
+
+msgid "Товары"
+msgstr "Products"
+
+msgid "Включить/выключить плагин"
+msgstr ""
+
+msgid "Отключить"
+msgstr ""
+
+msgid "Включить"
+msgstr ""
+
+msgid "Переменные"
+msgstr ""
+
+msgid "свернуть / развернуть блок с подсказсками"
+msgstr ""
+
+msgid "свернуть (выключить) / развернуть"
+msgstr ""
+
+msgid "Meta title"
+msgstr ""
+
+msgid "Meta description"
+msgstr ""
+
+msgid "h1"
+msgstr ""
+
+msgid "{$pagination}"
+msgstr ""
+
+msgid "переменная для подставления, если на странице нет пагинации то выведет пустую строку"
+msgstr ""
+
+msgid "Приоритет"
+msgstr ""
+
+msgid "Всегда заменять значение (иначе заменять только если исходное значение пустое)"
+msgstr ""
+
+msgid "интеграция с плагинами для работы с брендами идет на основе переменных шаблона brand и brands (в частности проверено на плагине productbrands)"
+msgstr ""
+
+msgid "Бренды"
+msgstr ""
+
+msgid "Страница определенного бренда"
+msgstr ""
+
+msgid "Мета настройки"
+msgstr ""
+
+msgid "Кешировать заполненные шаблоны"
+msgstr ""
+
+msgid "Если кеш заполняется слишком быстро то отключите"
+msgstr ""

@@ -1,0 +1,15 @@
+{strip}
+    {$wa->globals('market_searchpro_filters', $filters)}
+
+    {if !$is_in_category && $category_status && !empty($categories) && count($categories) > 1 && $category_mode === 'filters'}
+        {$_categories = []}
+        {foreach $categories as $category_id => $category}
+            {if !$category.name}
+                {continue}
+            {/if}
+            {$_categories[$category_id] = $category}
+        {/foreach}
+        {$categories = $_categories}
+        {$wa->globals('market_searchpro_categories', $categories)}
+    {/if}
+{/strip}

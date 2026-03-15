@@ -1,0 +1,34 @@
+{strip}
+	{$albums = $albums|default:[]}
+
+	<div class="photos-albums">
+		{foreach $albums as $album}
+			{if !empty($album.key_photo.description) && preg_match('/^promo_id=\d+/', $album.key_photo.description)}
+				{continue}
+			{/if}
+			<div class="photos-albums__item">
+				{* Photos Album Start *}
+					{$key_photo = $wa->photos->photo($album.key_photo_id, '235x150')}
+
+					<a class="photos-album" href="{$album.full_url|escape}">
+						<span class="photos-album__image-container" style="background-image: url({photosPhoto::getPhotoUrl($album.key_photo, '970')});">
+							<span class="image-box photo-album__image-box">
+								{if $album.key_photo}
+									<img class="photos-album__image" src="{photosPhoto::getPhotoUrl($album.key_photo, '255x150')|escape}" alt="{$album.name|escape}" />
+                                {else}
+                                    {call svg_icon icon='no-thumb' width=200 height=100 fill='#CFCFCF'}
+                                {/if}
+                            </span>
+                        </span>
+                        <span class="photos-album__count-container">
+                            {$album.count|default:0} {call plural forms=["{_wp("фотография")}", "{_wp("фотографии")}", "{_wp("фотографий")}"] n=$album.count}
+                        </span>
+                        <span class="photos-album__name-container">
+                            {$album.name|escape}
+                        </span>
+                    </a>
+                {* Photos Album End *}
+            </div>
+        {/foreach}
+    </div>
+{/strip}

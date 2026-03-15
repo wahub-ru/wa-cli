@@ -1,0 +1,42 @@
+{if $comments}
+    <table class="zebra">
+        <thead>
+            <tr>
+                <th style='width: 120px;'>
+                    Когда
+                </th>
+                <th style='width: 200px;'>
+                    Кто
+                </th>
+                <th>
+                    Текст
+                </th>
+                <th style='width: 70px;'></th>
+            </tr>
+        </thead>
+        <tbody>
+            {foreach $comments as $comment}
+                <tr data-comment-id="{$comment['id']|escape}" data-order-id="{$comment['order_id']|escape}">
+                    <td>
+                        {$comment['datetime']|wa_date:'humandatetime'}
+                    </td>
+                    <td>
+                        {$comment['name']|escape}
+                    </td>
+                    <td class="bnpcomments-body">
+                        <span>{$comment['text']|escape}</span>
+                        <div class="editable-comment" style="display: none;">
+                            <input type="hidden" value="{$comment['order_id']|escape}" name="order_id" />
+                            <input type="hidden" value="{$comment['id']|escape}" name="id" />
+                            <textarea name="text" style="width: 95% !important;">{$comment['text']|escape}</textarea>
+                        </div>
+                    </td>
+                    <td>
+                        <i class="icon16 delete bnpcomments-delete" title="Удалить" style="cursor: pointer;"></i>
+                        <i class="icon16 edit bnpcomments-edit" title="Редактировать" style="cursor: pointer;"></i>
+                    </td>
+                </tr>
+            {/foreach}
+        </tbody>
+    </table>
+{/if}

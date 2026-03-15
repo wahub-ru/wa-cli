@@ -1,0 +1,141 @@
+/**
+ * @link https://warslab.ru/
+ * @author waResearchLab
+ * @Copyright (c) 2025 waResearchLab
+ * @version 5.0.0
+ **/
+
+.alert {
+    display: block;
+    border-radius: 0.375em;
+    padding: 0.5em 0.75em;
+    font-weight: normal;
+    font-style: normal;
+    margin: 15px 15px 1.25em;
+    border: 0.09375em solid #ddd;
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 5%), 0 0.5rem 0.5rem -0.5rem rgb(0 0 0 / 13%);
+    background: #9fff77;
+    border-color: #8ce06c;
+    color: #2f8e2f;
+    line-height: 1.5
+}
+.alert.danger {
+    background: red;
+    border-color: #ee2200;
+    color: white;
+}
+.alert.info {
+    background: lightgreen;
+    border-color: green;
+}
+.alert.blue {
+    background: lightgoldenrodyellow;
+    border-color: palegoldenrod;
+}
+.alert.cli-command {
+    font-family: monospace;
+    /*font-weight: bold;*/
+    background-color: lightgray;
+    color: black;
+    border-color: gray;
+}
+.cli-task {
+    background-color: antiquewhite;
+    padding: 8px;
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 5%), 0 0.5rem 0.5rem -0.5rem rgb(0 0 0 / 13%);
+    border-radius: 0.375em;
+    border: 0.09375em solid #ddd;
+    margin-top: 15px;
+}
+.cli-task.addon {
+    border: 0.375em solid gold;
+}
+.task-info {
+    float: right;
+    margin-right: 35px;
+}
+a.disabled {
+    color: grey;
+    cursor: default;
+    pointer-events: none;
+}
+.hidset-table {
+    display: table;
+}
+.hidset-row {
+    display: table-row;
+}
+.hidset-cell {
+    display: table-cell;
+    padding-left: 20px;
+    padding-top: 5px;
+    vertical-align: middle;
+}
+.hidset-cell.bolder {
+    font-weight: bolder;
+}
+.hidset-cell.right {
+    text-align: right;
+}
+.hidset-footer {
+    padding: 35px;
+}
+.hidset-button {
+    float: left;
+    min-height: 1em;
+    line-height: 1em;
+    background: #DDDDDD;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: bold;
+    padding: 10px 8px 8px 7px;
+    margin: 4px 10px 4px 35px;
+}
+.hidset-button a {
+    color: black;
+}
+.hidset-button a:hover {
+    color: black !important;
+}
+.mono {
+    font-family: monospace;
+}
+tr.dimension > td {
+    padding-top: 25px;
+}
+tr.values > td {
+    padding-left: 10px;
+    line-height: 1.3em;
+}
+tr.units > td {
+    padding-top: 5px;
+}
+td.right {
+    text-align: right;
+}
+a.icon {
+    border-bottom: 1px dotted;
+    font-weight: normal;
+    position: relative;
+    top: -0.13em;
+}
+.hidset-icons > a {
+    visibility: visible;
+}
+.hidset-icons:hover > a {
+    visibility: visible;
+    display: inline;
+}
+.hidset-handler {
+    padding: 5px 8px;
+    background-color: #f1eeee;
+    cursor: pointer;
+    border: solid gray 1px;
+}
+.hidset-handler:hover:not(.selected) {
+    background-color: #e5e1e1;
+}
+.hidset-handler.selected {
+    background-color: #dedada;
+    border: solid darkgray 1px;
+}

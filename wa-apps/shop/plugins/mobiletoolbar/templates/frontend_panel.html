@@ -1,0 +1,107 @@
+{* ========= Рекурсивное дерево категорий ========= *}
+{function name=mobiletoolbar_tree items=[]}
+  {if $items}
+    <ul class="shop-mobiletoolbar__catalog-list">
+      {foreach $items as $c}
+        <li class="shop-mobiletoolbar__catalog-item{if !empty($c.children)} shop-mobiletoolbar__catalog-item_has-children{/if}">
+          <a class="shop-mobiletoolbar__catalog-link" href="{$c.frontend_url|escape}">
+            <span class="shop-mobiletoolbar__catalog-name">{$c.name|escape}</span>
+          </a>
+
+          {if !empty($c.children)}
+            <button class="shop-mobiletoolbar__catalog-toggle"
+                    type="button"
+                    aria-label="Открыть подразделы"
+                    data-shop-mobiletoolbar-catalog-toggle></button>
+
+            <div class="shop-mobiletoolbar__catalog-children">
+              {call name=mobiletoolbar_tree items=$c.children}
+            </div>
+          {/if}
+        </li>
+      {/foreach}
+    </ul>
+  {/if}
+{/function}
+
+{* ========= Нижняя панель ========= *}
+<div class="shop-mobiletoolbar">
+  <nav class="shop-mobiletoolbar__nav">
+    {foreach $mobiletoolbar_buttons as $b}
+      <a class="shop-mobiletoolbar__item{if !empty($b.is_active)} is-active{/if}"
+         href="{$b.url|escape}" {if $b.action}data-shop-mobiletoolbar-action="{$b.action|escape}"{/if}>
+        <span class="shop-mobiletoolbar__icon">
+          {$b.icon nofilter}
+          {if !empty($b.counter_html)}{$b.counter_html nofilter}{/if}
+        </span>
+        <span class="shop-mobiletoolbar__label">{$b.label|escape}</span>
+      </a>
+    {/foreach}
+  </nav>
+</div>
+
+{* ========= Каталог (правый шит) + фон ========= *}
+{if !empty($mobiletoolbar_catalog_tree)}
+  <div class="shop-mobiletoolbar__catalog" data-shop-mobiletoolbar-catalog hidden>
+    <div class="shop-mobiletoolbar__catalog-inner">
+      <div class="shop-mobiletoolbar__catalog-header">
+        <button class="shop-mobiletoolbar__back" type="button" data-mtb-back aria-label="Назад" hidden></button>
+        <div class="shop-mobiletoolbar__catalog-title" data-mtb-title>Каталог товаров</div>
+        <button class="shop-mobiletoolbar__close" type="button" data-shop-mobiletoolbar-close aria-label="Закрыть"></button>
+      </div>
+
+      <div class="shop-mobiletoolbar__catalog-scroll">
+        <a class="shop-mobiletoolbar__catalog-all" data-mtb-all hidden href="">Показать все товары</a>
+        <ul class="shop-mobiletoolbar__catalog-list" data-mtb-list></ul>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="mtb-catalog-data">{$mobiletoolbar_catalog_tree|json_encode nofilter}</script>
+  <div class="shop-mobiletoolbar__backdrop" data-shop-mobiletoolbar-backdrop hidden></div>
+{/if}
+
+{* ========= Поиск ========= *}
+{if $mobiletoolbar_has_search}
+<div class="mtb-searchbar" data-mtb-search style="display:none;">
+
+  {if !empty($mobiletoolbar_use_searchpro)}
+    {* Вариант с ПоискПРО *}
+    <div class="mtb-searchbar__form mtb-searchbar__form--searchpro">
+      <button class="mtb-searchbar__back" type="button" data-mtb-search-close aria-label="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div class="mtb-searchbar__field">
+        {shopSearchproPluginViewHelper::field()}
+      </div>
+    </div>
+
+  {else}
+    {* Обычная форма поиска *}
+    <form class="mtb-searchbar__form" action="{$mobiletoolbar_search_url|escape}" method="get" role="search">
+      <button class="mtb-searchbar__back" type="button" data-mtb-search-close aria-label="Назад">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <label class="mtb-searchbar__field">
+        <span class="visually-hidden">Поиск по каталогу</span>
+        <input class="mtb-searchbar__input" type="search" name="query" placeholder="Поиск товаров" autocomplete="off">
+      </label>
+
+      <button class="mtb-searchbar__submit" type="submit" aria-label="Найти">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </form>
+  {/if}
+
+</div>
+{/if}
+

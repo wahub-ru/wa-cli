@@ -1,0 +1,131 @@
+/* primary */
+/* primary hover */
+/* dark */
+/* light */
+/* light hover */
+/* accent */
+/* accent hover */
+@keyframes market-fade-down {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: inherit;
+  }
+}
+@keyframes market-fade-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: inherit;
+  }
+}
+@keyframes market-fadein-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes market-fadeout-up {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+}
+@keyframes market-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
+@keyframes market-appear {
+  from {
+    transform: translateZ(0);
+  }
+  to {
+    transform: translateZ(0);
+  }
+}
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+/* stylelint-disable-next-line block-no-empty */
+.subscriptions__description {
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+.subscriptions__list {
+  margin-top: 15px;
+}
+
+.subscriptions__item {
+  margin-bottom: 15px;
+}
+.subscriptions__item:last-child {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .subscriptions__controls {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+  }
+  .subscriptions__control {
+    padding-right: 15px;
+  }
+  .subscriptions__control:last-child {
+    padding-right: 0;
+  }
+}
+@media (max-width: 1023px) {
+  .subscriptions__controls {
+    flex-wrap: wrap;
+    margin: 30px -7px -5px;
+  }
+  .subscriptions__control {
+    flex-basis: 50%;
+    flex-grow: 1;
+    margin: 5px 7px;
+  }
+  .subscriptions__control .button {
+    width: 100%;
+  }
+}
+/* stylelint-disable-next-line block-no-empty */
+.mailer-subscription-page__informer {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.mailer-subscription-page__informer_success {
+  color: #27ae60;
+}

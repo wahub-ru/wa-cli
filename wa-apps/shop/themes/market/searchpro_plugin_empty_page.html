@@ -1,0 +1,58 @@
+{strip}
+    <div class="search-page__content-container">
+        <div class="blocks">
+            <div class="blocks__item">
+                <div class="block">
+                    <div class="block__header block__header_text">
+                        [`По вашему запросу ничего не найдено`]
+                    </div>
+                    <div class="block__content">
+                        <div class="not-found-block">
+                            <div class="not-found-block__header">
+                                [`Попробуйте сократить запрос или задать его по-другому.`]
+                            </div>
+                            <div class="not-found-block__content">
+                                <a class="link" href="{$wa_url|escape}">[`Вернуться на главную.`]</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="blocks__item">
+                <div class="block">
+                    <div class="block__header block__header_text">
+                        [`Возможно`], [`вас заинтересует`]
+                    </div>
+                    <div class="block__content">
+                        {$content}
+                    </div>
+                </div>
+            </div>
+            <div class="blocks__item">
+                <div class="block">
+                    <div class="block__header block__header_text">
+                        [`Популярные запросы`]
+                    </div>
+                    <div class="block__content">
+                        <div class="tags">
+                            <div class="tags__list">
+                                {foreach $popular as $entity}
+                                    <div class="tags__item">
+                                        <a href="{$entity.url}" class="tag">
+                                            {$entity.query}
+                                            {' '}
+                                            {if $entity.category_id}
+                                                {$category = $wa->shop->category($entity.category_id)}
+                                                ({$category.name})
+                                            {/if}
+                                        </a>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/strip}

@@ -1,0 +1,26 @@
+<form action="javascript:void(0);" onsubmit="$.Link_photo.submit(this)">
+    <label for="link-plugin-url">[`Link:&nbsp;`]</label>
+    <input type="hidden" name="photo_id" value="{$photo_id}">
+    <input name="url" type="text" id="link-plugin-url" style="width: 300px;" value="{if !empty($link)}{$link.url}{/if}">
+    <label for="link-plugin-target">[`&nbsp;open in&nbsp;`]</label>
+    <select id="link-plugin-target" name="target">
+        <option value="_blank" {if !empty($link) && $link.target == '_blank'}selected{/if}>[`new window`]</option>
+        <option value="_self" {if !empty($link) && $link.target == '_self'}selected{/if}>[`self window`]</option>
+    </select>
+    <button id="link-plugin-submit" class="button gray">[`Save link`]</button>
+</form>
+
+<script>
+    $(function () {
+        $.when(
+            $.Deferred(function (deferred) {
+                if ($.Link_photo) deferred.resolve();
+                else {
+                    $.getScript('{$wa_app_static_url}plugins/link/js/link_photo.{if !$wa->debug()}min.{/if}js', deferred.resolve)
+                }
+            })
+        ).done(function () {
+            $.Link_photo.init();
+        });
+    });
+</script>

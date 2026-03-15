@@ -1,0 +1,72 @@
+{* one review output *}
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Arguments *}
+    {$review = $review|default:null}
+    {$plugins = $wa->globals('plugins')|default:[]}
+
+    {* Theme Settings *}
+    {$hide_title_site = $theme_settings['shop_product_reviews_hide_title_site']|default:1}
+
+    {* Variables *}
+    {$is_reply = $review.depth != 0}
+
+    {$review.comments = $review.comments|default:[]}
+    {$has_replies = count($review.comments) > 0}
+    {$review_product = $wa->shop->product($review.product.id)}
+    {$review_product_image_url = $wa->shop->productImgUrl($review_product, '96')}
+
+
+    {* Template *}
+    <div class="catalogreviews-review product-review product-review_depth_{$review.depth|escape} {if $review.rate}product-review_rate_{intval($review.rate)|escape}{/if}  {if $has_replies}product-review_has-replies{/if} {if $is_reply}product-review_reply{/if}" data-review_id="{$review.id|escape}">
+        <div class="product-review__top">
+            <div class="product-review__author">
+                {$author = $review.author}
+
+                {if isset($author.id)}
+                    {$author = $wa->contact($author.id)}
+                {/if}
+
+                {if $is_reply}
+                    {call contact_block contact=$author size='s' link=$review.site}
+                {else}
+                    {call contact_block contact=$author link=$review.site}
+                {/if}
+            </div>
+            <div class="product-review__date">
+                {$review.datetime|wa_datetime:'d.m.Y / H:i'}
+            </div>
+        </div>
+        <div class="product-review__body">
+            {if !empty($review_product_image_url)}
+                <div class="product-review__product-image-wrapper">
+                    <img class="product-review__product-image" src="{$review_product_image_url|escape}" alt="{$review_product_name}">
+                </div>
+            {/if}
+            <div class="product-review__main">
+                {if !$is_reply}
+                    <a class="product-review__product-url link" href="{$wa->shop->productUrl($review_product)}">{$review_product.name}</a>
+                    <div class="product-review__rating">
+                        <span class="rating">
+                            {$rating_stars = explode(',', "{call rating_stars rating=$review.rate}")}
+                            {foreach $rating_stars as $star}
+                                <span class="rating__star rating__star_{$star}"></span>
+                            {/foreach}
+                        </span>
+
+                    </div>
+                {/if}
+                <div class="product-review__content">
+                    <div class="content-decorator">
+                        {if !$hide_title_site}
+                            <h4>{$review.title}</h4>
+                        {/if}
+
+                        {$review.text}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/strip}

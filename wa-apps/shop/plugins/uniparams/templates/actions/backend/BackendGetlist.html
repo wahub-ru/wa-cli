@@ -1,0 +1,10 @@
+{foreach $lists as $list}
+    <li id="li_{$list.front_index}" data-id="{$list.id}">
+        <a href="#">
+            <i class="icon16 ss set"></i>
+            {$list.name|escape} <br>
+            <span class="hint">{$list.description|escape}</span>
+            <i class="float-right icon16 settings uniparams-list-settings"></i>
+        </a>
+    </li>
+{/foreach}

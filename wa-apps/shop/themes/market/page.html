@@ -1,0 +1,71 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Theme Settings *}
+    {if $page.is_show_sidebar != '0'}
+        {$is_sidebar_enabled = !!$theme_settings['shop_information_sidebar_enabled']}
+    {/if}
+    {$is_subpages_enabled = !!$theme_settings["{$wa_app}_subpages_enabled"]}
+
+    {if $wa_app === 'shop'}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_regions = $plugins['shop_regions']}
+    {/if}
+
+    {* Variables *}
+    {if $is_enabled_regions|default:false}
+        {$page_content = shopRegionsViewHelper::getPageContent()}
+    {else}
+        {$page_content = $page.content}
+    {/if}
+
+    {$wa->globals('is_show_sidebar', $is_sidebar_enabled)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $page.name])}
+    {$is_disabled_decorator = $wa->globals('is_disabled_decorator')|default:$page.is_disabled_decorator|default:false}
+
+    {if $is_subpages_enabled}
+        {$subpages = $wa->__get($wa_app)->pages($page.id)}
+    {/if}
+    <div class="block">
+        <h1 class="block__header block__header_text">
+            {$page.name|escape}
+        </h1>
+        {if $subpages}
+            <div class="block__links">
+                {foreach $subpages as $subpage}
+                <div class="block__links_item">
+                    <a href="{$subpage.url}" class="link link_style_hover block__links_item__link">
+                        {$subpage.name}
+                    </a>
+                </div>
+                {/foreach}
+            </div>
+        {/if}
+        <div class="block__content">
+            {if $is_disabled_decorator}
+                {$page_content}
+            {else}
+                <div class="content-decorator">
+                    {$page_content}
+                </div>
+            {/if}
+            {if !empty($additional_content)}
+                <div>
+                    {$additional_content}
+                </div>
+            {/if}
+        </div>
+    </div>
+
+    {$wa->globals('market.og.type', 'article')}
+
+    {$imgs = []}
+    {if preg_match_all('/<img[^>]+src="([^"]+)"?[^>]*>/', $page_content, $imgs) && !empty($imgs)}
+        {$wa->globals('market.og.image', $imgs[1][0])}
+    {elseif $theme_settings['logo_alt_enabled'] && $theme_settings['logo_alt']}
+        {$wa->globals('market.og.image', "{$wa_theme_url}{$theme_settings['logo_alt']}")}
+    {elseif $theme_settings['logo']}
+        {$wa->globals('market.og.image', "{$wa_theme_url}{$theme_settings['logo']}")}
+    {/if}
+{/strip}

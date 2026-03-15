@@ -1,0 +1,127 @@
+
+<script src="https://unpkg.com/vanilla-picker@2"></script>
+
+
+<h5>Настройка асcистента: {if !empty($settingApi.name)}{$settingApi.name}{/if}</h5>
+
+{*$embeddingSettings|wa_dumpc*}
+
+{if $activeActions == 'embedding'}
+<form id="save-embedding-form">
+
+
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="enabled" name="enabled" {if !isset($embeddingSettings.enabled)  || $embeddingSettings.enabled == 'on'}checked{/if}>
+        <label class="form-check-label" for="enabled">Включить вывод на витрине<small class="text-muted"></small></label>
+    </div>
+
+
+    <div class="form-group">
+        <label for="selectShowcase">Выберите витрину для отображения<small class="text-muted"></small></label>
+        <select class="form-control" id="selectShowcase" name="selectShowcase">
+            {foreach shopAssistaiPlugin::getSettlements() as $option}
+            <option value="{$option.value}" {if $embeddingSettings.selectShowcase == $option.value}selected{/if}>{$option.title}</option>
+            {/foreach}
+        </select>
+    </div>
+
+
+
+    <!-- Поля загрузки файла -->
+    <div class="form-group">
+        <label for="iconImage">Иконка <small class="text-muted">/ Ваше изображение для иконки. Если не загружено, будет использована иконка по умолчанию</small></label>
+        <input {if !empty($embeddingSettings.iconImage)}style="display: none"{/if}   type="file" class="form-control-file" id="iconImage" name="iconImage">
+        {if !empty($embeddingSettings.iconImage)}
+        <div  class="container-preview  container mt-4">
+            <div class="card preview-icon">
+                <img src="{$wa_url}wa-data/public/shop/plugins/assistai/icons/{$embeddingSettings.iconImage}" class="preview-icon card-img-top" alt="Preview">
+                <div class="card-body text-center">
+                    <button type="iconImage" class="btn btn-danger btn-sm hide-container-preview">Удалить</button>
+                </div>
+            </div>
+        </div>
+        {/if}
+    </div>
+
+
+
+
+    <div class="form-group">
+        <label for="hoverIconImage">Иконка при наведении <small class="text-muted">/ Ваше изображение для иконки при наведении. Если не загружено, будет использована иконка по умолчанию</small></label>
+        <input {if !empty($embeddingSettings.hoverIconImage)}style="display: none"{/if} type="file" class="form-control-file" id="hoverIconImage" name="hoverIconImage">
+
+        {if !empty($embeddingSettings.hoverIconImage)}
+        <div  class="container-preview  container mt-4">
+            <div class="card preview-icon">
+                <img src="{$wa_url}wa-data/public/shop/plugins/assistai/icons/{$embeddingSettings.hoverIconImage}" class="preview-icon card-img-top" alt="Preview">
+                <div class="card-body text-center">
+                    <button type="hoverIconImage" class="btn btn-danger btn-sm hide-container-preview">Удалить</button>
+                </div>
+            </div>
+        </div>
+        {/if}
+    </div>
+
+
+    <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="enableGreetings" name="enableGreetings" {if !isset($embeddingSettings.enableGreetings)  || $embeddingSettings.enableGreetings == 'on'}checked{/if}>
+        <label class="form-check-label" for="enableGreetings">Включить всплывающее приветствие<small class="text-muted"></small></label>
+    </div>
+
+
+    <!-- Текстовые поля -->
+    <div class="form-group">
+        <label for="firstGreeting">Первое приветствие <small class="text-muted">/ Например, 'Здравствуйте'</small></label>
+        <input type="text" class="form-control" id="firstGreeting" name="firstGreeting" placeholder="Здравствуйте" value="{ifempty($embeddingSettings.firstGreeting, '')}">
+    </div>
+    <div class="form-group">
+        <label for="secondGreeting">Второе приветствие <small class="text-muted">/ Например, 'Чем могу помочь?'</small></label>
+        <input type="text" class="form-control" id="secondGreeting" name="secondGreeting" placeholder="Чем могу помочь?" value="{ifempty($embeddingSettings.secondGreeting, '')}">
+    </div>
+
+    <!-- Поля подбора цвета -->
+    <div class="form-group">
+        <label for="initialGradientColor">Начальный цвет градиента <small class="text-muted">/ Начальный цвет градиента окна приветствия</small></label>
+        <input type="color" class="form-control form-control-color" id="initialGradientColor" name="initialGradientColor" value="{ifempty($embeddingSettings.initialGradientColor, '#000000')}">
+    </div>
+    <div class="form-group">
+        <label for="finalGradientColor">Конечный цвет градиента <small class="text-muted">/ Конечный цвет градиента окна приветствия</small></label>
+        <input type="color" class="form-control form-control-color" id="finalGradientColor" name="finalGradientColor" value="{ifempty($embeddingSettings.finalGradientColor, '#866523')}">
+    </div>
+</form>
+
+
+<button id="save-embedding" class="btn btn-primary">
+    <span style="display: none" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Сохранить
+</button>
+
+{else}
+
+<form id="save-rules-form">
+    <div class="form-group">
+        <label for="assistName">Имя Ассистента <small class="text-muted"></small></label>
+        <input type="text" class="form-control" id="assistName" name="assistName" placeholder="Ассистент такой-то" value="{ifempty($ruleSettings.name, '')}">
+    </div>
+
+    <div class="form-group">
+        <label for="greeting">Фраза приветствия в чате <small class="text-muted"></small></label>
+        <input type="text" class="form-control" id="greeting" name="greeting" placeholder="Привет, спроси меня о чём-нибудь." value="{ifempty($ruleSettings.greeting, '')}">
+    </div>
+
+
+    <div class="form-group">
+        <label for="rules-textarea" class="form-check-label">Инструкции для консультанта</label>
+        <textarea class="form-control" max-length="{$maxLength}" placeholder="Ты ассистент компании ****. Мы занимаемся  ***. Если тебя спросят *** то отвечай ***. Отвечай кратко и лаконично." id="rules-textarea" name="rules">{ifempty($ruleSettings.instructions, '')}</textarea>
+        <small class="form-text text-muted">Задайте инструкции для консультанта. Сейчас инструкция содержит <span class="characters current_characters">{$length}</span> символов. Ваш тарифный план позволяет указать инструкции до <span class="characters">{$maxLength}</span> символов.</small>
+    </div>
+</form>
+
+
+<button id="save-rules" class="btn btn-primary">
+    <span style="display: none" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    Сохранить
+</button>
+
+{/if}
+

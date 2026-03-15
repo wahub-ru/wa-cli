@@ -1,0 +1,46 @@
+<div class="wa-page-container">
+  <h1>Онлайн-консультант (Telegram)</h1>
+  <form method="post" id="tgc-settings">
+    {$wa->csrf()}
+    <div class="fields">
+      <div class="field">
+        <div class="name">Включить плагин</div>
+        <div class="value"><label><input type="checkbox" name="enabled" value="1" {if !empty($s.enabled)}checked{/if}> Активен</label></div>
+      </div>
+
+      <div class="field">
+        <div class="name">Токен бота</div>
+        <div class="value"><input class="wa-text" type="text" name="bot_token" value="{$s.bot_token|escape}" required></div>
+      </div>
+
+      <div class="field">
+        <div class="name">Приветственное сообщение</div>
+        <div class="value"><input class="wa-text" type="text" name="welcome" value="{$s.welcome|escape}" placeholder="Здравствуйте! Чем помочь?"></div>
+      </div>
+
+      <div class="field">
+        <div class="name">Имя менеджера</div>
+        <div class="value"><input class="wa-text" type="text" name="manager_name" value="{$s.manager_name|escape}" placeholder="Менеджер"></div>
+      </div>
+
+      <div class="field">
+        <div class="name">Фото менеджера 1(URL)</div>
+        <div class="value"><input class="wa-text" type="url" name="manager_photo" value="{$s.manager_photo|escape}" placeholder="https://.../photo.jpg"></div>
+      </div>
+    </div>
+    <div class="wa-actions">
+      <button type="submit" class="wa-button primary">Сохранить</button>
+    </div>
+  </form>
+{literal}
+<script>
+  $('#tgc-settings').on('submit', function(e){
+    e.preventDefault();
+    $.post('?plugin=tgconsult&action=settings', $(this).serialize(), function(){
+      wa.ui.alert('Сохранено');
+    }, 'json');
+  });
+</script>
+
+</div>
+{/literal}

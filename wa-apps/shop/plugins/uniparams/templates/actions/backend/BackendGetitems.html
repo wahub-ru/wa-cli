@@ -1,0 +1,98 @@
+{if ! $field_types} 
+    <p class="block double-padded align-center gray">Чтобы добавить карточку создайте в настройках списка поля для карточек</p>
+{else}
+    {if ! $error}
+    <div class="fields parent form">
+        <ul class="uniparams-items_list">
+            {foreach $items as $item}
+            <li id="li_{$item.front_index}">
+                <form enctype="multipart/form-data" class="fields-group uniparams-itemdiv {if $item.enabled == 1}is-enabled{else}is-disabled{/if}" data-id="{$item.id}">
+                    <div class="field-delete uniparams-itemdiv__header">
+                        <i class="icon16 sort"></i>
+
+                        <div class="uniparams-itemdiv__header-right">
+                            <!--suppress SyntaxError -->
+                            <div class="uniparams-activity" title="Скрывать\Показывать">
+                            <input type="checkbox" class="uniparams-item-enabled" name="enabled" {if $item.enabled == 1}checked="true"{/if}>
+                        </div>
+                            <a href="#" class="uniparams-edit-vals-item"><i class="icon16 edit"></i><span class="hint">Редактировать</span></a>
+
+                            <a href="#" class="uniparams-delete-item"><i class="icon16 delete"></i><span class="hint">Удалить</span></a>
+                        </div>
+                    </div>
+                    <input type="hidden" name="item_id" value="{$item.id}" />
+                    {foreach $field_types as $field_type}
+                    <div class="field">
+                        <div class="name">{$field_type.name|escape}</div>
+                        <div class="value">
+                            {if $field_type.type == "image"}
+                                <span class="span-value">
+                                </span>
+                                <img class="uniparams-item-img" src="{if $item.vals[$field_type.id]} {$item.vals[$field_type.id]}?{$wa->version()} {else}#{/if}" />
+                                <img class="uniparams-item-img-preview show-edit" src="{if $item.vals[$field_type.id]} {$item.vals[$field_type.id]}?{$wa->version()} {else}#{/if}" style="display: none" />
+                                <input type="file" name="{$field_type.id}" accept="image/*" value="" style="display: none" />
+                            {elseif $field_type.type == "textarea"}
+                                <span class="span-value">{$item.vals[$field_type.id]}</span>
+                                <textarea name="{$field_type.id}" style="display: none">{$item.vals[$field_type.id]|escape}</textarea>
+                            {else}
+                                <span class="span-value">{$item.vals[$field_type.id]|escape}</span>
+                                <input type="text" name="{$field_type.id}" value="{$item.vals[$field_type.id]|escape}" style="display: none" />
+                            {/if}
+                            <p class="field-description hint show-edit" style="display: none;">{$field_type.description|escape}</p>
+                        </div>
+                    </div>
+                    {/foreach}
+                    <em class="errormsg uniparams-err01"></em>
+                    <div class="field uniparams-save-edits-div" style="display: none">
+                        <div class="value submit">
+                            <a href="#" class="button yellow uniparams-save-edit-item">Сохранить</a> или
+                            <a href="#" class="uniparams-cancel-edit-item">отмена</a>
+                        </div>
+                    </div>
+                </form>
+            </li>
+            {/foreach}
+        </ul>
+        <div class="fields-group uniparams-itemdiv uniparams-new-item" style="display: none;">
+            <input type="hidden" name="list_id" value="{$field_types.0.list_id}" />
+            {foreach $field_types as $field_type}
+            <div class="field">
+                <div class="name">{$field_type.name|escape}</div>
+                <div class="value">
+                    {if $field_type.type == "image"}
+                    <img class="uniparams-item-img-preview" src="#" style="display: none;" />
+                    <input type="file" name="{$field_type.id}" accept="image/*" value="" />
+                    {elseif $field_type.type == "textarea"}
+                    <textarea name="{$field_type.id}"></textarea>
+                    {else}
+                    <input type="text" name="{$field_type.id}"  value="" />
+                    {/if}
+                    <p class="hint">{$field_type.description|escape}</p>
+                </div>
+            </div>
+            {/foreach}
+            <em class="errormsg uniparams-err01"></em>
+            <div class="field">
+                <div class="value submit">
+                    <a href="#" class="button yellow uniparams-add-new-item">Сохранить</a> или
+                    <a href="#" class="uniparams-cancel-new-param">отмена</a>
+                </div>
+            </div>
+        </div>
+        <div class="field uniparams-add_param_btn">
+            <div class="value submit">
+                <a href="#" class="uniparams-add-item button blue">Добавить карточку</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(function(){
+            $('.uniparams-wrapper input[type="checkbox"]').iButton({ labelOn : "", labelOff : "", className: 'mini' });
+        })
+    </script>
+    {elseif $error}
+    <div class="fields">
+        {$error}
+    </div>
+    {/if}
+{/if}

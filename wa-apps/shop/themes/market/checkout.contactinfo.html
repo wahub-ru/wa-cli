@@ -1,0 +1,218 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$is_enabled_auth = $wa->isAuthEnabled()}
+    {$is_auth = $wa->user()->isAuth()}
+    {$has_service_agreement = !empty($checkout_steps.contactinfo.service_agreement) && !empty($checkout_steps.contactinfo.service_agreement_hint)}
+    {$has_error = !empty($errors.all)}
+    {$has_global_error = !empty($error)}
+
+    <div class="checkout-contactinfo checkout-step step-contactinfo {if $billing_matches_shipping}checkout-contactinfo_billing-matches-shipping{/if}">
+        {if $is_enabled_auth}
+            <div class="checkout-contactinfo__auth-box">
+                {if $is_auth}
+                    {* Checkout User Start *}
+                        {$user = $wa->user()}
+
+                        <div class="checkout-user">
+                            <div class="checkout-user__container">
+                                <div class="checkout-user__container-image">
+                                    <span class="checkout-user__image-box image-box image-box_contain">
+                                        {if isset($user.photo) && $user.photo}
+                                            {$photo = $user->getPhoto(50)}
+                                            <img class="checkout-user__image" src="{$photo|escape}" alt="{$user.name|escape}">
+                                        {else}
+                                            {call svg_icon icon='no-avatar' width=50 height=50}
+                                        {/if}
+                                    </span>
+                                </div>
+                                <div class="checkout-user__container-content">
+                                    <div class="checkout-user__primary-container">
+                                        [`Вы авторизованы как`] <a class="link" href="{$wa->myUrl()|escape}">{$user.name|escape}</a>. [`Пожалуйста`], [`подтвердите или обновите вашу контактную информацию.`] [`Изменения будут автоматически сохранены в вашем профиле.`]
+                                    </div>
+                                    <div class="checkout-user__additional-container">
+                                        [`Если вы хотите оформить заказ от имени другого пользователя`], <a class="link" href="?logout">[`выйдите из сеанса`]</a> [`и перейдите к оформлению заказа заново.`]
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {* Checkout User End *}
+                {else}
+                    {* Checkout Auth Start *}
+                        <div class="checkout-auth">
+                            <div class="checkout-auth__text">
+                                [`Авторизуйтесь на сайте`], [`и мы сохраним всю информацию по заказу и автоматически заполним ваши контактные данные`]
+                            </div>
+                            <div class="checkout-auth__controls">
+                                <div class="checkout-auth__auth">
+                                    <a class="link login-link" href="{$wa->loginUrl()|escape}">
+                                        [`Авторизация`]
+                                    </a>
+                                </div>
+                                <div class="checkout-auth__auth-adapters">
+                                    {$auth_adapters = $wa->authAdapters(true)}
+                                    {if count($auth_adapters) > 0}
+                                        <div class="auth-adapters">
+                                            {foreach $auth_adapters as $adapter_id => $adapter}
+                                                {$custom_icons_adapters = [
+                                                    'facebook',
+                                                    'google',
+                                                    'twitter',
+                                                    'vkontakte',
+                                                    'yandex',
+                                                    'mailru'
+                                                ]}
+
+                                                {$styles = null}
+                                                {if !in_array($adapter_id, $custom_icons_adapters)}
+                                                    {$adapter_icon = $adapter->getIcon()}
+                                                    {$styles = 'style="background-image: url('|cat:{$adapter_icon}|cat:')"'}
+                                                {/if}
+
+                                                <div class="auth-adapters__item">
+                                                    
+                                                    <a class="auth-adapter auth-adapter_{$adapter_id}" href="{$adapter->getUrl()}" {$styles}></a>
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+
+                                </div>
+                            </div>
+                        </div>
+                    {* Checkout Auth End *}
+                {/if}
+            </div>
+        {/if}
+        <div class="checkout-contactinfo__form">
+            <div class="form-decorator">
+                {$contact_form_output = $checkout_contact_form->html(null, true, true)}
+                {if $wa->locale() === 'ru_RU'}
+                    {$contact_form_output = $contact_form_output|replace:'<em class="errormsg">Required</em>':'<em class="errormsg">Это поле обязательное</em>'}
+                {/if}
+                {$contact_form_output}
+
+                <div class="form-decorator__trigger"></div>
+            </div>
+        </div>
+        {if $billing_matches_shipping}
+            <div class="checkout-contactinfo__billing-matches-shipping">
+                <div class="checkout-contactinfo__billing-matches-shipping-text">
+                    {$checkout_contact_form->fields('address.billing')->getName(null, true)} [`совпадает с адресом доставки`]
+                </div>
+                <div class="checkout-contactinfo__billing-matches-shipping-button-box">
+                    <span class="checkout-contactinfo__billing-matches-shipping-button pseudo-link">[`Изменить адрес плательщика`]</span>
+                </div>
+                <input type="hidden" name="billing_matches_shipping" value="1" />
+            </div>
+        {/if}
+
+        {if $has_service_agreement}
+            <div class="checkout-contactinfo__service-agreement link-decorator">
+                {if $checkout_steps.contactinfo.service_agreement === 'checkbox'}
+                    <div class="form-field form-field_size_s">
+                        <div class="form-field__content-container">
+                            <input type="hidden" name="service_agreement" value="" />
+                            <label class="checkbox">
+                                <input class="checkbox__control checkout-signup__control" type="checkbox" name="service_agreement" value="1" {if $wa->post('service_agreement') || $wa->storage('shop_checkout_contactinfo_agreement')}checked="checked"{/if} />
+                                <span class="checkbox__mark"></span>
+                                <span class="checkbox__label">
+                                    {$checkout_steps.contactinfo.service_agreement_hint}
+                                </span>
+                            </label>
+
+                            {if !empty($errors.service_agreement)}
+                                <div class="form-field__error-container">{$errors.service_agreement|escape}</div>
+                            {/if}
+                        </div>
+                    </div>
+                {else}
+                    {$checkout_steps.contactinfo.service_agreement_hint}
+                {/if}
+            </div>
+        {/if}
+
+        {if $is_enabled_auth && !$is_auth}
+            <div class="checkout-contactinfo__signup">
+                <div class="checkout-signup">
+                    <div class="checkout-signup__control-box">
+                        <label class="checkbox">
+                            <input class="checkbox__control checkout-signup__control" type="checkbox" name="create_user" value="1" {if $wa->post('create_user')}checked="checked"{/if} />
+                            <span class="checkbox__mark"></span>
+                            <span class="checkbox__label">
+                                {_wp("Зарегистрироваться как постоянный покупатель")}
+                            </span>
+                        </label>
+
+                        {if shopAffiliate::isEnabled()}
+                            <div class="checkout-signup__affiliate-text">
+                                [`Зарегистрированные покупатели получают накопительные бонусные баллы и скидки на будущие заказы.`]
+                                {$add_affiliate_bonus = round(shopAffiliate::calculateBonus(['items' => $wa->shop->cart->items(), 'total' => $wa->shop->cart->total()]), 2)}
+
+                                {if !empty($add_affiliate_bonus)}
+                                    {' '}[`Этот заказ добавит`] <span class="checkout-signup__add-affiliate-bonus">+{$add_affiliate_bonus} [`баллов`]</span> [`к вашему партнерскому бонусу.`]
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+                    <div class="checkout-signup__form form">
+                        {$has_email_error = !empty($errors.email)}
+                        {$has_password_error = !empty($errors.password)}
+                        {$login = $wa->post('login', $customer->get('email', 'default'))}
+                        {$password = $wa->post('password')}
+
+                        <div class="form__fields">
+                            <div class="form__field form-field">
+                                <div class="form-field__name">
+                                    Email:
+                                </div>
+                                <div class="form-field__value">
+                                    <input class="input-text input-text_fill {if $has_email_error}input-text_error{/if}" name="login" value="{$login|escape}" placeholder="Email" />
+                                    {if $has_email_error}
+                                        <div class="form-field__error-container">
+                                            {$errors.email}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                            <div class="form__field form-field">
+                                <div class="form-field__name">
+                                    [`Пароль`]:
+                                </div>
+                                <div class="form-field__value">
+                                    <input class="input-text input-text_fill {if $has_password_error}input-text_error{/if}" type="password" name="password" value="{$password|escape}" placeholder="{_wp("Пароль")}" />
+                                    {if $has_password_error}
+                                        <div class="form-field__error-container">
+                                            {$errors.password}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {/if}
+
+        {if $has_error}
+            <div class="checkout-contactinfo__error">
+                <div class="error">{$errors.all}</div>
+            </div>
+        {/if}
+
+        {if $has_global_error}
+            <div class="checkout-contactinfo__error">
+                <div class="error">{$error}</div>
+            </div>
+        {/if}
+    </div>
+
+    <script>
+        $(function () {
+            window.market.Update($('.checkout-contactinfo').parent());
+        });
+    </script>
+
+    {* @event frontend_checkout.%plugin_id% *}
+    {foreach $frontend_checkout as $_}{$_}{/foreach}
+{/strip}

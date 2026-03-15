@@ -1,0 +1,41 @@
+<style>
+    #thumbpage-preview img {
+        max-width: 300px;max-width: 300px;
+    }
+    .thumbpage-buttons {
+        position: relative;width: 50%;height: 24px;
+        margin-top: 15px;
+    }
+    .ajax-upload-button-wrapper input[type=file]{
+        display: none;
+    }
+</style>
+
+{if isset($page['id'])}
+    <script type="text/javascript" src="{$wa_app_static_url}plugins/thumbpage/js/ajaxupload.js"></script>
+    <script type="text/javascript" src="{$wa_app_static_url}plugins/thumbpage/js/script.js"></script>
+    <div id="thumbpage-plugin">
+        <div class="field">
+            <div class="name">
+                Изображение 
+            </div>
+            <div class="value">
+                <div id="thumbpage-preview">
+                    {if $page.thumbpage}
+                        <img src="{$wa_url}wa-data/public/blog/plugins/thumbpage/images/{$page.thumbpage}" />
+                    {/if}
+                </div>
+                <div id="thumbpage-response"></div>
+                <input type="hidden" name="page_id" value="{$page.id}" />
+                <div class="thumbpage-buttons">
+                    <a id="uploadButton" href="javascript:void(0);">
+                        <i  class="icon16 add" title="Загрузить"></i>
+                    </a>
+                    <a id="deleteButton" {if !$page.thumbpage}style="display:none;"{/if} href="javascript:void(0);">
+                       <i class="icon16 delete" title="Удалить"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{/if}

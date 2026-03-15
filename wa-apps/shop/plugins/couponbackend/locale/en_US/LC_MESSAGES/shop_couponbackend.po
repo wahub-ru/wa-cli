@@ -1,0 +1,46 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: shop/plugins/couponbackend\n"
+"POT-Creation-Date: 2020-06-02 14:05+0000\n"
+"PO-Revision-Date: \n"
+"Last-Translator: shop/plugins/couponbackend\n"
+"Language-Team: shop/plugins/couponbackend\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: en_US\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+msgid "Disable the ability to edit the \"Discount\""
+msgstr ""
+
+msgid "This option disables the ability to change the discount value when creating and editing an order."
+msgstr ""
+
+msgid "Disable coupons when editing"
+msgstr ""
+
+msgid "This option disables the plugin when editing an order."
+msgstr ""
+
+msgid "Application of coupons in the backend"
+msgstr ""
+
+msgid "The plugin allows you to apply discount coupons in the backend of the store when creating an order"
+msgstr ""
+
+msgid "Loading promocode"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "Enter coupon code"
+msgstr ""
+
+msgid "Coupon code"
+msgstr ""

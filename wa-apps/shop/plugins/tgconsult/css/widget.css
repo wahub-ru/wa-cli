@@ -1,0 +1,215 @@
+/* ===== tgconsult widget ===== */
+#tgconsult-root,
+#tgconsult-root * {
+  box-sizing: border-box;
+}
+
+#tgconsult-root {
+  position: fixed;
+  left: auto;
+  right: auto;
+  bottom: var(--tgc-bottom, 70px);
+  z-index: 2147483647;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+#tgconsult-root.tgc-pos-right {
+  right: var(--tgc-side, 22px) !important;
+  left: auto !important;
+}
+
+#tgconsult-root.tgc-pos-left {
+  left: var(--tgc-side, 22px) !important;
+  right: auto !important;
+}
+
+#tgconsult-root .tgc-button {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--tgc-color, #0D6EFD);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .2);
+  cursor: pointer;
+  user-select: none;
+}
+
+#tgconsult-root.tgc-pos-left .tgc-button {
+  left: 0;
+  right: auto;
+}
+
+#tgconsult-root .tgc-button svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+#tgconsult-root .tgc-window {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  background: #f6f7f9;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .22);
+  overflow: hidden;
+}
+
+#tgconsult-root.tgc-pos-left .tgc-window {
+  left: 0;
+  right: auto;
+}
+
+#tgconsult-root .tgc-window[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 480px) {
+  #tgconsult-root .tgc-window {
+    width: 92vw;
+  }
+}
+
+#tgconsult-root .tgc-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #243a73, #1b2e59);
+  padding: 12px 14px;
+  color: #fff;
+}
+
+#tgconsult-root .tgc-ava {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: block;
+}
+
+#tgconsult-root .tgc-title {
+  flex: 1;
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#tgconsult-root .tgc-close {
+  background: none;
+  border: 0;
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+#tgconsult-root .tgc-body {
+  height: 320px;
+  overflow: auto;
+  padding: 14px;
+  background: #f5f6f8;
+}
+
+#tgconsult-root .tgc-msg {
+  padding: 10px 12px;
+  border-radius: 14px;
+  max-width: 82%;
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+
+#tgconsult-root .tgc-msg-author {
+  font-size: 11px;
+  opacity: .75;
+  margin-bottom: 4px;
+}
+
+#tgconsult-root .tgc-msg-text {
+  white-space: pre-wrap;
+}
+
+#tgconsult-root .tgc-msg-manager {
+  background: #fff;
+  color: #222;
+  border: 1px solid #e5e7eb;
+  margin-right: auto;
+}
+
+#tgconsult-root .tgc-msg-visitor {
+  background: var(--tgc-color, #0D6EFD);
+  color: #fff;
+  margin-left: auto;
+}
+
+#tgconsult-root .tgc-scroll-down {
+  position: absolute;
+  right: 12px;
+  bottom: 128px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 0;
+  background: #1f2937;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+}
+
+#tgconsult-root.tgc-pos-left .tgc-scroll-down {
+  left: 12px;
+  right: auto;
+}
+
+#tgconsult-root .tgc-scroll-down[hidden] {
+  display: none !important;
+}
+
+#tgconsult-root .tgc-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #fff;
+  border-top: 1px solid #eee;
+}
+
+#tgconsult-root .tgc-input {
+  flex: 1;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #dfe3e7;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+#tgconsult-root .tgc-send {
+  width: 44px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tgc-color, #0D6EFD);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#tgconsult-root .tgc-hp {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

@@ -1,0 +1,29 @@
+#catalog-menu-container {
+    position: relative;
+}
+
+#catalog-menu-container .top-level-menu {
+    display: block;
+}
+
+#catalog-menu-container .submenu {
+    display: none;
+    margin-left: 15px;
+}
+
+#catalog-menu-container.expanded .submenu {
+    display: block;
+}
+
+#catalog-toggle.loading:after {
+    content: '...';
+    display: inline-block;
+    margin-left: 5px;
+    animation: loadingDots 1s infinite;
+}
+
+@keyframes loadingDots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}

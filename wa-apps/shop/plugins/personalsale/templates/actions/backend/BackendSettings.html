@@ -1,0 +1,111 @@
+<div class="block double-padded">
+    <h1>
+        По покупателю
+    </h1>
+	<div class="fields form">
+		<div class="field-group">
+			<input type="hidden" name="dummy" value="{$status}">
+			<div class="field">
+				<div class="name">Статус</div>
+				<div class="value no-shift s-ibutton-checkbox">
+					<ul class="menu-h">
+						<li><span class="gray" id="s-discount-type-disabled-label">Отключен</span></li>
+						<li>
+							<div class="ibutton-container mini ibbstatus" style="width: 30px;"><input type="checkbox" id="s-discount-type-status" name="enabled" value="{if $status}1{else}0{/if}"><div class="ibutton-handle" style="width: 5px; left: {if $status}19{else}0{/if}px;"><div class="ibutton-handle-right"><div class="ibutton-handle-middle"></div></div></div><div class="ibutton-label-off" style="width: 25px;"><span style="margin-right: 0px;"><label></label></span></div><div class="ibutton-label-on" style="width: {if $status}24{else}4{/if}px;"><span style="margin-left: -19px;"><label></label></span></div><div class="ibutton-padding-left"></div><div class="ibutton-padding-right"></div></div>
+						</li>
+						<li><span id="s-discount-type-enabled-label">Включен</span></li>
+					</ul>
+				</div>
+			</div>
+			<div id="box_discount_inuser"{if !$status} style="display:none;"{/if}>
+				<div class="field">
+					<div class="name">Покупатель</div>
+					<div class="value no-shift s-ibutton-checkbox">
+						<input type="text" id="user_select"> <input type="text" style="width:25px;min-width:25px;margin-left:5px;" id="percent_user"> %<br/>
+						<p style="color:#999;margin-top:5px;font-size:12px;">Что бы добавить, изменить или просмотреть скидку<br/>начните вводить имя покупателя или email,<br/> затем выберите подходящий вариант из списка.</p>
+					</div>
+				</div>
+				<div class="field" id="save_box_sale" style="display: none;">
+					<div class="name"></div>
+					<div class="value submit">
+						<input type="submit" class="button green" value="Сохранить">
+						<span id="sale-form-status" style="display:none"></span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+    <div class="clear-left"></div>
+	<script>
+		var maxPercent = 100;
+		$(function(){
+			$("#user_select").autocomplete({
+				source: function (request, response) {
+					$.get("?plugin=personalsale&action=actions&type=search", {
+						query: request.term
+					}, function (res) {
+						if (res.status == 'ok') {
+							response(res.data);
+						}
+					});
+				},
+				select: function (event, ui) {
+					$("#save_box_sale").show();
+					$("#percent_user").val(ui.item.percent).data("id", ui.item.id);
+				},
+				change: function (event, ui) {
+					if (ui.item == null) {
+						$("#save_box_sale").hide();
+						$("#percent_user").val("").data("id", "");
+					}
+				},
+				minLength: 2
+			});
+			$("#save_box_sale input").click(function(){
+				$.post("?plugin=personalsale&action=actions&type=save", { contact_id:$("#percent_user").data("id"), percent:$("#percent_user").val() }, function(res){
+					if (res.status == 'ok') {
+						$("#sale-form-status").html('<i style="vertical-align:middle" class="icon16 yes"></i> Сохранено').show();
+					}
+					else {
+						$("#sale-form-status").html('<i style="vertical-align:middle" class="icon16 no"></i> '+res.errors).show();
+					}
+					setTimeout(function(){
+						$("#sale-form-status").hide();
+					}, 3000);
+				});
+			});
+			$("#percent_user").keyup(function(){
+				$(this).val($(this).val().replace(',','.'));
+				var percent = parseFloat($(this).val().replace(',','.'));
+				if (isNaN(percent)) {
+					$(this).val("");
+				}
+				else if (maxPercent < percent) {
+					$(this).val(maxPercent);
+				}
+			});
+			$(".ibbstatus").click(function(){
+				check = ($("#s-discount-type-status").val() == "1")? 0 : 1;
+				$.get("?plugin=personalsale&action=actions&type=status", {
+					status: check
+				}, function (res) {
+					if (res.status == 'ok') {
+						$("#s-discount-type-status").val(check);
+						if (check == 1) {
+							$(".ibbstatus .ibutton-handle").animate({ left:"19px" }, 300);
+							$(".ibbstatus .ibutton-label-on").animate({ width:"25px" }, 300);
+							$("#discount-types li.selected a i").removeClass('status-gray-tiny').addClass('status-blue-tiny');
+							$("#box_discount_inuser").slideDown();
+						}
+						else {
+							$(".ibbstatus .ibutton-handle").animate({ left:"0px" }, 300);
+							$(".ibbstatus .ibutton-label-on").animate({ width:"4px" }, 300);
+							$("#discount-types li.selected a i").removeClass('status-blue-tiny').addClass('status-gray-tiny');
+							$("#box_discount_inuser").slideUp();
+						}
+					}
+				});
+			});
+		});
+	</script>
+</div>

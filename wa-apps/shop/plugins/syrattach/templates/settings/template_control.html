@@ -1,0 +1,120 @@
+<div class="s-syrattach-settings-template s-syrattach-settings-original-template">
+    <p>[`Default template`]: <a href="javascript:void(0)" class="inline-link s-syrattach-template-switcher"
+                                   data-template="original"><b><i>[`show`]</i></b></a></p>
+    <div class="s-syrattach-settings-original-template__content" style="display: none">
+        <pre>{$original_template|escape}
+        </pre>
+    </div>
+</div>
+{* $modified_template = $original_template *}
+{if $modified_template}
+    <div class="s-syrattach-settings-template s-syrattach-settings-modified-template">
+        <p>[`Template saved from previous version of plugin`]:
+            <a href="javascript:void(0)" class="inline-link s-syrattach-template-switcher"
+               data-template="modified"><b><i>[`show`]</i></b></a>.
+            [`Now this code is used instead of the default template. Transfer its code to the design theme template then`] <a
+                    href="javascript:void(0)" class="inline-link s-syrattach-modified-delete"><b><i>[`delete it from here`]</i></b></a>
+        </p>
+        <div class="s-syrattach-settings-modified-template__content" style="display: none">
+        <pre>{$modified_template|escape}
+        </pre>
+        </div>
+    </div>
+{/if}
+<div class="s-syrattach-settings-template__help">
+    <p>{_wp('JFYI. Variables available within the template:')}</p>
+    <code><b>$attachments</b></code> — {_wp('A list of file data. Each file item is an array with keys:')}
+    <ul>
+        <li><code>id</code> — {_wp('Attachment ID#')}</li>
+        <li><code>name</code> — {_wp('File name')}</li>
+        <li><code>ext</code> — {_wp('File extension')}</li>
+        <li><code>description</code> — {_wp('File description')}</li>
+        <li><code>size</code> — {_wp('File size in bytes')}</li>
+        <li><code>url</code> — {_wp('File URL')}</li>
+    </ul>
+</div>
+<div class="s-syrattach-settings-template__error" style="display: none"></div>
+<script>
+    (function ($) {
+        function showError(err) {
+            const error_div = $('.s-syrattach-settings-template__error');
+            if (Array.isArray(err)) err = err[0];
+            if (Array.isArray(err)) err = err[0];
+            error_div.text(err);
+            error_div.slideDown();
+            setTimeout(() => {
+                error_div.slideUp(()=>error_div.empty())
+            }, 8000);
+        }
+
+        {literal}
+        $('a.s-syrattach-template-switcher')
+            .off('.syrnik')
+            .on('click.syrnik', function (evt) {
+                evt.preventDefault();
+                const template_type = $(this).data('template');
+                const template = $(`.s-syrattach-settings-${template_type}-template__content`);
+                if (template.is(':visible')) template.slideUp();
+                else template.slideDown();
+                return false;
+            });
+        {/literal}
+        $('.s-syrattach-modified-delete')
+            .off('.syrnik')
+            .on('click.syrnik', function (evt) {
+                evt.preventDefault();
+                if (confirm("{_wp("Do you really want to delete your custom template?")|escape:'javascript'}")) {
+                    $.shop.jsonPost(
+                        '?plugin=syrattach&module=settings&action=deleteCustomTemplate',
+                        r => {
+                            if (r && r.status && r.status === 'ok') $('div.s-syrattach-settings-modified-template').remove();
+                            else if (r && r.status && r.status === 'fail') {
+                                showError(r.errors ?? '{_wp('Error deleting modified template')|escape:'javascript'}');
+                            } else {
+                                showError('{_wp('Error deleting modified template')|escape:'javascript'}');
+                            }
+                        },
+                        r => {
+                            if (r && r.status && r.status === 'fail') {
+                                showError(r.errors ?? '{_wp('Error deleting modified template')|escape:'javascript'}');
+                            } else {
+                                showError('{_wp('Error deleting modified template')|escape:'javascript'}');
+                            }
+                            return false;
+                        }
+                    );
+                }
+                return false;
+            })
+    })(jQuery)
+</script>
+<style>
+    .s-syrattach-settings-modified-template__content > pre,
+    .s-syrattach-settings-original-template__content > pre {
+        background-color: #333;
+        color: lightgreen;
+        padding: 1rem;
+    }
+
+    .s-syrattach-settings-template__help li {
+        list-style-type: none;
+    }
+
+    .s-syrattach-settings-template__help code {
+        padding: 2px 4px;
+        font-size: 90%;
+        background-color: #f9f2f4;
+        color: #c7254e
+    }
+
+    .s-syrattach-settings-template__help li code {
+        display: inline-block;
+        width: 6em;
+    }
+    .s-syrattach-settings-template__error {
+        padding: 0.5rem;
+        border: 1px solid firebrick;
+        background-color: mistyrose;
+        color: firebrick;
+    }
+</style>

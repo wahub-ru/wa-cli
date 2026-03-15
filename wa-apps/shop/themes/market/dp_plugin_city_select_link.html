@@ -1,0 +1,22 @@
+<div class="dp-city-select-link{if $is_next_page} dp-city-select-link--is-next-page{/if}{if $is_next_product} dp-city-select-link--is-next-product{/if}">
+    {if $is_next_page}
+        <div class="dp-city-select-link__caption">
+            Ваш город:
+        </div>
+    {/if}
+
+    <div class="dp-city-select-link__city">
+        <a href="javascript: void(0);" class="dp-city-select-link__city-link js-dp-city-select">
+            <span class="icon-box">
+                <span class="icon-box__icon">
+                    <svg class="svg-icon" width="12" height="16" fill="transparent">
+                        <use xlink:href="{$wa_theme_url}svg/market.symbol-sprite.svg#map"></use>
+                    </svg>
+                </span>
+                <span class="icon-box__content">
+                    в г. <span class="dp-city-select-link__city-text">{$location.city}</span>
+                </span>
+            </span>
+        </a>
+    </div>
+</div>

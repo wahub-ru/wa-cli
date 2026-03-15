@@ -1,0 +1,219 @@
+{strip}
+{assign var=has_reviews value=($total|intval > 0 && $reviews|@count > 0)}
+{if $has_reviews}
+  <div class="yreviews-toolbar">
+    <div class="yreviews-toolbar__left">
+      {if $show_review_btn && $review_btn_url}
+        {if !empty($review_btn_hover_css)}<style>{$review_btn_hover_css}</style>{/if}
+        <a id="{$review_btn_id|escape}" class="yreviews-btn" href="{$review_btn_url|escape}" target="_blank" rel="nofollow noopener"{if !empty($review_btn_style)} style="{$review_btn_style|escape}"{/if}>
+          {$review_btn_text|default:'Оставить отзыв на Яндекс Картах'|escape}
+        </a>
+      {/if}
+    </div>
+    <div class="yreviews-sort">
+      {if !$wa->isMobile()}<label>Сортировать:</label>{/if}
+      <select class="js-ysort">
+        <option value="date_desc"{if $sort=='date_desc'} selected{/if}>Сначала новые</option>
+        <option value="date_asc"{if $sort=='date_asc'} selected{/if}>Сначала старые</option>
+        <option value="rating_desc"{if $sort=='rating_desc'} selected{/if}>Высокий рейтинг</option>
+        <option value="rating_asc"{if $sort=='rating_asc'} selected{/if}>Низкий рейтинг</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="yreviews"
+       class="yreviews yreviews--{$view_mode|escape}"
+       data-ajax="{$ajax_url|escape}"
+       data-view="{$view_mode|escape}"
+       data-limit="{$limit|intval}"
+       data-hide="{$hide_low|intval}"
+       data-sort="{$sort|escape}"
+       data-offset="{$offset|intval}">
+
+    {if $view_mode == 'list'}
+      {include file=$tpl_items_list}
+    {else}
+      {include file=$tpl_items_tiles}
+    {/if}
+  </div>
+
+  {if $has_more}
+    <div class="yreviews-morewrap">
+      <a href="#" class="yreviews-morelink js-ymorebtn" role="button" aria-label="Показать ещё">Показать ещё</a>
+    </div>
+  {/if}
+{else}
+  <div class="yreviews-empty" role="status" aria-live="polite">
+    Отзывы еще не загружены
+  </div>
+{/if}
+
+{if !$wa->globals('yreviews_fancybox_loaded')}
+  {$wa->globals('yreviews_fancybox_loaded', 1)}
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+{/if}
+
+{/strip}
+
+
+{literal}
+
+<script>
+(function(){
+  var root = document.getElementById('yreviews');
+  if (!root) return;
+
+  var ajax = root.dataset.ajax || '';
+  if (!ajax) {
+    var origin = (location.origin) ? location.origin : (location.protocol + '//' + location.host);
+    ajax = origin + '/yandexreviews/';
+  }
+
+  var view   = root.dataset.view,
+      limit  = parseInt(root.dataset.limit||'8',10),
+      hide   = parseInt(root.dataset.hide||'0',10),
+      sort   = root.dataset.sort||'date_desc',
+      offset = parseInt(root.dataset.offset||'0',10);
+
+  function wc(s){ return (s||'').replace(/\s+/g,' ').trim().split(' ').filter(Boolean).length; }
+
+  function setupClamp(el){
+    var link = el.parentNode.querySelector('.js-ymore');
+    if (!link) return;
+    var isOpen = el.classList.contains('is-open');
+    if (isOpen) {
+      link.hidden = false; link.textContent = 'Свернуть'; el.classList.remove('is-clamped'); return;
+    }
+    link.hidden = true; el.classList.remove('is-clamped');
+    var minw = parseInt(el.dataset.minwords || '50', 10);
+    requestAnimationFrame(function(){
+      var clampHeight = el.clientHeight;
+      var wasOpen = el.classList.contains('is-open');
+      if (!wasOpen) { el.classList.add('is-open'); }
+      var fullHeight = el.scrollHeight;
+      if (!wasOpen) { el.classList.remove('is-open'); }
+      var tooLong  = fullHeight > clampHeight + 1;
+      var manyWord = wc(el.textContent) > minw;
+      if (tooLong && manyWord) { el.classList.add('is-clamped'); link.hidden = false; link.textContent = 'Показать полностью'; }
+    });
+  }
+  function initClamps(ctx){ (ctx||root).querySelectorAll('.js-ytext').forEach(setupClamp); }
+
+  function initFancybox(){
+    if (!window.Fancybox || !window.Fancybox.bind) return;
+    if (window.__yreviewsFancyboxBound) return;
+    window.__yreviewsFancyboxBound = true;
+    window.Fancybox.bind('[data-fancybox^="yreviews-"]', {
+      groupAll: false,
+      hideScrollbar: false,
+      Hash: false
+    });
+  }
+
+  // Аватары: если картинка не загрузилась — удаляем <img> и показываем placeholder.
+  // Важно: обработчик безопасен (не обращается к null), чтобы не плодить ошибки в консоли.
+  function initAvatars(ctx){
+    (ctx||root).querySelectorAll('img.yreviews__avatar-img').forEach(function(img){
+      if (img.dataset && img.dataset.yreviewsAvatarBound) return;
+      if (img.dataset) img.dataset.yreviewsAvatarBound = '1';
+
+      function onError(){
+        var wrap = img.closest ? img.closest('.yreviews__avatar') : (img.parentNode || null);
+        try { img.remove(); } catch(e) { if (img.parentNode) img.parentNode.removeChild(img); }
+        if (!wrap || !wrap.classList) return;
+        wrap.classList.add('is-ph');
+        if (!wrap.querySelector('.yreviews__avatar-ph')) {
+          var ph = document.createElement('span');
+          ph.className = 'yreviews__avatar-ph';
+          ph.setAttribute('aria-hidden', 'true');
+          wrap.appendChild(ph);
+        }
+      }
+
+      img.addEventListener('error', onError, {once:true});
+
+      // Если ошибка уже случилась (например, кэш/быстрый ответ) — применяем сразу.
+      if (img.complete && img.naturalWidth === 0) {
+        onError();
+      }
+    });
+  }
+
+  function send(url, cb){
+    if (window.fetch) {
+      fetch(url, {credentials:'same-origin'})
+        .then(function(r){ var t=parseInt(r.headers.get('X-Total')||'0',10); return r.text().then(function(h){ cb({ok:r.ok, html:h, total:t}); }); })
+        .catch(function(){ cb({ok:false, html:'', total:0}); });
+    } else {
+      var x=new XMLHttpRequest(); x.open('GET', url, true);
+      x.onreadystatechange=function(){ if (x.readyState===4){ var ok=(x.status>=200&&x.status<300); var t=0; try{t=parseInt(x.getResponseHeader('X-Total')||'0',10);}catch(e){} cb({ok:ok, html:x.responseText||'', total:t}); } };
+      x.send(null);
+    }
+  }
+  function buildUrl(off){
+    var u = ajax; if (u.indexOf('?')===-1) u+='?'; else if (!/[?&]$/.test(u)) u+='&';
+    u += 'view='+encodeURIComponent(view)+'&offset='+off+'&limit='+limit+'&hide='+hide+'&sort='+encodeURIComponent(sort);
+    return u;
+  }
+
+  document.addEventListener('click', function(e){
+    // раскрытие длинного текста
+    if (e.target && e.target.classList && e.target.classList.contains('js-ymore')) {
+      e.preventDefault(); var a=e.target, t=a.previousElementSibling; if (!t||!t.classList.contains('js-ytext')) return;
+      t.classList.toggle('is-open'); setupClamp(t);
+    }
+
+    // "Показать ещё" — псевдоссылка
+    if (e.target && e.target.classList && e.target.classList.contains('js-ymorebtn')) {
+      e.preventDefault();
+      var link = e.target;
+      if (link.classList.contains('is-loading')) return;
+
+      link.classList.add('is-loading');
+      offset += limit; root.dataset.offset = String(offset);
+
+      send(buildUrl(offset), function(res){
+        if (res.ok && res.html && res.html.indexOf('yreviews__item')!==-1) {
+          var tmp=document.createElement('div'); tmp.innerHTML=res.html;
+          while(tmp.firstChild) root.appendChild(tmp.firstChild);
+          initClamps(root);
+          initAvatars(root);
+          initFancybox();
+        }
+        if ((offset+limit)>=res.total || !res.ok) {
+          var wrap = link.closest('.yreviews-morewrap') || link.parentNode;
+          if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        } else {
+          link.classList.remove('is-loading');
+        }
+      });
+    }
+  }, false);
+
+  // сортировка
+  document.addEventListener('change', function(e){
+    if (e.target && e.target.classList && e.target.classList.contains('js-ysort')) {
+      sort=e.target.value; offset=0; root.dataset.offset='0';
+      send(buildUrl(0), function(res){
+        if (!res.ok || !res.html || res.html.indexOf('yreviews__item')===-1) return;
+        root.innerHTML=res.html; initClamps(); initAvatars();
+        initFancybox();
+
+        // переинициализируем "показать ещё" рядом с root
+        var old=document.querySelector('.yreviews-morewrap'); if (old) old.parentNode.removeChild(old);
+        if (limit < res.total) {
+          var w=document.createElement('div'); w.className='yreviews-morewrap';
+          w.innerHTML = '<a href="#" class="yreviews-morelink js-ymorebtn" role="button" aria-label="Показать ещё">Показать ещё</a>';
+          root.insertAdjacentElement('afterend', w);
+        }
+      });
+    }
+  }, false);
+
+  initClamps();
+  initAvatars();
+  initFancybox();
+})();
+</script>
+{/literal}

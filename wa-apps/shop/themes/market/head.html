@@ -1,0 +1,304 @@
+{strip}
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    {if $wa->storage('nomobile') || $theme_settings['disable_adaptive']}
+        <meta name="viewport" content="width=1024, initial-scale=0, maximum-scale=1" />
+    {else}
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1{if $wa->globals('is_mobile')}, user-scalable=0{/if}" />
+    {/if}
+
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>{$wa->title()|escape}</title>
+    <meta name="Description" content="{$wa->meta('description')|escape}" />
+    <meta name="Keywords" content="{$wa->meta('keywords')|escape}" />
+    <meta name="theme-color" content="{$wa->globals('market.colors.primary')|escape}">
+    <meta name="msapplication-navbutton-color" content="{$wa->globals('market.colors.primary')|escape}" />
+
+    {if $wa->globals('market.og.type')}
+        <meta property="og:type" content="{$wa->globals('market.og.type')|escape}" />
+    {/if}
+
+    {if $wa->globals('market.og.image')}
+        <meta property="og:image" content="{$wa->globals('market.og.image')|escape}" />
+    {/if}
+
+    {if !empty($nofollow)}
+        <meta name="robots" content="nofollow" />
+    {/if}
+
+    {if !empty($canonical)}
+        <link rel="canonical" href="{$canonical|escape}" />
+    {/if}
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    {if $wa_app === 'blog'}
+        {function rss}
+            {$rss = $wa->blog->rssUrl()}
+
+            {if $rss}
+                <link rel="alternate" type="application/rss+xml" title="{$wa->accountName()|escape}" href="{$rss|escape}" />
+            {/if}
+        {/function}
+
+        {call rss}
+    {/if}
+
+    
+    {function theme_css_schema}
+        {$colors = $wa->globals('market.colors')}
+
+        {$container_width = 1485}
+
+        <style>
+            :root {
+                --primary-color: {$colors['primary_color']};
+                --primary-color-hover: {$colors['primary_color_hover']};
+                --primary-color-alpha-5: {call hex_to_rgba hex=$colors['primary_color'] opacity='.5'};
+                --dark-color: {$colors['dark_color']};
+                --dark-color-alpha-5: {call hex_to_rgba hex=$colors['dark_color'] opacity='.5'};
+                --accent-color: {$colors['accent_color']};
+                --accent-color-hover: {$colors['accent_color_hover']};
+                --light-color: {$colors['light_color']};
+                --light-color-hover: {$colors['light_color_hover']};
+                --pale-color: {$colors['pale_color']};
+                --footer-text-color: {$colors['footer_text_color']};
+                --price-with-compare-color: {$colors['price_with_compare_color']};
+                --container-width: {$container_width}px;
+                --inputs-buttons-border-radius: {$theme_settings['inputs_buttons_border_radius']|default:'15px'};
+
+                --header-bottom-bar-bg-color: {$colors['header_bottom_bar_bg_color']};
+                --header-bottom-bar-btn-color: {$colors['header_bottom_bar_btn_color']};
+                --header-bottom-bar-btn-hover-color: {$colors['header_bottom_bar_btn_hover_color']};
+                --header-bottom-bar-text-color: {$colors['header_bottom_bar_text_color']};
+
+                --add-to-cart-button-color: {$colors['add_to_cart_button_color']};
+                --add-to-cart-button-color-hover: {$colors['add_to_cart_button_color_hover']};
+                --add-to-cart-button-text-color: {$colors['add_to_cart_button_text_color']};
+                --add-to-cart-button-text-hover-color: {$colors['add_to_cart_button_text_hover_color']};
+
+                --badge-bestseller-color: {$colors['badge_bestseller_color']};
+                --badge-bestseller-text-color: {$colors['badge_bestseller_text_color']};
+                --badge-new-color: {$colors['badge_new_color']};
+                --badge-new-text-color: {$colors['badge_new_text_color']};
+                --badge-discount-color: {$colors['badge_discount_color']};
+                --badge-discount-text-color: {$colors['badge_discount_text_color']};
+
+                {$font = $theme_settings['font']}
+                {if !empty($theme_settings['user_online_font_url']) && !empty($theme_settings['user_online_font_family'])}
+                    {$font = $theme_settings['user_online_font_family']}
+                {/if}
+
+
+                --font-family: '{$font}'{if in_array($font, ['Open Sans', 'Lato'])}, 'Nunito Sans'{/if}, sans-serif;
+                --counter-padding: 2px 2px 1px;
+
+            {if $theme_settings['shop_slider_height'] > 0}
+                --home-slider-height: {$theme_settings['shop_slider_height']}px;
+                --home-slider-height-adaptive-ratio: {$theme_settings['shop_slider_height'] / 1920};
+                --home-slider-height-s-adaptive-ratio: {$theme_settings['shop_slider_height'] / (1024 - 60)};
+                @media (min-width: 1200px) {
+                    --home-slider-height-s-adaptive-ratio: {$theme_settings['shop_slider_height'] / (1200 - 90)};
+                }
+            {else}
+                --home-slider-height: auto;
+            {/if}
+            {if $theme_settings['shop_slider_height_adaptive'] > 0}
+                --home-slider-height-adaptive: {$theme_settings['shop_slider_height_adaptive']}px;
+            {else}
+                --home-slider-height-adaptive: auto;
+            {/if}
+            }
+
+            {if $theme_settings['disable_adaptive']}
+            body.page__d {
+                padding-top: 0;
+            }
+            {else}
+            @media (max-width: 1023px) {
+                body:not(.page__d) .r-hidden-md {
+                    display: none !important;
+                }
+            }
+            {/if}
+
+            @media (max-width: {$container_width + 17}px) {
+                :root {
+                    --container-width: calc(100vw - 17px);
+                }
+            }
+        </style>
+    {/function}
+
+    {call theme_css_schema}
+
+
+    {function theme_link_stylesheet url=null min=null}
+        {if $min === null}
+            {$min = $theme_settings['minified_css_enabled']}
+        {/if}
+
+        {if $min}
+            {$url = "{$url}.min.css"}
+        {else}
+            {$url = "{$url}.css"}
+        {/if}
+
+        {$url = "{$url}?v={$wa_theme_version}"}
+
+        <link href="{$url|escape}" rel="stylesheet" />
+    {/function}
+
+    {if !empty($theme_settings['user_online_font_url']) && !empty($theme_settings['user_online_font_family'])}
+        <link href="{$theme_settings['user_online_font_url']}" rel="stylesheet" />
+    {elseif in_array($theme_settings['font'], ['Open Sans', 'Lato'])}
+        <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family={$theme_settings['font']|replace:' ':'+'|escape}:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&amp;display=swap&amp;subset=cyrilic,latin-ext" rel="stylesheet" />
+    {elseif in_array($theme_settings['font'], ['Nunito Sans', 'Rubik', 'Inter'])}
+        <link href="https://fonts.googleapis.com/css2?family={$theme_settings['font']|replace:' ':'+'|escape}:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&amp;display=swap&amp;subset=cyrilic,latin-ext" rel="stylesheet" />
+    {/if}
+
+    {call theme_link_stylesheet url="{$wa_theme_url}css/market.vendors"}
+    {call theme_link_stylesheet url="{$wa_theme_url}css/market"}
+
+    {if $wa_app === 'shop' || $wa->globals('add_shop_resources')}
+        {call theme_link_stylesheet url="{$wa_theme_url}css/market.shop"}
+    {/if}
+    {if $wa_app === 'blog'}
+        {call theme_link_stylesheet url="{$wa_active_theme_url}css/market.blog"}
+    {elseif $wa_app === 'photos'}
+        {call theme_link_stylesheet url="{$wa_active_theme_url}css/market.photos"}
+    {elseif $wa_app === 'mailer'}
+        {call theme_link_stylesheet url="{$wa_active_theme_url}css/market.mailer"}
+    {/if}
+
+    {if $theme_settings['user_css_enabled'] === 'head'}
+        {call theme_link_stylesheet url="{$wa_theme_url}user" min=false}
+    {/if}
+
+    {$wa->css()}
+
+    {if $theme_settings['block_head_css']}
+        {$wa->block('market.head.css')}
+    {/if}
+
+
+    {function theme_script url=null min=null defer=false async=false priority=null}
+        {if $min === null}
+            {$min = $theme_settings['minified_js_enabled']}
+        {/if}
+
+        {if $min}
+            {$url = "{$url}.min.js"}
+        {else}
+            {$url = "{$url}.js"}
+        {/if}
+
+        {$url = "{$url}?v={$wa_theme_version}"}
+
+        <script src="{$url|escape}" {if $defer}defer{/if} {if $async}async{/if} {if $priority}fetchpriority="{$priority}"{/if}></script>
+    {/function}
+
+    {call theme_script url="{$wa_theme_url}js/market.head"}
+    {call theme_script url="{$wa_theme_url}js/market.vendors" defer=true priority='high'}
+
+    {if $wa->globals('ya-share_is_enabled') && !$wa->globals('is_mobile')}
+        {if $wa->globals('ya-share_source') === 'yastatic'}
+            <script src="https://yastatic.net/es5-shims/0.0.2/es5-shims.min.js" defer></script>
+            <script src="https://yastatic.net/share2/share.js" defer></script>
+        {else}
+            <script src="https://cdn.jsdelivr.net/npm/yandex-share2/share.js" defer></script>
+        {/if}
+    {/if}
+
+    {if $theme_settings['font_awesome'] === 'all'}
+        <script src="{$wa_theme_url}js/vendor/fontawesome/all.min.js" async></script>
+    {elseif $theme_settings['font_awesome'] === 'custom'}
+        {if $theme_settings['fa_part_solid'] && $theme_settings['fa_part_regular'] && $theme_settings['fa_part_brands']}
+            <script src="{$wa_theme_url}js/vendor/fontawesome/all.min.js" async></script>
+        {else}
+            <script src="{$wa_theme_url}js/vendor/fontawesome/fontawesome.js" async></script>
+
+            {if $theme_settings['fa_part_solid']}
+                <script src="{$wa_theme_url}js/vendor/fontawesome/solid.js" async></script>
+            {/if}
+            {if $theme_settings['fa_part_regular']}
+                <script src="{$wa_theme_url}js/vendor/fontawesome/regular.js" async></script>
+            {/if}
+            {if $theme_settings['fa_part_brands']}
+                <script src="{$wa_theme_url}js/vendor/fontawesome/brands.js" async></script>
+            {/if}
+        {/if}
+    {/if}
+
+    {call theme_script url="{$wa_theme_url}js/market" defer=true priority='high'}
+
+    {if $wa_app == 'shop' || $wa->globals('add_shop_resources')}
+        {call theme_script url="{$wa_theme_url}js/market.shop" defer=true priority='high'}
+    {/if}
+    {if $wa_app == 'blog'}
+        {call theme_script url="{$wa_active_theme_url}js/market.blog" defer=true priority='high'}
+    {elseif $wa_app == 'photos'}
+        {call theme_script url="{$wa_active_theme_url}js/market.photos" defer=true priority='high'}
+    {/if}
+
+    {if $theme_settings['user_js_enabled'] === 'head'}
+        {call theme_script url="{$wa_theme_url}user" defer=true min=false priority='high'}
+    {/if}
+
+    {$wa->js()}
+
+    {if $wa->globals('market.plugins.shop.ordercall') && $wa_app !== 'shop'}
+        {shopOrdercallPlugin::form()}
+    {/if}
+
+    {if $theme_settings['block_head_js']}
+        {$wa->block('market.head.js')}
+    {/if}
+
+
+    {$wa->head()}
+
+    {if $wa_app == 'shop'}
+        <!-- plugin hook: 'frontend_head' -->
+        {* @event frontend_head.%plugin_id% *}
+        {foreach $frontend_head as $plugin => $_}
+            {if ($plugin === 'featurestips-plugin' && $wa->globals('market.route') != 'shop/frontend/product')
+                || ($plugin === 'pnotice-plugin' && !$market['plugins']['shop_pnotice'])}
+                {continue}
+            {/if}
+
+            {if (
+            $plugin === 'dp-plugin'
+            && $wa->globals('market.route') != 'shop/frontend/page'
+            && $wa->globals('market.route') != 'shop/frontend/product'
+            )}
+                {continue}
+            {/if}
+
+            {if $plugin === 'pnotice-plugin' && $market['plugins']['shop_pnotice'] && $theme_settings['plugins_shop_pnotice_css']}
+                {$pnotice_link_regexp = '/<link.+href=".+\/pnotice.+"?(.+)>/U'}
+                {$_ = $_|regex_replace:$pnotice_link_regexp:''}
+            {/if}
+
+            <!-- frontend_head.{$plugin} -->
+            {$_}
+        {/foreach}
+    {elseif $wa_app == 'photos'}
+        <!-- plugin hook: 'frontend_assets' -->
+        {* @event frontend_assets.%plugin_id% *}
+        {foreach $frontend_assets as $plugin => $_}
+            <!-- frontend_assets.{$plugin} -->
+            {$_}
+        {/foreach}
+    {elseif $wa_app == 'blog'}
+        <!-- plugin hook: 'frontend_action_default|frontend_action_post|frontend_action_page|frontend_action_error' -->
+        {* @event (frontend_action_default|frontend_action_post|frontend_action_page|frontend_action_error).%plugin_id%.head *}
+        {foreach $frontend_action as $plugin => $_}
+            <!-- (frontend_action_default|frontend_action_post|frontend_action_page|frontend_action_error).{$plugin}.head -->
+            {if !empty($_.head)}{$_.head}{/if}
+        {/foreach}
+    {/if}
+
+    {if $wa_app !== 'shop' && $market['plugins']['shop_buy1click'] && method_exists('shopBuy1clickViewHelper', 'frontendHead')}
+        {shopBuy1clickViewHelper::frontendHead()}
+    {/if}
+{/strip}

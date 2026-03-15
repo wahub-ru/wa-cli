@@ -1,0 +1,38 @@
+<div class="pagevisitorcounter-graph">
+  <h2>График просмотров</h2>
+  <select id="graph-period">
+    <option value="today">Сегодня</option>
+    <option value="week" selected>Неделя</option>
+    <option value="month">Месяц</option>
+    <option value="year">Год</option>
+  </select>
+  <select id="graph-group-by">
+    <option value="date">По датам</option>
+    <option value="page">По страницам</option>
+  </select>
+  <canvas id="viewsChart" width="400" height="200"></canvas>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('viewsChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: [{foreach $graph_data as $label=>$value}'{$label}',{/foreach}],
+      datasets: [{
+        label: 'Уникальные просмотры',
+        data: [{foreach $graph_data as $value}{$value},{/foreach}],
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>

@@ -1,0 +1,116 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Theme Settings *}
+    {$description_position = $theme_settings['shop_catalog_description_position']}
+    {$description_rows = $theme_settings['shop_catalog_description_rows']|default:0}
+    {$additional_description_rows = $theme_settings['shop_catalog_add_description_rows']|default:0}
+
+    {* Variables *}
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_sorting=$is_client_sorting_enabled|default:$is_enabled_sorting|default:false}
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_seo = $plugins['shop_seo']}
+
+    {$is_show_sidebar = !!$theme_settings['shop_catalog_sidebar_enabled']}
+    {$wa->globals('is_show_sidebar', $is_show_sidebar)}
+    {$wa->globals('sidebar_side', $theme_settings['shop_catalog_sidebar_side'])}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$is_enabled_filters = !empty($filters) && count($filters) > 0}
+    {$page = $wa->get('page', 1)}
+
+    {if $is_enabled_filters}
+        {$wa->globals('is_show_sidebar_mobile', true)}
+    {/if}
+
+    {* Templates *}
+    <div class="blocks">
+        <div class="blocks__item">
+            {if waRequest::isXMLHttpRequest()}
+                <div style="display: none">
+                    <input id="filter_meta_title" type="hidden" value="{$seofilter_category_title|default:''|escape}" />
+                    <input id="filter_h1" type="hidden" value="{$seofilter_category_h1|default:$h1|escape}" />
+                    <input id="filter_description" type="hidden" value="{$seofilter_category_description|default:$description|escape}" />
+                    <input id="filter_current_url" type="hidden" value="{$seofilter_current_url|default:$wa->currentUrl()|escape}" />
+                    <input id="filter_additional_description" type="hidden" value="{$seofilter_category_additional_description|default:''|escape}" />
+
+                    <div id="feature_value_ids" data-feature_value_ids="{$seofilter_current_feature_value_ids|json_encode|escape}"></div>
+
+                    <input id="filter_is_sfilter" type="hidden" value="{($is_with_seofilter|default:false) ? '1' : '0'}" >
+                </div>
+            {/if}
+
+            <div class="category-page block">
+                <h1 class="block__header block__header_text category-name">
+                    {$h1|escape}
+                </h1>
+
+                <!-- plugin hook: 'frontend_catalogreviews' -->
+                {foreach $frontend_catalogreviews as $_}{$_}{/foreach}
+
+                <div class="block__content">
+                    {capture assign='_description'}
+                        <div class="category-page__description{if $description_position === 'after_products'} category-page__description_after-products{/if} description-block">
+                            {$show_description = $wa->get('page', 1) == 1 && (!waRequest::get() || (isset($is_seofilter) && $is_seofilter))}
+                            {if !$theme_settings['shop_catalog_description_get_params_hide']}
+                                {$show_description = true}
+                            {/if}
+
+                            {if $description && $wa->get('page', 1) == 1 && (!waRequest::get() || $is_seofilter)}
+                                <div class="content-decorator category-desc description-block__content-wrapper"{if $description_rows != 0} style="max-height: {$description_rows}px; overflow: hidden"{/if}>
+                                    {call wrap_tables content=$description}
+                                </div>
+                                {if $description_rows != 0}
+                                    <div class="description-block__more description-block__more_{$theme_settings['shop_catalog_description_more_align']|default:'right'}">
+                                        <button class="description-block__more-btn link link_style_hover">
+                                            <span>Читать далее</span>
+                                            <span style="display: none">Скрыть</span>
+                                        </button>
+                                    </div>
+                                {/if}
+                            {/if}
+                        </div>
+                    {/capture}
+
+                    {if $description_position === 'before_products'}
+                        {$_description}
+                    {/if}
+
+                    {if count($reviews) > 0 || $is_enabled_filters}
+                        <div class="category-page__products">
+                            {include './catalogreviews_plugin.category_reviews-list.html' reviews=$reviews is_enabled_sorting=$is_enabled_sorting is_show_sidebar=$is_show_sidebar}
+                        </div>
+                    {else}
+                        <div class="not-found-block">
+                            <div class="not-found-block__header">
+                                [`В этой категории ещё нет ни одного отзыва.`]
+                            </div>
+                        </div>
+                    {/if}
+
+                    {if $description_position === 'after_products'}
+                        {$_description}
+                    {/if}
+
+                    {if $is_enabled_seo}
+                        <div class="category-page__additional-description">
+                            {if $additional_description|default:'' && $wa->get('page', 1) == 1 && (!waRequest::get() || $is_seofilter)}
+                                <div class="content-decorator filter-additional-desc description-block__content-wrapper"{if $additional_description_rows != 0} style="max-height: {$additional_description_rows}px; overflow: hidden"{/if}>
+                                    {call wrap_tables content=$additional_description}
+                                </div>
+                                {if $additional_description_rows != 0}
+                                    <div class="description-block__more description-block__more_{$theme_settings['shop_catalog_description_more_align']|default:'right'}">
+                                        <button class="description-block__more-btn link link_style_hover">
+                                            <span>Читать далее</span>
+                                            <span style="display: none">Скрыть</span>
+                                        </button>
+                                    </div>
+                                {/if}
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+{/strip}

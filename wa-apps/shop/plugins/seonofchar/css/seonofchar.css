@@ -1,0 +1,41 @@
+.seonofchar-wrap {
+    padding: 0;
+}
+
+.seonofchar-val {
+    color: #fff;
+    background-color: #555555;
+    display: inline-block;
+    padding: 5px;
+    font-size: 75%;
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 3px;
+    min-width: 10px;
+}
+
+.seonofchar-val::before {
+    content: 'Кол-во: ';
+    color: #aaa;
+}
+
+.seonofchar-warning {
+    background-color: #ffc107 !important;
+}
+
+.seonofchar-success {
+    background-color: #28a745 !important;
+}
+
+.seonofchar-danger {
+    background-color: #dc3545 !important;
+}
+
+.seonofchar-warning::before, .seonofchar-success::before, .seonofchar-danger::before {
+    color: #fff;
+}
+.seonofchar-hint {
+    color: #aaa;
+    font-size: 12px;
+}

@@ -1,0 +1,45 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('market.main.only_content', true)}
+    {$referer = $wa->server('HTTP_REFERER')}
+
+    {$is_404 = $error_code == 404}
+    <div class="error-page">
+        <div class="error-page__container">
+            {if $is_404}
+                <div class="error-page__image-box">
+                    <span class="image-box image-box_contain">
+                        {call svg_icon classes='error-page__image' icon='404' width=373  height=360}
+                    </span>
+                </div>
+            {/if}
+            <div class="error-page__header">
+                {if $is_404}
+                    [`Страница не найдена`]!
+                {else}
+                    {$error_code|escape}. {$error_message|escape}
+                {/if}
+            </div>
+            <div class="error-page__buttons">
+                <div class="error-page__button">
+                    <a class="button button_fill" href="{$wa_url|escape}">[`Перейти на главную`]</a>
+                </div>
+                {$referer = $wa->server('HTTP_REFERER')}
+
+                {if $referer}
+                    <div class="error-page__button">
+                        <a class="button button_style_light button_fill" href="{$referer|escape}">[`Вернуться назад`]</a>
+                    </div>
+                {/if}
+            </div>
+
+            {if isset($frontend_error) && !empty($frontend_error)}
+                <!-- plugin hook: 'frontend_error' -->
+                {foreach $frontend_error as $plugin => $_}
+                    <!-- frontend_error.{$plugin} -->
+                    {$_}
+                {/foreach}
+            {/if}
+        </div>
+    </div>
+{/strip}

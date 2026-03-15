@@ -1,0 +1,130 @@
+<div class="shop-sk-with-notice">
+    <div class="shop-sk-with-notice__left">
+        <div class="field">
+            <div class="name"></div>
+            <div class="value">
+                <strong>Настройка email</strong>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Уведомлять по email
+            </div>
+            <div class="value">
+                <select name="shop_skcallback_defines[email_active]" autocomplete="off" class="select">
+                    <option value="1" {if $defines.email_active}selected="selected"{/if}>Включен</option>
+                    <option value="" {if !$defines.email_active}selected="selected"{/if}>Отключен</option>
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Получатели
+            </div>
+            <div class="value">
+                <input type="text" name="shop_skcallback_defines[email_list]" value="{$defines.email_list}" placeholder="user1@mail.ru, user2@mail.ru"/>
+                <br><span class="hint">Укажите список получателей через запятую</span>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Заголовок письма
+            </div>
+            <div class="value">
+                <input type="text" name="shop_skcallback_defines[email_title]" value="{$defines.email_title}"/>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Контент письма
+            </div>
+            <div class="value">
+                <textarea class="js-sk-editor" name="shop_skcallback_defines[email_content]">{$defines.email_content}</textarea>
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="name"></div>
+            <div class="value">
+                <strong>Настройка sms</strong>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Уведомлять по смс
+            </div>
+            <div class="value">
+                <select name="shop_skcallback_defines[sms_active]" autocomplete="off" class="select">
+                    <option value="1" {if $defines.sms_active}selected="selected"{/if}>Включен</option>
+                    <option value="" {if !$defines.sms_active}selected="selected"{/if}>Отключен</option>
+                </select>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Получатели
+            </div>
+            <div class="value">
+                <input type="text" name="shop_skcallback_defines[sms_list]" value="{$defines.sms_list}" placeholder="+71111111111, +7222222222"/>
+                <br><span class="hint">Укажите список получателей через запятую</span>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Текст смс
+            </div>
+            <div class="value">
+                <textarea name="shop_skcallback_defines[sms_content]">{$defines.sms_content}</textarea>
+            </div>
+        </div>
+
+        <br/>
+
+        <div class="field">
+            <div class="name"></div>
+            <div class="value">
+                <strong>Настройка push уведомлений</strong>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Отправлять push уведомления
+            </div>
+            <div class="value">
+                <select name="shop_skcallback_defines[push_active]" autocomplete="off" class="select">
+                    <option value="1" {if $defines.push_active}selected="selected"{/if}>Включен</option>
+                    <option value="0" {if !$defines.push_active}selected="selected"{/if}>Отключен</option>
+                </select>
+                <br/><span class="hint"><a href="https://support.webasyst.ru/33248/push-notifications/" target="_blank">Инструкция по настройке</a></span>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Заголовок уведомления
+            </div>
+            <div class="value">
+                <input type="text" name="shop_skcallback_defines[push_title]" value="{$defines.push_title}"/>
+            </div>
+        </div>
+        <div class="field">
+            <div class="name">
+                Текст уведомления
+            </div>
+            <div class="value">
+                <textarea name="shop_skcallback_defines[push_content]">{$defines.push_content}</textarea>
+            </div>
+        </div>
+    </div>
+    {literal}
+    <div class="shop-sk-with-notice__right">
+        <p><strong>Переменные:</strong></p>
+        <p><strong>{$id}</strong> - Номер заявки</p>
+        <p><strong>{$region}</strong> - Регион</p>
+        <p><strong>{$city}</strong> - Город</p>
+        <p><strong>{$url}</strong> - Страница  с которой оформлена заявка</p>
+        <p><strong>{$var_1}</strong> - Поле формы с идентификатором 1</p>
+        <p><strong>{$var_2}</strong> - Поле формы с идентификатором 2</p>
+        <p>и т.д.</p>
+    </div>
+    {/literal}
+</div>

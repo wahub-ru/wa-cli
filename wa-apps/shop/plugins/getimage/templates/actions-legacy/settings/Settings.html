@@ -1,0 +1,43 @@
+<form id="getimage-settings-form" method="post" action="">
+    <!-- Добавляем CSRF-токен -->
+    {$wa->csrf()}
+
+    <div class="fields">
+        {if !empty($settings_controls)}
+            {foreach $settings_controls as $control}
+                <div class="field">
+                    {$control}
+                </div>
+            {/foreach}
+        {else}
+            <p>Нет доступных настроек.</p>
+        {/if}
+    </div>
+
+    <div class="field">
+        <div class="value submit">
+            <input type="submit" class="button green" value="Сохранить">
+            <span id="getimage-save-message" class="hint" style="display: none;">Настройки сохранены!</span>
+        </div>
+    </div>
+</form>
+
+<script>
+    $(function() {
+        $('#getimage-settings-form').on('submit', function(e) {
+            e.preventDefault(); // Отменяем стандартную отправку формы
+
+            var form = $(this);
+            var url = '{$wa_app_url}?plugin=getimage&module=settings&action=save'; // Исправленный URL
+            var data = form.serialize();
+
+            $.post(url, data, function(response) {
+                if (response.status === 'ok') {
+                    $('#getimage-save-message').show().fadeOut(3000); // Показываем сообщение об успешном сохранении
+                } else {
+                    alert('Ошибка: ' + response.errors.messages.join(', '));
+                }
+            }, 'json');
+        });
+    });
+</script>

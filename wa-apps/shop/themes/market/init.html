@@ -1,0 +1,743 @@
+{strip}
+    {$force = $force|default:false}
+    {$is_shop = $is_shop|default:false}
+    {if empty($market['inited']) || $force}
+        {*
+            Попытка выставить переменные фреймворка, если их нет.
+            Обычно это происходит если какой-то плагин не использует метод setThemeTemplate для отображения шаблона.
+
+            Выставить переменные в данный момент можно только если это шаблон плагина приложения "Магазин", и если
+            в текущей версии "Магазина" уже есть метод-хелпер $wa->shop->getListThumbsTemplate.
+
+            Метод вызывает шаблон list-thumbs.html, внутри которого тоже происходит инициализация темы,
+            но уже с переменными фреймворка.
+            Они записываются в $wa->globals, и выставляются глобально уже в текущем шаблоне.
+        *}
+        {if $wa_app === 'shop' && method_exists($wa->shop, 'getListThumbsTemplate')}
+            {if !isset($theme_settings)}
+                {$_ = $wa->shop->getListThumbsTemplate([])}
+                {$framework_vars = $wa->globals('market.framework_vars')}
+                {$wa_active_theme_path = $framework_vars['wa_active_theme_path'] scope='global'}
+                {$wa_active_theme_url = $framework_vars['wa_active_theme_url'] scope='global'}
+                {$wa_real_active_theme_url = $framework_vars['wa_real_active_theme_url'] scope='global'}
+
+                {if isset($framework_vars['wa_parent_theme_url'])}
+                    {$wa_parent_theme_url = $framework_vars['wa_parent_theme_url'] scope='global'}
+                    {$wa_real_parent_theme_url = $framework_vars['wa_real_parent_theme_url'] scope='global'}
+                    {$wa_parent_theme_path = $framework_vars['wa_parent_theme_path'] scope='global'}
+                {/if}
+
+                {$wa_theme_version = $framework_vars['wa_theme_version'] scope='global'}
+                {$theme_settings = $framework_vars['theme_settings'] scope='global'}
+                {$theme_settings_config = $framework_vars['theme_settings_config'] scope='global'}
+                {$wa_theme_url = $framework_vars['wa_theme_url'] scope='global'}
+                {$wa_real_theme_url = $framework_vars['wa_real_theme_url'] scope='global'}
+            {else}
+                {$framework_vars = []}
+                {$framework_vars['wa_active_theme_path'] = $wa_active_theme_path}
+                {$framework_vars['wa_active_theme_url'] = $wa_active_theme_url}
+                {$framework_vars['wa_real_active_theme_url'] = $wa_real_active_theme_url}
+
+                {if isset($wa_parent_theme_url)}
+                    {$framework_vars['wa_parent_theme_url'] = $wa_parent_theme_url}
+                    {$framework_vars['wa_real_parent_theme_url'] = $wa_real_parent_theme_url}
+                    {$framework_vars['wa_parent_theme_path'] = $wa_parent_theme_path}
+                {/if}
+
+                {$framework_vars['wa_theme_version'] = $wa_theme_version}
+                {$framework_vars['theme_settings'] = $theme_settings}
+                {$framework_vars['theme_settings_config'] = $theme_settings_config}
+                {$framework_vars['wa_theme_url'] = $wa_theme_url}
+                {$framework_vars['wa_real_theme_url'] = $wa_real_theme_url}
+                {$wa->globals('market.framework_vars', $framework_vars)}
+            {/if}
+        {/if}
+
+
+        {$market = []}
+
+        {include "./functions.html" inline}
+
+        {$wa->globals('market.route', "{$wa_app}/{$wa->param('module')}/{$wa->param('action')}")}
+        {$wa->globals('market.theme_exists.site', !!"{call theme_app_exists app='site'}")}
+        {$wa->globals('market.theme_exists.shop', !!"{call theme_app_exists app='shop'}")}
+        {$wa->globals('market.theme_exists.blog', !!"{call theme_app_exists app='blog'}")}
+        {$wa->globals('market.theme_exists.photos', !!"{call theme_app_exists app='photos'}")}
+        {$wa->globals('market.theme_exists.mailer', !!"{call theme_app_exists app='mailer'}")}
+
+        {$plugins = []}
+        {$market['plugins'] = []}
+
+        {$integrated_only_css_plugins = [
+            'shop_wholesale',
+            'shop_minimum',
+            'shop_promos'
+        ]}
+
+        {foreach [
+            ['shop', 'buy1click'],
+            ['shop', 'buy1click2'],
+            ['shop', 'ordercall'],
+            ['shop', 'seofilter'],
+            ['shop', 'breadcrumbs'],
+            ['shop', 'brand'],
+            ['shop', 'productbrands'],
+            ['shop', 'dp'],
+            ['shop', 'linkcanonical'],
+            ['shop', 'buy1step'],
+            ['shop', 'regions'],
+            ['shop', 'cityselect'],
+            ['shop', 'htmlmap'],
+            ['shop', 'categoryimages'],
+            ['shop', 'ewshopcimg'],
+            ['shop', 'arrived'],
+            ['shop', 'pnotice'],
+            ['shop', 'pricedown'],
+            ['shop', 'groupattr'],
+            ['shop', 'delpayfilter'],
+            ['shop', 'seo'],
+            ['shop', 'searchpro'],
+            ['shop', 'discount4review'],
+            ['shop', 'complex'],
+            ['shop', 'bundling'],
+            ['shop', 'smartfilters'],
+            ['shop', 'freedelivery'],
+            ['shop', 'sizetable'],
+            ['shop', 'specprice'],
+            ['shop', 'featurestips'],
+            ['shop', 'flexdiscount'],
+            ['shop', 'increase'],
+            ['shop', 'catalogreviews'],
+            ['shop', 'autobadge'],
+            ['shop', 'productgroup'],
+            ['shop', 'bestprice'],
+            ['shop', 'seosku'],
+            ['shop', 'que'],
+            ['shop', 'fiwex'],
+            ['shop', 'syrattach'],
+            ['shop', 'promos'],
+            ['shop', 'wholesale'],
+            ['shop', 'minimum'],
+            ['shop', 'giftcertificates'],
+            ['shop', 'promos'],
+            ['shop', 'warehouse'],
+            ['shop', 'listfeatures'],
+            ['shop', 'skcatimage'],
+            ['shop', 'filterext'],
+            ['shop', 'cartlinks'],
+            ['shop', 'estdelivery'],
+            ['blog', 'category'],
+            ['blog', 'mainpic'],
+            ['blog', 'ewblogpimg']
+        ] as $plugin}
+            {$plugin_name = $plugin[1]}
+            {$plugin_id = "{$plugin[0]}_{$plugin_name}"}
+
+            {$plugins["{$plugin_id}"] = class_exists("{$plugin[0]}{ucfirst($plugin_name)}Plugin") && (!empty($theme_settings["plugins_{$plugin_id}"]) || (in_array($plugin_id, $integrated_only_css_plugins) && !empty($theme_settings["plugins_{$plugin_id}_css"])))}
+            {$wa->globals("market.plugins.{$plugin[0]}.{$plugin[1]}", $plugins["{$plugin_id}"])}
+            {$market['plugins']["{$plugin_id}"] = $plugins["{$plugin_id}"]}
+        {/foreach}
+
+        {$wa->globals('plugins', $plugins)}
+
+        {$matches = []}
+
+        {if preg_match('/^img\/schemes\/(.*)\.png$/', $theme_settings['color_scheme_variant'], $matches)}
+            {$theme_settings['color_scheme_variant'] = $matches[1]}
+        {else}
+            {$theme_settings['color_scheme_variant'] = 'blue'}
+        {/if}
+
+        {if $theme_settings['custom_color_scheme_enabled']}
+            {$colors = [
+                'primary_color' => $theme_settings['custom_color_scheme_primary_color'],
+                'dark_color' => $theme_settings['custom_color_scheme_dark_color'],
+                'light_color' => $theme_settings['custom_color_scheme_light_color']
+            ]}
+        {else}
+            {if $theme_settings['color_scheme_variant'] == 'blue'}
+                {$colors = [
+                    'primary_color' => '#2d9cdb',
+                    'dark_color' => '#0c3c57',
+                    'light_color' => '#ebf8ff'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-blue'}
+                {$colors = [
+                    'primary_color' => '#004f7a',
+                    'dark_color' => '#0e364f',
+                    'light_color' => '#e7ecf9'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-blue'}
+                {$colors = [
+                    'primary_color' => '#004f7a',
+                    'dark_color' => '#0e364f',
+                    'light_color' => '#e7ecf9'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'green'}
+                {$colors = [
+                    'primary_color' => '#8dc63f',
+                    'dark_color' => '#1F3304',
+                    'light_color' => '#f6ffe9'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-green'}
+                {$colors = [
+                    'primary_color' => '#38b34f',
+                    'dark_color' => '#156c29',
+                    'light_color' => '#dcfade'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'black'}
+                {$colors = [
+                    'primary_color' => '#333333',
+                    'dark_color' => '#000000',
+                    'light_color' => '#F7F7F7'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'wetasphalt'}
+                {$colors = [
+                    'primary_color' => '#34495E',
+                    'dark_color' => '#081B2E',
+                    'light_color' => '#F1F8FF'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'orange'}
+                {$colors = [
+                    'primary_color' => '#F9A01B',
+                    'dark_color' => '#381600',
+                    'light_color' => '#FFF6E8'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'violet'}
+                {$colors = [
+                    'primary_color' => '#5C4280',
+                    'dark_color' => '#1F0A3C',
+                    'light_color' => '#FAF7FF'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-violet'}
+                {$colors = [
+                    'primary_color' => '#672c5d',
+                    'dark_color' => '#351e31',
+                    'light_color' => '#f4e2ef'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'red'}
+                {$colors = [
+                    'primary_color' => '#B92617',
+                    'dark_color' => '#3B0D08',
+                    'light_color' => '#FFF5F4'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-red'}
+                {$colors = [
+                    'primary_color' => '#8f261d',
+                    'dark_color' => '#5a2121',
+                    'light_color' => '#fae6e6'
+                ]}
+            {elseif $theme_settings['color_scheme_variant'] == 'dark-orange'}
+                {$colors = [
+                    'primary_color' => '#cd5100',
+                    'dark_color' => '#592e12',
+                    'light_color' => '#fbebe0'
+                ]}
+            {else}
+                {$colors = [
+                    'primary_color' => '#2d9cdb',
+                    'dark_color' => '#0c3c57',
+                    'light_color' => '#ebf8ff'
+                ]}
+            {/if}
+        {/if}
+
+        {foreach ['primary_color', 'dark_color', 'light_color'] as $color}
+            {if preg_match('/^[0-9A-Fa-f]{6}$/', $colors[$color])}
+                {$colors[$color] = "#{$colors[$color]}"}
+            {/if}
+        {/foreach}
+
+        {$colors['primary_color_hover'] = "{call hex_add_brightness hex=$colors['primary_color'] brightness=5}"}
+        {$colors['accent_color'] = "{call hex_add_brightness hex=$colors['primary_color'] brightness=-5}"}
+        {$colors['accent_color_hover'] = "{call hex_add_brightness hex=$colors['primary_color'] brightness=-10}"}
+        {$colors['light_color_hover'] = "{call hex_add_brightness hex=$colors['light_color'] brightness=-5}"}
+        {$colors['pale_color'] = "{call hex_to_rgba hex=$colors['light_color'] opacity=0.5}"}
+        {$colors['price_with_compare_color'] = $theme_settings['custom_color_scheme_price_with_compare_color']}
+
+        {call rgb2hsl hex=$colors['dark_color']}
+        {$dark_color_hsl = $wa->globals('market.return')}
+
+        {if $dark_color_hsl[2] > 90}
+            {$colors['footer_text_color'] = 'black'}
+        {else}
+            {$colors['footer_text_color'] = 'white'}
+        {/if}
+
+        {$colors['header_bottom_bar_bg_color'] = $colors['primary_color']}
+        {$colors['header_bottom_bar_btn_color'] = $colors['accent_color']}
+        {$colors['header_bottom_bar_btn_hover_color'] = $colors['accent_color_hover']}
+        {$colors['header_bottom_bar_text_color'] = $theme_settings['header_horizontal_custom_text_color']|default:'#ffffff'}
+
+        {if !empty($theme_settings['header_horizontal_custom_bg_color'])}
+            {$colors['header_bottom_bar_bg_color'] = $theme_settings['header_horizontal_custom_bg_color']}
+            {$colors['header_bottom_bar_btn_color'] = "{call hex_add_brightness hex=$colors['header_bottom_bar_bg_color'] brightness=-5}"}
+            {$colors['header_bottom_bar_btn_hover_color'] = "{call hex_add_brightness hex=$colors['header_bottom_bar_bg_color'] brightness=-10}"}
+        {/if}
+
+        {if $colors['header_bottom_bar_text_color'] == '#ffffff' && $theme_settings['header_variant'] == 5 && $theme_settings['header_variant_5_bottom_bar_transparent']}
+            {$colors['header_bottom_bar_text_color'] = '#1B1B1B'}
+        {/if}
+
+        {$colors['add_to_cart_button_color'] = $theme_settings['shop_misc_add_to_cart_button_color']|default:$colors['primary_color']}
+        {$colors['add_to_cart_button_color_hover'] = "{call hex_add_brightness hex=$colors['add_to_cart_button_color'] brightness=5}"}
+        {$colors['add_to_cart_button_text_color'] = $theme_settings['shop_misc_add_to_cart_button_text_color']|default:'#ffffff'}
+        {$colors['add_to_cart_button_text_hover_color'] = $theme_settings['shop_misc_add_to_cart_button_text_hover_color']|default:'#ffffff'}
+
+        {$colors['badge_bestseller_color'] = $theme_settings['custom_color_scheme_badge_bestseller']|default:'#9b51e0'}
+        {$colors['badge_bestseller_text_color'] = $theme_settings['custom_color_scheme_badge_bestseller_text']|default:'#ffffff'}
+        {$colors['badge_new_color'] = $theme_settings['custom_color_scheme_badge_new']|default:'#27ae60'}
+        {$colors['badge_new_text_color'] = $theme_settings['custom_color_scheme_badge_new_text']|default:'#ffffff'}
+        {$colors['badge_discount_color'] = $theme_settings['custom_color_scheme_badge_discount']|default:'#ff3131'}
+        {$colors['badge_discount_text_color'] = $theme_settings['custom_color_scheme_badge_discount_text']|default:'#ffffff'}
+
+        {if !"{call is_dark hex=$colors['add_to_cart_button_color']}"}
+            {$colors['add_to_cart_button_color_hover'] = "{call hex_add_brightness hex=$colors['add_to_cart_button_color'] brightness=-5}"}
+        {/if}
+
+        {$wa->globals('market.colors', $colors)}
+        {$wa->globals('market.colors.primary', $colors['primary_color'])}
+        {$wa->globals('market.colors.dark_color_hsl', $dark_color_hsl)}
+
+        {if $theme_settings['promo_top_banner_enabled'] && !empty($theme_settings['promo_top_banner_text'])}
+            {$banner_hash = md5(json_encode([
+                'text' => $theme_settings['promo_top_banner_text'],
+                'link' => $theme_settings['promo_top_banner_link'],
+                'button_text' => $theme_settings['promo_top_banner_button_text']
+            ]))}
+
+            {if $wa->cookie('banner_hash') !== $banner_hash}
+                {$wa->globals('market.promo_banner_hash', $banner_hash)}
+            {/if}
+        {/if}
+
+        {$wa->globals('market.extend_settings', [])}
+        {$_ = $wa->block('market.extend_settings')}
+        {$market['extend_settings'] = $wa->globals('market.extend_settings')|default:[]}
+
+        {$_ = $wa->block("market.stocks_available_statuses")}
+        {$market['stocks_available_statuses'] = $wa->globals('market.stocks_available_statuses')|default:[]}
+        {$wa->globals('market.stocks_available_statuses', $market['stocks_available_statuses'])}
+
+        {$market['stocks'] = $wa->shop->stocks(true)}
+        {$favorite_products = $wa->cookie('shop_favorite')}
+
+        {if $favorite_products}
+            {$favorite_products = explode(',', $favorite_products)}
+        {else}
+            {$favorite_products = []}
+        {/if}
+
+        {$market['favorite_products'] = array_fill_keys($favorite_products, true)}
+        {$market['compare_products'] = array_fill_keys($wa->shop->inComparison(), true)}
+
+        {$market['cart_items'] = $wa->shop->cart->items()}
+
+        {$cart_skus = []}
+
+        {foreach $market['cart_items'] as $item}
+            {$cart_skus[$item['sku_id']] = ifset($cart_skus[$item['sku_id']], 0) + $item['quantity']}
+        {/foreach}
+
+        {$market['cart_skus'] = $cart_skus}
+        {$market['currency'] = $wa->shop->currency()}
+        {$market['ignore_stock_count'] = $wa->shop->settings('ignore_stock_count')}
+        {$market['cart_add_url'] = $wa->getUrl('shop/frontendCart/add')}
+
+
+        {include "./blocks.html" inline}
+
+        {$defaults = [
+        'is_show_light_index' => false,
+        'is_checkout' => false,
+        'is_show_sidebar' => false,
+        'sidebar_side' => "left",
+        'is_static_catalog' => false,
+        'is_show_breadcrumbs' => false,
+        'is_show_responsive_social' => false,
+        'breadrumbs_block_add_content' => null,
+        'last_breadcrumb' => null,
+        'ignore_breadcrumbs_plugin' => false,
+        'market.index.only_content' => false,
+        'market.main.only_content' => false,
+        'is_my' => false,
+        'my_nav' => []
+        ]}
+
+        {foreach $defaults as $name => $default}
+            {$wa->globals($name, $wa->globals($name)|default:$default)}
+        {/foreach}
+
+        {$wa->globals('is_mobile', !$theme_settings['disable_adaptive'] && "{call is_mobile}")}
+        {$wa->globals('market.enable_2x', $wa->shop->config('enable_2x'))}
+        {$wa->globals('market.has_premium', class_exists('waLicensing') && waLicensing::check('shop/themes/market3')->hasPremiumLicense())}
+
+        {if $wa->globals('is_mobile') && !$wa->globals('fixed_bar_btns')}
+            {call get_fixed_bar_btns}
+        {/if}
+
+        {if $wa_app != 'shop'}
+            {call get_my_nav}
+        {/if}
+
+        {if $wa_app == 'blog' && !$is_shop}
+            {include "{$wa_active_theme_path}/init.blog.html" assign='_'}
+        {/if}
+
+        
+        {$config = []}
+        {$config['commons'] = []}
+        {$image_id = $image_id|default:''}
+        {capture assign='modal_tpl'}
+            <div class="modal">
+                <div class="modal__close">
+                    <span class="image-box">
+                        {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                    </span>
+                </div>
+                <div class="modal__title">
+                </div>
+                <div class="modal__content">
+                </div>
+            </div>
+        {/capture}
+        {$config['commons']['modal_tpl'] = $modal_tpl}
+        {capture assign='popup_gallery_tpl'}
+            <div class="popup-gallery">
+                <div class="popup-gallery__images-container">
+                    <div class="popup-gallery__images swiper">
+                        <div class="popup-gallery__images-wrapper swiper-wrapper">
+                            <div class="popup-gallery__image swiper-slide image-box image-box_contain" data-image_id="{$image_id}">
+                                <img src="" alt="" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="popup-gallery__arrow popup-gallery__arrow_prev">
+                        {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-left' width=16 height=26}
+                    </div>
+                    <div class="popup-gallery__arrow popup-gallery__arrow_next">
+                        {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-right' width=16 height=26}
+                    </div>
+                </div>
+                <div class="popup-gallery__pagination gallery-pagination"></div>
+            </div>
+        {/capture}
+        {$config['commons']['popup_gallery_tpl'] = $popup_gallery_tpl}
+        {capture assign="info_panel_html"}
+            {* @formatter:off *}
+            <div class="info-panel info-panel_dark">
+                <div class="container">
+                    <div class="info-panel__container">
+                        <div class="info-panel__content-container">
+                            
+                        </div>
+                        <div class="info-panel__close-button-container">
+                            <span class="info-panel__close-button">
+                                <span class="image-box">
+                                    {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {* @formatter:on *}
+        {/capture}
+        {$config['commons']['info_panel_html'] = $info_panel_html}
+        {$config['commons']['select_html'] = "{call select}"}
+        {capture assign="radio_html"}
+            <label class="radio">
+                <input class="radio__control" type="radio">
+                <span class="radio__mark"></span>
+            </label>
+        {/capture}
+        {$config['commons']['radio_html'] = $radio_html}
+        {capture assign="checkbox_html"}
+            <label class="checkbox">
+                <input class="checkbox__control" type="checkbox" />
+                <span class="checkbox__mark"></span>
+            </label>
+        {/capture}
+        {$config['commons']['checkbox_html'] = $checkbox_html}
+        {capture assign="input_file_html"}
+            <label class="input-file">
+                <input type="file" name="" class="input-file__control" />
+                <span class="input-file__box">
+                    <span class="input-file__button-box">
+                        <button class="input-file__button button button_style_inverse" type="button">
+                            [`Выберите файл`]
+                        </button>
+                    </span>
+                    <span class="input-file__file-box">[`Файл не выбран`]</span>
+                </span>
+            </label>
+        {/capture}
+        {$config['commons']['input_file_html'] = $input_file_html}
+        {capture assign="pseudo_link_icon_box_html"}
+            <span class="pseudo-link-box">
+                <span class="icon-box">
+                    <span class="icon-box__icon">
+                        {call svg_icon icon="null" classes="pseudo-link-box__icon"}
+                    </span>
+                    <span class="icon-box__content">
+                        <span class="pseudo-link-box__link">
+                        </span>
+                    </span>
+                </span>
+            </span>
+        {/capture}
+        {$config['commons']['pseudo_link_icon_box_html'] = $pseudo_link_icon_box_html}
+        {$config['commons']['wa_url'] = $wa_url}
+        {$config['commons']['login_url'] = $wa->loginUrl()}
+        {$config['commons']['signup_url'] = $wa->signupUrl()}
+        {$config['commons']['profile_url'] = $wa->getUrl('shop/frontend/myProfile')}
+        {$config['commons']['forgotpassword_url'] = $wa->forgotPasswordUrl()}
+        {$config['commons']['svg'] = []}
+        {if isset($wa_real_parent_theme_url)}
+            {$theme_url = $wa_real_parent_theme_url}
+        {else}
+            {$theme_url = $wa_real_theme_url}
+        {/if}
+        {$config['commons']['svg']['symbols_sprite'] = "{$theme_url}svg/icon.sprite.svg"}
+        {capture assign="spinner"}
+            <span class="spinner">
+                <span class="image-box">
+                    {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                </span>
+            </span>
+
+        {/capture}
+        {$config['commons']['svg']['spinner'] = $spinner}
+        {$config['commons']['svg']['trash'] = "{call svg_icon icon='trash' width=16 height=16 fill='currentColor'}"}
+        {$config['commons']['svg']['arrow_left'] = "{call svg_icon icon='arrow-left' width=6 height=10 fill='currentColor'}"}
+        {$config['commons']['svg']['arrow_right'] = "{call svg_icon icon='arrow-right' width=6 height=10 fill='currentColor'}"}
+        {$config['commons']['svg']['arrow_bottom'] = "{call svg_icon icon='arrow-bottom' width=10 height=6 fill='currentColor'}"}
+        {$config['commons']['svg']['cross'] = "{call svg_icon icon='cross' width=12 height=12 fill='currentColor'}"}
+        {$config['commons']['svg']['available'] = "{call svg_icon icon='available' width=16 height=16 fill='currentColor'}"}
+        {$config['commons']['svg']['no_available'] = "{call svg_icon icon='no-available' width=16 height=16 fill='currentColor'}"}
+        {$config['commons']['analytics'] = []}
+        {$config['commons']['analytics']['ym_counter'] = $theme_settings['analytics_ym_counter']}
+
+        {* @formatter:off *}
+        {$config['commons']['analytics']['goals'] = [
+        'add_to_cart' => [
+        'ym' => $theme_settings['analytics_add_to_cart_ym']|default:'',
+        'ga_category' => $theme_settings['analytics_add_to_cart_ga_category']|default:'',
+        'ga_action' => $theme_settings['analytics_add_to_cart_ga_action']|default:''
+        ],
+        'user_reg' => [
+        'ym' => $theme_settings['analytics_user_reg_ym']|default:'',
+        'ga_category' => $theme_settings['analytics_user_reg_ga_category']|default:'',
+        'ga_action' => $theme_settings['analytics_user_reg_ga_action']|default:''
+        ],
+        'add_review' => [
+        'ym' => $theme_settings['analytics_add_review_ym']|default:'',
+        'ga_category' => $theme_settings['analytics_add_review_ga_category']|default:'',
+        'ga_action' => $theme_settings['analytics_add_review_ga_action']|default:''
+        ],
+        'add_to_compare' => [
+        'ym' => $theme_settings['analytics_add_to_compare_ym']|default:'',
+        'ga_category' => $theme_settings['analytics_add_to_compare_ga_category']|default:'',
+        'ga_action' => $theme_settings['analytics_add_to_compare_ga_action']|default:''
+        ],
+        'add_to_favorite' => [
+        'ym' => $theme_settings['analytics_add_to_favorite_ym']|default:'',
+        'ga_category' => $theme_settings['analytics_add_to_favorite_ga_category']|default:'',
+        'ga_action' => $theme_settings['analytics_add_to_favorite_ga_action']|default:''
+        ],
+        'telegram' => [
+            'ym' => $theme_settings['analytics_tg_contacts']|default:'',
+            'ga_category' => $theme_settings['analytics_tg_contacts_ga_category']|default:'',
+            'ga_action' => $theme_settings['analytics_tg_contacts_ga_action']|default:''
+        ],
+        'telegram_product' => [
+            'ym' => $theme_settings['analytics_tg_product']|default:'',
+            'ga_category' => $theme_settings['analytics_tg_product_ga_category']|default:'',
+            'ga_action' => $theme_settings['analytics_tg_product_ga_action']|default:''
+        ],
+        'whatsapp' => [
+            'ym' => $theme_settings['analytics_whatsapp_contacts']|default:'',
+            'ga_category' => $theme_settings['analytics_whatsapp_contacts_ga_category']|default:'',
+            'ga_action' => $theme_settings['analytics_whatsapp_contacts_ga_action']|default:''
+        ],
+        'whatsapp_product' => [
+            'ym' => $theme_settings['analytics_whatsapp_product']|default:'',
+            'ga_category' => $theme_settings['analytics_whatsapp_product_ga_category']|default:'',
+            'ga_action' => $theme_settings['analytics_whatsapp_product_ga_action']|default:''
+        ]
+        ]}
+        {* @formatter:on *}
+
+        {$config['commons']['header_variant'] = $theme_settings['header_variant']}
+        {$config['commons']['is_cookie'] = !!"{call is_mobile_checking_by_cookie}"}
+        {$config['commons']['is_mobile'] = !!$wa->globals('is_mobile')}
+        {$config['commons']['catalog_onenter_timeout'] = 500}
+        {$config['commons']['catalog_onleave_timeout'] = 300}
+        {$config['commons']['cart_onenter_timeout'] = 500}
+        {$config['commons']['cart_onleave_timeout'] = 300}
+        {$config['commons']['has_premium'] = $wa->globals('market.has_premium')}
+
+        {if $wa->globals('ya-share_is_enabled')}
+            {$config['commons']['ya_share_source'] = $wa->globals('ya-share_source')}
+        {/if}
+
+        {$config['language'] = []}
+        {$config['language']['item'] = _wp('item')}
+        {$config['language']['Год'] = _wp('Год')}
+        {$config['language']['Сменить пароль'] = _wp('Сменить пароль')}
+        {$config['language']['Файл не выбран'] = _wp('Файл не выбран')}
+        {$config['language']['Вход на сайт'] = _wp('Вход на сайт')}
+        {$config['language']['message_max_count'] = _wp('Извините, но в наличии только %sku_count% единиц товара %sku_name%. Вы можете добавить в корзину ещё %max_sku_quantity%.')}
+        {$config['language']['message_max_count_in_cart'] = _wp('Извините, но в наличии только %sku_count% единиц товара %sku_name%, и все они уже в вашей корзине покупок.')}
+        {$config['language']['to_favorites'] = _wp('В избранное')}
+        {$config['language']['remove_from_favorites'] = _wp('Удалить из избранного')}
+        {$config['language']['to_compare'] = _wp('К сравнению')}
+        {$config['language']['remove_from_compare'] = _wp('Удалить из сравнения')}
+        {$config['language']['back_to_shopping'] = _wp('Back to shopping')}
+        {$config['language']['page_number'] = _wp('Страница %page% из %pages_count%')}
+        {$config['language']['for'] = _wp('за')}
+        {$config['language']['write_a_review'] = _wp('Написать отзыв')}
+        {$config['language']['add_comment'] = _wp('Написать комментарий')}
+        {$config['language']['copy_link'] = _wp('Копировать ссылку')}
+        {$config['language']['link_is_copied'] = _wp('Ссылка скопирована')}
+        {$config['language']['added_to_cart'] = _wp('Товар добавлен в корзину')}
+        {$config['language']['choose'] = _wp('Выбрать')}
+        {$config['language']['plurals'] = [
+            'products' => "{_wp("товар")},{_wp("товара")},{_wp("товаров")}",
+            'days' => "{_wp("день")},{_wp("дня")},{_wp("дней")}",
+            'hours' => "{_wp("час")},{_wp("часа")},{_wp("часов")}",
+            'minutes' => "{_wp("минута")},{_wp("минуты")},{_wp("минут")}",
+            'seconds' => "{_wp("секунда")},{_wp("секунды")},{_wp("секунд")}"
+        ]}
+
+        {$config['shop'] = []}
+        {$config['shop']['home_url'] = $wa->getUrl('shop/frontend')}
+        {$config['shop']['search_url'] = $wa->getUrl('shop/frontend/search')}
+        {$config['shop']['cart_url'] = $wa->getUrl('shop/frontend/cart')}
+
+        {if method_exists($wa->shop, 'checkout')}
+            {$config['shop']['real_cart_url'] = $wa->shop->checkout()->cartUrl()}
+        {else}
+            {$config['shop']['real_cart_url'] = $wa->getUrl('shop/frontend/cart')}
+        {/if}
+
+        {$config['shop']['cart_add_url'] = $wa->getUrl('shop/frontendCart/add')}
+        {$config['shop']['cart_save_url'] = $wa->getUrl('shop/frontendCart/save')}
+        {$config['shop']['cart_delete_url'] = $wa->getUrl('shop/frontendCart/delete')}
+        {$config['shop']['compare_url'] = $wa->getUrl('shop/frontend/compare')}
+        {$config['shop']['compare_id_url'] = $wa->getUrl('shop/frontend/compare', ['id' => '{$id}'])}
+        {$config['shop']['compare_url_variant'] = $theme_settings['shop_misc_compare_url_variant']}
+        {$config['shop']['data_regions_url'] = $wa->getUrl('shop/frontend/regions')}
+        {$config['shop']['data_shipping_url'] = $wa->getUrl('shop/frontend/shipping')}
+        {$config['shop']['search_query'] = $query|default:''}
+        {$config['shop']['to_toggle_cart_button'] = $theme_settings['shop_misc_change_add2cart'] == 1}
+        {$config['shop']['zero_price_text'] = $theme_settings['shop_misc_zero_price_text']}
+        {$config['shop']['is_enabled_2x'] = $wa->globals('market.enable_2x')}
+        {$config['shop']['is_enabled_srcset'] = $wa->globals('market.enable_2x') && $theme_settings['srcset_for_hpd_images'] == 1}
+        {$config['shop']['change_url_by_sku'] = $theme_settings['shop_product_change_url'] == 1}
+        {$config['shop']['product_dummy_image'] = $theme_settings['product_dummy_image']}
+
+        {if !empty($category_id)}
+            {call get_category_path category_id=$category_id}
+            {$config['shop']['path'] = $wa->globals('market.return')}
+        {elseif !empty($category)}
+            {call get_category_path category_id=$category.id}
+            {$config['shop']['path'] = $wa->globals('market.return')}
+        {else}
+            {$config['shop']['path'] = []}
+        {/if}
+
+        {$config['shop']['add_affiliate_bonus_string'] = sprintf(preg_quote("[`This order will add <strong>+%s bonuses</strong> to  your account, which you will be able to spend on getting additional discounts later.`]"), "(.*)")}
+
+        {call get_currency_info}
+        {$config['shop']['currency_info'] = $wa->globals('market.return')}
+        {$config['shop']['currency'] = $wa->shop->currency()}
+        {$config['shop']['primary_currency'] = $wa->shop->primaryCurrency()}
+        {$config['shop']['add_to_cart_effect'] = $theme_settings['shop_checkout_add_to_cart_effect']}
+        {$config['shop']['fractional_config'] = $fractional_config|default:[]}
+        {$config['shop']['units'] = $formatted_units|default:[]}
+
+        {$thumbs_image_block_padding = (intval($theme_settings['shop_catalog_products_mobile_thumbs_image_padding']) * 2)|default:0}
+
+        {* @formatter:off *}
+        {$config['shop']['images_sizes'] = [
+        'thumbs' => [
+        375 => 345 - $thumbs_image_block_padding,
+        425 => 393 - $thumbs_image_block_padding,
+        767 => 360 - $thumbs_image_block_padding
+        ],
+        'm-thumbs' => [
+        425 => 195 - $thumbs_image_block_padding,
+        560 => 260 - $thumbs_image_block_padding,
+        767 => 360 - $thumbs_image_block_padding
+        ]
+        ]}
+
+        {$wa->globals('market.js_config', $config)}
+
+        {$classes = []}
+
+        {$integrated_with_css_plugins = [
+           'shop_pricedown',
+           'shop_que',
+           'shop_cityselect'
+        ]}
+
+        {foreach [
+        ['shop', 'buy1step'],
+        ['shop', 'buy1click'],
+        ['shop', 'buy1click2'],
+        ['shop', 'ordercall'],
+        ['shop', 'regions'],
+        ['shop', 'cityselect'],
+        ['shop', 'searchpro'],
+        ['shop', 'dp'],
+        ['shop', 'discount4review'],
+        ['shop', 'complex'],
+        ['shop', 'bundling'],
+        ['shop', 'freedelivery'],
+        ['shop', 'specprice'],
+        ['shop', 'featurestips'],
+        ['shop', 'flexdiscount'],
+        ['shop', 'productbrands'],
+        ['shop', 'productgroup'],
+        ['shop', 'bestprice'],
+        ['shop', 'pricedown'],
+        ['shop', 'pnotice'],
+        ['shop', 'que'],
+        ['shop', 'fiwex'],
+        ['shop', 'wholesale'],
+        ['shop', 'minimum'],
+        ['shop', 'giftcertificates'],
+        ['shop', 'promos'],
+        ['shop', 'warehouse'],
+        ['shop', 'listfeatures']
+        ] as $plugin}
+            {$plugin_name = $plugin[1]}
+            {$plugin_id = "{$plugin[0]}_{$plugin_name}"}
+
+            {if $market['plugins']["{$plugin_id}"] && (!empty($theme_settings["plugins_{$plugin_id}_css"]) || in_array("{$plugin_id}", $integrated_with_css_plugins))}
+                {$classes[] = "page_{$plugin_name}"}
+            {/if}
+        {/foreach}
+
+        {if $wa->userAgent('device') === 'iphone'}
+            {$classes[] = "page_iphone"}
+        {/if}
+
+        {if $theme_settings['disable_adaptive']}
+            {$classes[] = "page__d"}
+        {/if}
+
+        {if count($wa->globals('market.fixed_bar_btns')|default:[]) > 0}
+            {$classes[] = "page_bar"}
+        {/if}
+
+        {$wa->globals('market.index.body_classes', implode(' ', $classes))}
+
+
+        {$market['inited'] = true}
+        {$market = $market scope='global'}
+    {/if}
+{/strip}

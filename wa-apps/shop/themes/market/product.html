@@ -1,0 +1,813 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Theme Settings *}
+    {$social_source = $theme_settings['shop_product_social_source']|default:'yastatic'}
+    {$is_enabled_brand = $theme_settings['shop_product_brand_enabled']}
+    {$variant_advantages = $theme_settings['shop_product_advantages_position']}
+    {$is_joined_description_and_features = $theme_settings['shop_product_joined_description_and_features']}
+    {$crosseling_lists = $theme_settings['shop_product_upselling_lists']|default:''}
+    {$variant_crosseling = $theme_settings['shop_product_upselling_variant']}
+    {$limit_crosseling = $theme_settings['shop_product_upselling_limit']}
+    {$hide_no_available_crosseling = $theme_settings['shop_product_upselling_available']}
+    {$upselling_block_title = $theme_settings['shop_product_upselling_title']}
+    {$crossselling_block_title = $theme_settings['shop_product_crossselling_title']}
+    {$recently_block_title = $theme_settings['shop_product_recently_title']}
+    {$variant_info = $theme_settings['shop_product_joined_description_and_features']}
+    {$variant_tab = $theme_settings['shop_product_tab_variant']}
+    {$is_hide_reviews = $theme_settings['shop_product_reviews_hide']}
+    {$is_hide_features = $theme_settings['shop_product_features_hide']}
+    {$slider_view_adaptive = $theme_settings["shop_home_products_variant_adaptive"]}
+    {$seofilter_links_header = $theme_settings["shop_product_seofilter_links_header"]|default:''}
+    {$seofilter_links_one_feature = $theme_settings["shop_product_seofilter_links_one_feature"]}
+    {$seofilter_links_many_features = $theme_settings["shop_product_seofilter_links_many_features"]}
+    {$brand_feature_code = $theme_settings["shop_misc_brand_feature_code"]|default:'brand'}
+    {$limit_features = $theme_settings['shop_product_features_limit']}
+    {$theme_feature_codes = $theme_settings['shop_product_features_ids']}
+
+    {* Variables *}
+    {$plugins = $wa->globals('plugins')}
+    {$is_install_groupattr = $plugins['shop_groupattr']}
+    {$is_install_seofilter = $plugins['shop_seofilter']}
+    {$is_install_brands = $plugins['shop_brand'] || $plugins['shop_productbrands']}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$is_enabled_social = $social_source !== 'disabled'}
+    {$wa->globals('is_show_responsive_social', $is_enabled_social)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $product.name])}
+    {$product.name = $product.name|escape}
+    {$product.url = $product.url|escape}
+
+    {if !isset($product.skus[$product.sku_id].features)}
+        {$skus = $product.skus}
+        {$skus[$product.sku_id].features = $product.features}
+
+        {if isset($product.sku_features[$product.sku_id])}
+            {$skus[$product.sku_id].features = array_merge($skus[$product.sku_id].features, $product.sku_features[$product.sku_id])}
+        {/if}
+
+        {$product.skus = $skus}
+    {/if}
+
+    {$primary_sku = $product.skus[$product.sku_id]}
+
+    {if !isset($sku_features)}
+        {$sku_features = $features}
+    {/if}
+
+    {$has_description = !!$product.description|default:'' || !!$product.additional_description|default:''}
+    {$show_seofilter_links = $seofilter_links_one_feature || $seofilter_links_many_features}
+    {$category = $wa->shop->category($product.category_id)}
+
+    {$is_mobile_view_slider = false}
+    {if $slider_view_adaptive === 'cols' && $wa->globals('is_mobile')}
+        {$is_mobile_view_slider = true}
+    {/if}
+
+    {if $variant_tab === 'inline' && !$wa->globals('is_mobile')}
+        {$is_joined_description_and_features = false}
+    {/if}
+
+    {$crosseling_lists = explode(',', $crosseling_lists)}
+
+    {function products_list id='' is_slider=false id=''}
+        <section class="blocks__item" id="{$id}">
+            <div class="block{if $is_slider} slider-block{/if}">
+                <div class="block__header block__header_text">
+                    {if $is_slider}
+                        <div class="slider-block__header-container">
+                            <div class="slider-block__header-text-container">
+                                {$header_text|escape}
+                            </div>
+                            <div class="slider-block__buttons-container">
+                                {call slider_arrows}
+                            </div>
+                        </div>
+                    {else}
+                        {$header_text|escape}
+                    {/if}
+                </div>
+                <div class="block__content">
+                    {call products_thumbs
+                    products=$products
+                    is_mobile=$is_mobile_view_slider
+                    features_variant=$theme_settings['shop_catalog_products_thumbs_features_variant']
+                    is_slider=$is_slider
+                    }
+                </div>
+            </div>
+        </section>
+    {/function}
+
+    {$products_blocks = []}
+    {$crossselling = null}
+    {$upselling = null}
+    {$viewed_products = null}
+
+    {if in_array('crossselling', $crosseling_lists)}
+        {$crossselling = $product->crossSelling($limit_crosseling, $hide_no_available_crosseling)}
+
+        {capture assign="crossselling_block"}
+            {if count($crossselling) > 0}
+                {call products_list products=$crossselling header_text="{_wp($crossselling_block_title)}" is_slider=$variant_crosseling === 'slider' id='crossselling'}
+            {/if}
+        {/capture}
+        {$products_blocks['crossselling'] = $crossselling_block}
+    {/if}
+
+    {if in_array('upselling', $crosseling_lists)}
+        {$upselling = $product->upSelling($limit_crosseling, $hide_no_available_crosseling)}
+
+        {capture assign="upselling_block"}
+            {if count($upselling) > 0}
+                {call products_list products=$upselling header_text="{_wp($upselling_block_title)}" is_slider=$variant_crosseling === 'slider' id='upselling'}
+            {/if}
+        {/capture}
+        {$products_blocks['upselling'] = $upselling_block}
+    {/if}
+
+    {if in_array('recently', $crosseling_lists)}
+        {$viewed_products = explode(',', $wa->cookie('shop_recently'))}
+        {$viewed_products = array_slice($viewed_products, 0, $limit_crosseling)}
+        {$recently = $wa->shop->products($viewed_products, ['fields' => '*,skus'])}
+
+        {capture assign="recently_block"}
+            {if count($recently) > 0}
+                {call products_list products=$recently header_text="{_wp($recently_block_title)}" is_slider=$variant_crosseling === 'slider' id='recently'}
+            {/if}
+        {/capture}
+
+        {$products_blocks['recently'] = $recently_block}
+    {/if}
+
+    {* Handlers *}
+    {$brand = null}
+    {if $is_enabled_brand && $is_install_brands}
+        {if $plugins['shop_brand'] && is_callable(['shopBrandViewHelper', 'getProductBrand'], false)}
+            {$brand = shopBrandViewHelper::getProductBrand($product)}
+        {elseif $plugins['shop_productbrands'] && is_callable(['shopProductbrandsPlugin', 'productBrand'], false)}
+            {$_brand = shopProductbrandsPlugin::productBrand($product.id)}
+            {$brand = [
+                'name' => $_brand.name,
+                'frontend_url' => $_brand.url,
+                'image_url' => "{$wa_url}wa-data/public/shop/brands/{$_brand.id}/{$_brand.id}{$_brand.image}"
+            ]}
+        {/if}
+    {/if}
+
+    {$features_selectable_ids = []}
+
+    {if $product.sku_type == '1'}
+        {$features_selectable_ids = array_keys($features_selectable)}
+    {/if}
+
+    {$category_params_features_codes = null}
+    {if isset($category.params.product_cart_features_ids) && !empty($category.params.product_cart_features_ids)}
+        {$category_params_features_codes = $category.params.product_cart_features_ids}
+    {/if}
+
+    {$feature_codes = []}
+
+    {if !empty($extend_feature_codes)}
+        {$feature_codes = $extend_feature_codes}
+    {elseif !empty($category_params_features_codes)}
+        {$feature_codes = explode(',', $category_params_features_codes)}
+    {elseif !empty($theme_feature_codes)}
+        {$feature_codes = explode(',', $theme_feature_codes)}
+    {/if}
+
+    {* TODO (wahub.ru) Fix - $primary_sku может вызываться с ошибкой при первом вызове (задаем пустой массив по умолчанию) *}
+    {function render_features sku=$primary_sku|default:[] _features=[] is_short=false}
+        {* Product Features Start *}
+        {* Theme Settings *}
+        {$is_2_cols = $theme_settings['shop_product_features_2_cols'] && !$is_short}
+
+        {* Variables *}
+        {$current_group = null}
+        {$features_groups = []}
+        {$__features = []}
+
+        {foreach $sku_features as $feature_code => $_}
+            {$__features[$feature_code] = $_features[$feature_code]|default:''}
+        {/foreach}
+
+        {$_features = $__features}
+
+        {if $is_install_groupattr && !$is_short}
+            {$_features = shopGroupattrPlugin::process($product, $sku_features)}
+        {/if}
+
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_featurestips = $plugins['shop_featurestips'] && isset($featurestips)}
+
+        {foreach $_features as $feature_code => $value}
+            {if !isset($sku_features[$feature_code])}
+                {continue}
+            {/if}
+
+            {$feature = $sku_features[$feature_code]}
+            {$is_divider = $feature['type'] === 'divider'}
+
+            {if $is_divider}
+                {$current_group = $feature_code}
+            {else}
+                {if !isset($features_groups[$current_group])}
+                    {$features_groups[$current_group] = []}
+                {/if}
+
+                {$features_groups[$current_group][$feature_code] = $value}
+            {/if}
+        {/foreach}
+
+        {$count_features = 0}
+
+        {* Template *}
+        <div class="product-features{if $is_2_cols && count($features_groups) > 1} product-features_2_cols{/if}">
+            {foreach $features_groups as $group_code => $product_features}
+                {$divider = $sku_features[$group_code]|default:null}
+
+                {capture assign="group_content"}
+                    {foreach $product_features as $feature_code => $value}
+                        {$feature = $sku_features[$feature_code]}
+
+                        {if $is_short}
+                            {if in_array($feature.id, $features_selectable_ids) || (count($feature_codes) > 0 && !in_array($feature_code, $feature_codes))}
+                                {continue}
+                            {/if}
+
+                            {if $limit_features != -1 && $count_features >= $limit_features}
+                                {break}
+                            {/if}
+                        {/if}
+
+                        {$featurestips_output = ''}
+                        {if $is_enabled_featurestips}
+                            {$featurestips_output = "{shopFeaturestipsPlugin::ShowFeatureTip($featurestips, $feature_code)}"}
+                        {/if}
+
+                        <div class="product-features__group-feature">
+                            <div class="product-feature product-feature_product-card {if $value === ''}product-feature_hidden{/if}" data-feature-code="{$feature_code|escape}">
+                                <div class="product-feature__name-box">
+                                    <div class="product-feature__name-align">
+                                        <span class="product-feature__name">
+                                            {$feature.name}
+                                            {if $featurestips_output}
+                                                <span class="product-feature__featurestips-decorator">
+                                                    {$featurestips_output}
+                                                </span>
+                                            {/if}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="product-feature__value{if $is_short} product-feature__value_size-s{/if} link-decorator">
+                                    {call product_feature_value product_id=$sku.product_id value=$value feature=$feature block=true}
+                                </div>
+                            </div>
+                        </div>
+
+                        {$count_features = $count_features + 1}
+                    {/foreach}
+                {/capture}
+
+                {if !empty($group_content)}
+                    {if $is_short}
+                        {$group_content}
+                    {else}
+                        <div class="product-features__group">
+                            {if $divider && !$is_short}
+                                <div class="product-features__group-name">{$divider.name|escape}</div>
+                            {/if}
+                            <div class="product-features__group-features{if $is_2_cols && count($features_groups) === 1} product-features__group-features_2_cols{/if}">
+                                {$group_content}
+                            </div>
+                        </div>
+                    {/if}
+                {/if}
+            {/foreach}
+        </div>
+
+        {$has_hidden_features = $limit_features > 0 && count($_features) > $limit_features}
+
+        {if !$wa->get('cart') && !$wa->get('modal') && $has_hidden_features && !$is_hide_features && $is_short}
+            <div class="product-cart-form__features-all">
+                {if $is_joined_description_and_features}
+                    {$features_url = '#description'}
+                {else}
+                    {$features_url = '#features'}
+                {/if}
+
+                <a class="product-cart-form__features-all-button pseudo-link" href="{$features_url}">
+                    [`Все характеристики`]
+                </a>
+            </div>
+        {/if}
+        {* Product Features End *}
+    {/function}
+
+    {$has_features = !empty($sku_features)}
+    {$_skus_features_html_templates = []}
+    {$product_features_rendered = []}
+
+    {foreach $product.features as $f_id => $v}
+        {* TODO (wahub.ru) Fix - Если пустая группа характеристик или не выбрано ни одной характеристики из группы *}
+        {if !is_null($v)}
+            {$product_features_rendered[$f_id] = "{call product_feature_value product_id=$product.id value=$v feature=$sku_features[$f_id] block=true}"}
+        {/if}
+    {/foreach}
+
+    {$skus_features_rendered = []}
+
+    {foreach $product.skus as $sku_id => $sku}
+        {$skus_features_rendered[$sku_id] = []}
+
+        {foreach $sku.features as $f_id => $v}
+            {* TODO (wahub.ru) Fix - Не задано значение по умолчанию для $sku_features[$f_id]['available_for_sku'] *}
+            {if !$sku_features[$f_id]['available_for_sku']|default:false}
+                {continue}
+            {/if}
+
+            {$product_v = $product_features[$f_id]|default:null}
+            {$sku_v = "{call product_feature_value product_id=$product.id value=$v feature=$sku_features[$f_id] block=true}"}
+
+            {if $sku_v === $product_v}
+                {continue}
+            {/if}
+
+            {$skus_features_rendered[$sku_id][$f_id] = $sku_v}
+        {/foreach}
+    {/foreach}
+
+    {if $variant_advantages !== 'disabled'}
+        {capture assign="advantages_block"}
+            <article class="blocks__item product-page__advantages">
+                {$advantages_size = null}
+                {if $wa->globals('is_mobile')}
+                    {$advantages_size = 'xs'}
+                {/if}
+
+                {call advantages size=$advantages_size}
+            </article>
+        {/capture}
+    {/if}
+
+    {if $plugins['shop_bestprice'] && isset($frontend_product['bestprice-plugin'])}
+        {function decorate_bestprice block=null is_link=false}
+            {if $block}
+                {$button_classes = 'button button_fill'}
+                {if $is_link}
+                    {$button_classes = 'button_clean pseudo-link'}
+                {/if}
+                <div class="bestprice-decorator">
+                    {$block|replace:'i-bestprice__button':"{$button_classes} js-bestprice-button"}
+                </div>
+            {/if}
+        {/function}
+
+        {$frontend_product_bestprice = $frontend_product['bestprice-plugin']}
+        {$active_hook_block = ''}
+        {if !empty($frontend_product_bestprice['cart'])}
+            {$active_hook_block = 'cart'}
+        {elseif !empty($frontend_product_bestprice['block_aux'])}
+            {$active_hook_block = 'block_aux'}
+        {elseif !empty($frontend_product_bestprice['block'])}
+            {$active_hook_block = 'block'}
+        {/if}
+
+        {$hook_output = $frontend_product['bestprice-plugin'][$active_hook_block]}
+        {if !empty($hook_output)}
+            {$frontend_product['bestprice-plugin'][$active_hook_block] = " {call decorate_bestprice block=$hook_output is_link=$active_hook_block === 'cart'}"}
+        {/if}
+    {/if}
+
+    {if $plugins['shop_promos'] && isset($frontend_product['promos-plugin'])}
+        {$frontend_product['promos-plugin'] = []}
+    {/if}
+
+    {* Template *}
+    <div class="microdata">
+        <div itemscope itemtype="http://schema.org/Product">
+            <meta itemprop="name" content="{$product.name}" />
+            <meta itemprop="description" content="{$product.description|escape}" />
+
+            {if $reviews_total_count > 0}
+                <div itemprop="aggregateRating" itemscope itemtype="http://schema.org/AggregateRating">
+                    <meta itemprop="ratingValue" content="{$product.rating|escape}" />
+                    <meta itemprop="reviewCount" content="{$reviews_total_count|escape}" />
+                </div>
+            {/if}
+
+            {if count($product.images) > 0}
+                <meta itemprop="image" content="{$wa->shop->productImgUrl($product, '970')|escape}">
+            {/if}
+
+            {$microdata_params = ['weight', 'model', 'width', 'height', 'depth', 'color', 'manufacturer']}
+
+            {if !empty($primary_sku.sku)}
+                <meta itemprop="sku" content="{$primary_sku.sku|escape}">
+            {/if}
+
+            {if !empty($brand.name)}
+                <meta itemprop="brand" content="{$brand.name|escape}" />
+            {else}
+                {$microdata_params[] = 'brand'}
+            {/if}
+
+            {foreach $product.features as $feature_code => $feature_value}
+                {$_feature_code = $feature_code}
+                {if $_feature_code === $brand_feature_code}
+                    {$_feature_code = 'brand'}
+                {/if}
+                {$is_microdata_param = in_array($_feature_code, $microdata_params)}
+
+                {if $is_microdata_param}
+                    {capture assign='feature_value'}
+                        {if is_array($feature_value)}
+                            {foreach $feature_value as $i => $v}
+                                {$feature_value[$i] = trim(strip_tags($v))}
+                            {/foreach}
+
+                            {$feature_value = implode(', ', $feature_value)}
+                        {/if}
+
+                        {$feature_value|strip_tags}
+                    {/capture}
+
+                    <meta itemprop="{$_feature_code|escape}" content="{$feature_value|escape}" />
+                {/if}
+            {/foreach}
+
+            {capture assign='offers'}
+                {foreach $product.skus as $sku}
+                    <div itemprop="offers" itemscope itemtype="http://schema.org/Offer">
+                        {if $sku.name}
+                            <meta itemprop="name" content="{$sku.name|escape}" />
+                        {/if}
+
+                        <meta itemprop="price" content="{shop_currency($sku.price, $product.currency, null, false)|escape}" />
+                        <meta itemprop="priceCurrency" content="{$wa->shop->currency()|escape}" />
+
+                        {if (!($sku.count === null) && $sku.count <= 0)}
+                            <link itemprop="availability" href="http://schema.org/OutOfStock" />
+                        {else}
+                            <link itemprop="availability" href="http://schema.org/InStock" />
+                        {/if}
+                    </div>
+                {/foreach}
+            {/capture}
+
+            {if count($product.skus) > 1}
+                <div itemprop="offers" itemscope itemtype="http://schema.org/AggregateOffer">
+                    <span itemprop="offerCount">{$product.sku_count}</span>
+                    <span itemprop="lowPrice">{shop_currency($product.min_price, null, null, false)|escape}</span>
+                    <span itemprop="highPrice">{shop_currency($product.max_price, null, null, false)|escape}</span>
+                    <span itemprop="priceCurrency">{$wa->shop->currency()|escape}</span>
+                    {$offers}
+                </div>
+            {else}
+                {$offers}
+            {/if}
+
+            {foreach $product.reviews as $review}
+                <div itemscope itemprop="review" itemtype="http://schema.org/Review">
+                    <meta itemprop="name" content="{$review.title|escape}" />
+
+                    {if !$review.parent_id && !empty($review.rate)}
+                        <div itemprop="reviewRating" itemscope itemtype="http://schema.org/Rating">
+                            {$rate = round($review.rate)}
+
+                            <meta itemprop="worstRating" content="1" />
+                            <meta itemprop="ratingValue" content="{$rate|escape}" />
+                            <meta itemprop="bestRating" content="5" />
+                        </div>
+                    {/if}
+
+                    <meta itemprop="author" content="{$review.author.name|escape}" />
+                    <meta itemprop="itemReviewed" content="{$product.name}">
+                    <meta itemprop="datePublished" content="{$review.datetime|date_format:'Y-m-d'|escape}">
+                    <meta itemprop="description" content="{$review.text|escape}" />
+                </div>
+            {/foreach}
+        </div>
+
+
+        {if $product->video}
+            {$video = $product->video}
+
+            <div itemscope itemtype="http://schema.org/VideoObject">
+                <meta itemprop="embedUrl" content="{$video.url|escape}" />
+                <meta itemprop="width" content="{$video.width|escape}" />
+                <meta itemprop="height" content="{$video.height|escape}" />
+                <meta itemprop="name" content="{$product.name|default:''}" />
+                <meta itemprop="description" content="{$product.description|default:''|escape}" />
+                <meta itemprop="uploadDate" content="{$product.create_datetime|default:''|escape}" />
+
+                {$has_video_thumb = count($video.images) > 0}
+
+                {if $has_video_thumb}
+                    {$video_thumb = $video.images[0]}
+                    {$absolute_thumb_url = "{$wa->url(true)}{$video_thumb|substr:1}"}
+
+                    <link itemprop="thumbnailUrl" href="{$absolute_thumb_url|escape}" />
+                {/if}
+            </div>
+        {/if}
+    </div>
+
+    <div class="product-page" data-product_id="{$product.id}">
+        <div class="blocks">
+            <section class="blocks__item">
+                {include './product.cart.html' product_features_rendered=$product_features_rendered skus_features_rendered=$skus_features_rendered include_microdata=true}
+            </section>
+            {if $variant_advantages === 'before'}
+                {$advantages_block}
+            {/if}
+            <div class="blocks__item">
+                <div class="product-page__content">
+                    {if !empty($frontend_product['complex-plugin']['block'])}
+                        {$frontend_product['complex-plugin']['block']}
+                    {/if}
+
+                    {$tabs = []}
+
+                    {if $has_description}
+                        {capture assign="tab_content"}
+                            <div class="content-decorator product-page__description {if $theme_settings['shop_product_summary_full_width_enabled']}product-page__description_full-width{/if}">
+                                {$product.description}
+
+                                {$product.additional_description|default:''}
+                            </div>
+                        {/capture}
+
+                        {$tabs['description'] = ['slug' => 'description', 'name' => "{_wp("Описание")}", 'show_title' => false, 'content' => $tab_content]}
+                    {/if}
+
+                    {if $has_features && !$is_hide_features}
+                        {capture assign="tab_content"}
+                            {if $has_features}
+                                <div class="product-full-features">
+                                    {call render_features sku=$primary_sku _features=$primary_sku.features}
+                                </div>
+                            {/if}
+                        {/capture}
+
+                        {if $is_joined_description_and_features}
+                            {capture assign='content_features'}
+                                <div class="block block_secondary">
+                                    <div class="block__header block__header_text">
+                                        {_wp("Характеристики")}
+                                    </div>
+                                    <div class="block__content">
+                                        <div class="content-decorator">
+                                            {$tab_content}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/capture}
+                            {$content_description = $tabs['description']['content']}
+                            {capture assign='joined_content'}
+                                <div class="blocks">
+                                    {if $has_description}
+                                        <div class="blocks__item">{$content_description}</div>
+                                    {/if}
+                                    <div class="blocks__item">{$content_features}</div>
+                                </div>
+                            {/capture}
+                            {$tabs['description'] = ['slug' => 'description', 'name' => "{_wp("Описание")}", 'show_title' => false, 'content' => $joined_content, 'joined' => true]}
+                        {else}
+                            {$tabs['features'] = ['slug' => 'features', 'name' => "{_wp("Характеристики")}", 'show_title' => true, 'content' => $tab_content]}
+                        {/if}
+                    {/if}
+
+                    {if !$is_hide_reviews}
+                        {capture assign='tab_content'}
+                            {$reviews = $product.reviews}
+
+                            {function to_tree_comments review=null comments=[]}
+                                {$review.comments = []}
+
+                                {foreach $comments as $comment}
+                                    {if $comment.parent_id == $review.id}
+                                        {call to_tree_comments review=$comment comments=$comments}
+                                        {$review.comments[$comment.id] = $wa->globals('market.return')}
+                                    {/if}
+                                {/foreach}
+
+                                {$wa->globals('market.return', $review)}
+                            {/function}
+
+                            {foreach $reviews as $review_id => $review}
+                                {$review.comments = $review.comments|default:[]}
+
+                                {call to_tree_comments review=$review comments=$review.comments}
+                                {$reviews[$review_id] = $wa->globals('market.return')}
+                            {/foreach}
+
+                            {$show_header = $variant_tab === 'tabs'}
+                            {include './reviews.html' args=[
+                                'disable_wrapper' => true,
+                                'disable_breadcrumbs' => true,
+                                'product' => $product,
+                                'reviews' => $reviews,
+                                'is_tree' => true,
+                                'show_header' => $show_header
+                            ]}
+                        {/capture}
+
+                        {if $reviews_total_count > 0}
+                            {$reviews_tab_title = "{_wp("Отзывы")} <sup>{$reviews_total_count}</sup>"}
+                        {else}
+                            {$reviews_tab_title = "{_wp("Отзывы")}"}
+                        {/if}
+
+                        {$tabs['reviews'] = ['slug' => 'reviews', 'name' => $reviews_tab_title, 'content' => $tab_content, 'show_title' => false]}
+                    {/if}
+
+                    {if $plugins['shop_syrattach'] && empty($frontend_product['syrattach-plugin']['block']) && empty($frontend_product['syrattach-plugin']['block_aux'])}
+                        {$attachments_html = $wa->shop->syrattachPlugin->render($product.id)}
+                        {if $attachments_html}
+                            {$tabs['syrattach'] = ['slug' => 'syrattach', 'name' => "{_wp('Сопутствующие файлы')}", 'content' => $attachments_html]}
+                        {/if}
+                    {/if}
+
+                    {foreach $product.pages as $page}
+                        {capture assign='tab_content'}
+                            <div class="content-decorator">
+                                {$page.content}
+                            </div>
+                        {/capture}
+                        {$slug = "page_{$page.url|replace:'-':'_'}"}
+                        {$tabs[$slug] = ['slug' => $slug, 'name' => $page.name, 'show_title' => false, 'content' => $tab_content]}
+                    {/foreach}
+
+                    {for $i = 1; $i <= 3; $i++}
+                        {$add_tab_title = $theme_settings["shop_product_add_tabs_tab_{$i}_title"]|default:''}
+                        {$add_tab_block_id = $theme_settings["shop_product_add_tabs_tab_{$i}_block"]|default:''}
+                        {if !empty($add_tab_title) && !empty($wa->block($add_tab_block_id))}
+                            {capture assign='tab_content'}
+                                <div class="content-decorator">
+                                    {$wa->block($add_tab_block_id)}
+                                </div>
+                            {/capture}
+                            {$slug = "additional_tab_{$i}"}
+                            {$tabs[$slug] = ['slug' => $slug, 'name' => $add_tab_title, 'show_title' => false, 'content' => $tab_content]}
+                        {/if}
+                    {/for}
+
+
+                    {if !$wa->globals('is_mobile')}
+                        {if $variant_tab === 'tabs' && count($tabs) > 1}
+                            <div class="content-tabs">
+                                {if count($tabs) > 1}
+                                    <div class="content-tabs__tabs tabs">
+                                        {foreach $tabs as $tab}
+                                            {$is_selected = $tab@first}
+                                            <div class="tabs__tab {if $is_selected}tabs__tab_selected{/if}">{$tab.name}</div>
+                                        {/foreach}
+                                    </div>
+                                {/if}
+                                <div class="content-tabs__contents">
+                                    {foreach $tabs as $tab}
+                                        {$is_selected = $tab@first}
+                                        <section class="content-tabs__content {if $is_selected}content-tabs__content_selected{/if}" data-slug="{$tab.slug}">
+                                            <div class="block block_secondary">
+                                                <div class="block__header block__header_text">
+                                                    {if isset($tab.show_title) && $tab.show_title}
+                                                        {$tab.name}
+                                                    {/if}
+                                                </div>
+                                                <div class="block__content">
+                                                    {$tab.content}
+                                                </div>
+                                            </div>
+                                        </section>
+                                    {/foreach}
+                                </div>
+                            </div>
+                        {else}
+                            <div class="blocks-content blocks">
+                                {foreach $tabs as $tab}
+                                    <div class="blocks-content__item blocks__item" data-slug="{$tab.slug}">
+                                        <div class="block block_secondary">
+                                            <div class="block__header block__header_text">
+                                                {$tab.name}
+                                            </div>
+                                            <div class="block__content">
+                                                {$tab.content}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+
+                {if $wa->globals('is_mobile')}
+                    <div class="product-page__responsive-content">
+                        <div class="responsive-tabs">
+                            {foreach $tabs as $tab}
+                                {$is_selected = $tab@first}
+
+                                <div class="responsive-tabs__tab-container {if $is_selected}responsive-tabs__tab-container_selected{/if}"  data-slug="{$tab.slug}">
+                                    <div class="responsive-tabs__tab-header-container">
+                                        <div class="responsive-tabs__tab-header-text-container">
+                                            {$tab.name}
+                                        </div>
+                                        <div class="responsive-tabs__tab-header-arrow-container">
+                                            <span class="image-box">
+                                                {call svg_icon classes="responsive-tabs__tab-header-arrow" icon='arrow-right' width=6 height=10 fill='currentColor'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="responsive-tabs__tab-content-container">
+                                        {$tab.content}
+                                    </div>
+                                </div>
+                            {/foreach}
+                        </div>
+                    </div>
+                {/if}
+            </div>
+
+            {$is_enabled_categories = $theme_settings['shop_product_categories_enabled'] && count($product.categories) > 0}
+            {$is_enabled_tags = $theme_settings['shop_product_tags_enabled'] && count($product.tags) > 0}
+            {if $is_enabled_tags || $is_enabled_categories}
+                <div class="product-page__footer">
+                    <div class="product-page__footer-content">
+                        {if $is_enabled_categories}
+                            {$product_categories = []}
+
+                            {foreach $product.categories as $_category}
+                                {capture append='product_categories'}
+                                    <a class="link" href="{$wa->shop->categoryUrl($_category)}">{$_category.name}</a>
+                                {/capture}
+                            {/foreach}
+                            <div class="product-page__categories">
+                                [`Категории`]: {implode(', ', $product_categories)}
+                            </div>
+                        {/if}
+                        {if $is_enabled_tags}
+                            {$product_tags = []}
+
+                            {foreach $product.tags as $_tag}
+                                {capture append='product_tags'}
+                                    <a class="link" href="{$wa->getUrl('shop/frontend/tag', ['tag' => $_tag])}">{$_tag}</a>
+                                {/capture}
+                            {/foreach}
+                            <div class="product-page__tags">
+                                [`Теги`]: {implode(', ', $product_tags)}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+
+            {if $show_seofilter_links && $is_install_seofilter && method_exists('shopSeofilterProductfiltersViewHelper', 'getProductFiltersUrls')}
+                {$operation = '='}
+                {if $seofilter_links_one_feature && $seofilter_links_many_features}
+                    {$operation = '>='}
+                {elseif $seofilter_links_many_features}
+                    {$operation = '>'}
+                {/if}
+
+                {$seofilters = shopSeofilterProductfiltersViewHelper::getProductFiltersUrls($product, $operation, 1)}
+
+                {if !empty($seofilters)}
+                    <section class="blocks__item product-page__seofilter-links">
+                        {if !empty($seofilter_links_header)}
+                			<div class="block__header block__header_text">
+								{$seofilter_links_header}
+							</div>
+						{/if}
+						<div class="seofilter-links">
+							{foreach $seofilters as $f}
+								<a class="seofilter-links__link" href="{$f.url|escape}">{$f.seo_name}</a>
+							{/foreach}
+						</div>
+					</section>
+				{/if}
+			{/if}
+
+			{if $variant_advantages === 'after'}
+				{$advantages_block}
+			{/if}
+
+			{foreach $crosseling_lists as $list}
+				{$products_blocks[$list]}
+			{/foreach}
+
+            <!-- plugin hook: 'frontend_product.block' -->
+            {* @event frontend_product.%plugin_id%.block *}
+
+            {foreach $frontend_product as $plugin => $_}
+                {if $plugin === 'complex-plugin' || !is_array($_) || !ifset($_.block, '')}
+                    {continue}
+                {/if}
+
+                <!-- frontend_product.{$plugin}.block -->
+                <div class="blocks__item{if $plugin === 'que-plugin'} content-decorator{/if}">
+                    {$_.block}
+                </div>
+            {/foreach}
+		</div>
+	</div>
+{/strip}

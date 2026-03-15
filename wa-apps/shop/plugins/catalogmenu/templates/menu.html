@@ -1,0 +1,26 @@
+{*
+<div id="catalog-menu-container">
+    <a href="#" id="catalog-toggle">Каталог товаров</a>
+
+    <ul class="top-level-menu">
+        {foreach $top_categories as $category}
+            <li data-category-id="{$category.id}">
+                <a href="{$wa->getUrl('shop/frontend/category', ['category_url' => $category.full_url])}">
+                    {$category.name}
+                </a>
+                {if $has_cached_menu && !empty($category.childs)}
+                    <ul class="submenu">
+                        {foreach $category.childs as $child}
+                            <li>
+                                <a href="{$wa->getUrl('shop/frontend/category', ['category_url' => $child.full_url])}">
+                                    {$child.name}
+                                </a>
+                            </li>
+                        {/foreach}
+                    </ul>
+                {/if}
+            </li>
+        {/foreach}
+    </ul>
+</div>*}
+<h1>Test</h1>

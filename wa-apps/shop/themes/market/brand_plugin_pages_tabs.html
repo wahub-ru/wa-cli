@@ -1,0 +1,47 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {if !$wa->globals('is_mobile')}
+        <div class="brand-tabs">
+            {foreach $pages as $_page}
+                {$is_active = $_page.id == $page.id}
+
+                <div class="brand-tabs__item">
+                    {if $is_active}
+                        <span class="brand-tabs__tab brand-tabs__tab_active">
+                            {$_page.name}
+                            {if $_page.is_reviews_page}
+                                {' '}
+                                {$reviews_count}
+                            {/if}
+                        </span>
+                    {else}
+                        <a class="brand-tabs__tab" href="{$_page->getBrandUrl($brand)}">
+                            {$_page.name}
+                            {if $_page.is_reviews_page}
+                                {' '}
+                                {$reviews_count}
+                            {/if}
+                        </a>
+                    {/if}
+                </div>
+            {/foreach}
+        </div>
+    {else}
+        {if $pages|default:null}
+            <div class="r-brand-tabs">
+                <select class="select-decorator js-r-select-links" data-fill="true" data-size="l" data-classes="js-r-select-links">
+                    {foreach $pages as $_page}
+                        {$is_active = $_page.id == $page.id}
+                        <option value="{$_page->getBrandUrl($brand)}" {if $is_active}selected{/if}>
+                            {$_page.name}
+                            {if $_page.is_reviews_page}
+                                {' '}
+                                {$reviews_count}
+                            {/if}
+                        </option>
+                    {/foreach}
+                </select>
+            </div>
+        {/if}
+    {/if}
+{/strip}

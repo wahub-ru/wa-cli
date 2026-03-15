@@ -1,0 +1,10 @@
+<link href='{$css}' rel='stylesheet' type='text/css'>
+<script type="text/javascript" src="{$js}"></script>
+<script>
+    $(function () {
+        $.seonofchar.title_min_max = {$title_min_max|@json_encode};
+        $.seonofchar.key_min_max = {$key_min_max|@json_encode};
+        $.seonofchar.desc_min_max = {$desc_min_max|@json_encode};
+        $.seonofchar.init('#s-product-meta-title', '#s-product-meta-keywords', '#s-product-meta-description', 'product');
+    });
+</script>

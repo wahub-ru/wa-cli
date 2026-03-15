@@ -1,0 +1,10 @@
+.apiextension-bonus { display:flex; gap:20px; align-items:center; margin-bottom:20px; }
+.apiextension-bonus-categ-add,
+.apiextension-bonus-categ-del-all { cursor:pointer; }
+.apiextension-bonus-categ-del { cursor:pointer; }
+.apiextension-bonus-categ-new td { background-color:#cceccc!important; }
+
+
+.plugins .top-padded { padding-top:1rem; }
+#wa-plugins-container .content { background-color: var(--background-color, #fff); }
+#wa-plugins-container .fields-group { background-color: var(--background-color-blank, #fff); }

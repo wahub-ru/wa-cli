@@ -1,0 +1,63 @@
+{$_sprite_url = "`$wa_url`wa-apps/shop/img/backend/products/product/icons.svg?v=`$wa->version()`"}
+
+<style>
+	.js-additional-links-move-toggle {
+		cursor: default;
+  }
+	.js-additional-links-edit {
+		background: none;
+		border: none;
+		padding: 0;
+  }
+	.additional-dialog {
+		z-index: 3000;
+  }
+</style>
+
+<div class="s-form-section">
+	<div class="s-section-header">
+		<h5 class="s-section-title">Дополнительные ссылки</h5>
+	</div>
+	<div class="s-section-body js-additional-links">
+		<div class="flexbox wrap space-8">
+			<div class="flexbox wrap js-additional-links-wrapper">
+				{if $additionalLinks}
+					{foreach $additionalLinks as $l}
+						<div class="button" type="button" data-id="{$l.id}">
+							<span class="s-icon icon size-14 js-additional-links-move-toggle">
+								<svg><use xlink:href='{$_sprite_url}#grip'></use></svg>
+							</span>
+							<button type="button" class="js-additional-links-edit" title="Редактировать">{$l.name}</button>
+							<span class="icon js-additional-links-delete" title="Удалить">
+								<i class="fas fa-times"></i>
+							</span>
+						</div>
+					{/foreach}
+				{/if}
+			</div>
+			<div>
+				<button class="button outlined js-additional-links-add">+ Добавить</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+  (function($) {
+    const sources = [
+      {
+				id: "additional-links-js",
+				type: "js",
+				uri: "{$additionalLinksJS}"
+			},
+		];
+
+    $.wa.loadSources(sources).done( function() {
+			$.backendAdditionalLinks.init({
+        additionalLinks: {if $additionalLinks}{json_encode($additionalLinks)}{else}[]{/if},
+				spriteUrl: "{$_sprite_url}",
+			})
+    });
+
+  })(jQuery);
+</script>

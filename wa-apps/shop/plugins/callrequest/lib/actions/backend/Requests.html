@@ -1,0 +1,149 @@
+<div class="block double-padded"><h1>Заявки на рассчет пакетов</h1></div>
+
+<div class="block double-padded">
+
+  <div class="cr-toolbar" style="margin-bottom:12px;">
+    <a href="?plugin=callrequest&action=requests" class="button{if !$status} green{/if}">Все</a>
+    <a href="?plugin=callrequest&action=requests&status=new" class="button{if $status=='new'} green{/if}">Новые</a>
+    <a href="?plugin=callrequest&action=requests&status=done" class="button{if $status=='done'} green{/if}">Завершённые</a>
+    <a href="?plugin=callrequest&action=requests&status=deleted" class="button{if $status=='deleted'} green{/if}">Удалённые</a>
+  </div>
+
+  <form method="get" action="" class="cr-search" style="margin:0 0 12px 0; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <input type="hidden" name="plugin" value="callrequest">
+    <input type="hidden" name="action" value="requests">
+    {if $status}<input type="hidden" name="status" value="{$status|escape}">{/if}
+
+    <input type="text" name="q_name" value="{$q_name|escape}" placeholder="Имя" style="width:220px;">
+    <input type="text" name="q_phone" value="{$q_phone|escape}" placeholder="Телефон" style="width:180px;">
+
+    <span style="opacity:.75;">Дата:</span>
+    <input type="date" name="date_from" value="{$date_from|escape}">
+    <span style="opacity:.6;">—</span>
+    <input type="date" name="date_to" value="{$date_to|escape}">
+
+    <button class="button">Найти</button>
+    {if $q_name || $q_phone || $date_from || $date_to}
+      <a class="inline-link" href="?plugin=callrequest&action=requests{if $status}&status={$status}{/if}">Сбросить</a>
+    {/if}
+  </form>
+
+  <table class="zebra table-cr">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Дата</th>
+        <th>Имя</th>
+        <th>Телефон</th>
+        <th>Страница</th>
+        <th>Статус</th>
+        <th>Комментарий</th>
+        <th style="width:340px">Действия</th>
+      </tr>
+    </thead>
+    <tbody>
+      {foreach $items as $it}
+        <tr>
+          <td>{$it.id}</td>
+          <td>{$it.create_datetime|wa_date:"humandatetime"}</td>
+          <td>{$it.name|escape}</td>
+          <td>{$it.phone|escape}</td>
+          <td>
+            {if !empty($it.referer)}
+              <a class="cr-ref" href="{$it.referer|escape}" target="_blank" rel="noopener">{$it.referer|escape}</a>
+            {else} — {/if}
+          </td>
+          <td>
+            {if $it.status=='done'}<span style="color:#334dcc;font-weight:600;">Завершена</span>
+            {elseif $it.status=='deleted'}<span style="color:#ff0000;font-weight:600;">Удалена</span>
+            {else}<span style="color:#6C3;font-weight:600;">Новая</span>{/if}
+          </td>
+          <td>{if $it.manager_comment}{$it.manager_comment|escape}{else}—{/if}</td>
+          <td>
+            <div class="flexbox space-8">
+              {if $it.status=='deleted'}
+                <button class="button small yellow" onclick="return crRestore({$it.id});">Восстановить</button>
+              {else}
+                {if $it.status!='done'}
+                  <button class="button small green" onclick="return crDone({$it.id});">Завершить</button>
+                {/if}
+                <button class="button small light-gray" onclick="return crComment({$it.id}, '{$it.manager_comment|escape:'javascript'}');">Комментарий</button>
+                <button class="button small red" onclick="return crDelete({$it.id});">Удалить</button>
+              {/if}
+            </div>
+          </td>
+        </tr>
+      {/foreach}
+    </tbody>
+  </table>
+
+  {* Пагинация + счётчик *}
+  <div style="margin-top:12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+    {if $pages>1}
+      <div class="paging">
+        {if $page>1}
+          <a href="?plugin=callrequest&action=requests&page={$page-1}{if $status}&status={$status}{/if}{if $q_name}&q_name={$q_name|escape}{/if}{if $q_phone}&q_phone={$q_phone|escape}{/if}{if $date_from}&date_from={$date_from|escape}{/if}{if $date_to}&date_to={$date_to|escape}{/if}">« Назад</a>
+        {else}
+          <span class="disabled">« Назад</span>
+        {/if}
+
+        {section name=p loop=$pages+1 start=1}
+          {if $smarty.section.p.index == $page}
+            <span class="selected">{$page}</span>
+          {else}
+            <a href="?plugin=callrequest&action=requests&page={$smarty.section.p.index}{if $status}&status={$status}{/if}{if $q_name}&q_name={$q_name|escape}{/if}{if $q_phone}&q_phone={$q_phone|escape}{/if}{if $date_from}&date_from={$date_from|escape}{/if}{if $date_to}&date_to={$date_to|escape}{/if}">
+              {$smarty.section.p.index}
+            </a>
+          {/if}
+        {/section}
+
+        {if $page<$pages}
+          <a href="?plugin=callrequest&action=requests&page={$page+1}{if $status}&status={$status}{/if}{if $q_name}&q_name={$q_name|escape}{/if}{if $q_phone}&q_phone={$q_phone|escape}{/if}{if $date_from}&date_from={$date_from|escape}{/if}{if $date_to}&date_to={$date_to|escape}{/if}">Вперёд »</a>
+        {else}
+          <span class="disabled">Вперёд »</span>
+        {/if}
+      </div>
+    {/if}
+
+    <div class="hint">
+      {if $total>0}
+        Показано {$from}–{$to} из {$total} (по 30 на странице)
+      {else}
+        Ничего не найдено
+      {/if}
+    </div>
+  </div>
+</div>
+
+{* CSRF для backend-запросов *}
+<form id="cr-csrf" style="display:none;">{$wa->csrf()}</form>
+
+{literal}
+<style>
+  .table-cr td .cr-ref{word-break:break-all;display:inline-block;max-width:480px;vertical-align:top}
+  .cr-toolbar{margin-bottom:12px}
+  .cr-modal-bg{position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:9998;display:none}
+  .cr-modal{position:fixed;left:50%;top:20%;transform:translateX(-50%);background:#fff;padding:16px;border-radius:6px;z-index:9999;min-width:420px;display:none}
+  .cr-modal h3{margin:0 0 8px 0}
+  .cr-modal textarea{width:100%;min-height:120px}
+  .cr-modal .actions{margin-top:10px;display:flex;gap:8px;justify-content:flex-end}
+  .button {font-size: 12px !important;}
+  .cr-modal.is-open { display:block; }
+#cr-comment-bg.is-open { display:block; }
+
+</style>
+{/literal}
+
+{* Модалка комментария (если хочешь UI без prompt) *}
+<div id="cr-comment-modal" class="cr-modal" aria-hidden="true" style="display:none;">
+  <h3>Комментарий</h3>
+  <textarea id="cr-comment-text" placeholder="Введите комментарий..."></textarea>
+  <div class="actions">
+    <button type="button" class="button green" id="cr-comment-save">Сохранить</button>
+    <button type="button" class="button light-gray" id="cr-comment-cancel">Отмена</button>
+  </div>
+</div>
+<div class="cr-modal-bg" id="cr-comment-bg" style="display:none;"></div>
+
+{* Подключаем внешний JS с crDone/crDelete/crRestore/crComment *}
+<script src="{$wa_app_static_url}plugins/callrequest/js/backend.requests.js?v={$wa->version()}"></script>

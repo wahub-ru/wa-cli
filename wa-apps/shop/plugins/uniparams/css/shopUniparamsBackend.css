@@ -1,0 +1,53 @@
+/*Uniparams*/
+.uniparams-wrapper  ul.menu-v.with-icons.with-settings li a{ padding-right: 28px; }
+.uniparams-wrapper .uniparams-sidebar{ width: 220px; display: inline-block; vertical-align: top; padding: 20px 0; }
+.uniparams-wrapper .uniparams-sidebar .heading{ padding:20px 5px 6px; }
+.uniparams-wrapper .uniparams-workarea{ padding-left: 20px; display: inline-block; vertical-align: top; width: calc(100% - 240px); box-sizing: border-box; }
+.uniparams-wrapper .uniparams-list-settings{ position: absolute; top: 5px; right: 5px; margin: 0!important; }
+.uniparams-wrapper .inline_block {display: inline-block;}
+.buttons{ clear: both; }
+.uniparams-copy-to-cp {  }
+.uniparams-copy-to-cp .copy-success{ display: none; color: #999; white-space: nowrap; }
+.uniparams-copy-to-cp .copy{ color: #999; white-space: nowrap;}
+.uniparams-copy-to-cp.is-copy .copy-success{ display: inline-block; }
+.uniparams-copy-to-cp.is-copy .copy{ display: none; }
+.uniparams-wrapper .uniparams-list-fields{ margin-top: 20px; }
+.uniparams-wrapper .field-head{ color: #aaa; font-weight: normal; font-size: 13px;}
+.uniparams-wrapper .field .value textarea{ min-width: 220px; width: 100%; }
+.uniparams-minitab select,
+.uniparams-minitab input,
+.uniparams-minitab textarea{ width: 100%; box-sizing: border-box;}
+.uniparams-minitab{ float:left; width: calc((100% - 25px)/4); padding: 3px; vertical-align: top; display: inline-block; font-weight: bold; box-sizing: border-box; }
+.uniparams-delete-list-field,
+.uniparams-delete-list-param{ margin-left: 4px; vertical-align: bottom; display: inline-block; margin-bottom: 6px;}
+.uniparams-oldlist .field-group,
+.uniparams-newlist .field-group{ margin-bottom: 20px !important; }
+.uniparams-itemdiv {  width: 640px;max-width: 100%;padding: 10px;margin: 20px 0; box-shadow: 0 3px 7px rgba(0,0,0,0.2);background: #fff;box-sizing: border-box;}
+.uniparams-itemdiv .field { padding: 5px;}
+.uniparams-itemdiv .field:after{ content: ""; display: block; clear: both; }
+.uniparams-thelist { display: block;    overflow: hidden;}
+.uniparams-wrapper .ui-sortable-helper .uniparams-itemdiv{ box-shadow: 0px 10px 12px 4px rgba(58, 56, 0, 0.2); }
+.uniparams-wrapper .uniparams-add_param_btn { margin-top: 35px;}
+.uniparams-itemdiv__header-right{ float: right; }
+.uniparams-itemdiv__header-right a .hint,
+.uniparams-itemdiv__header-right a { text-decoration: none; transition: all 0.5s ease;  }
+.uniparams-itemdiv__header-right a:hover,
+.uniparams-itemdiv__header-right a:hover .hint{ color: red; }
+.uniparams-itemdiv__header{ padding: 6px 10px; background: #f4f4f4; margin: -10px -10px 6px; }
+.uniparams-itemdiv__header:after{ content: ""; clear: both; display: block; }
+.uniparams-activity{ display: inline-block; vertical-align: top; }
+.uniparams-itemdiv.is-disabled{ opacity: 0.7; }
+.uniparams-item-img, .uniparams-item-img-preview { max-height: 120px; max-width: 280px; display: block;}
+.uniparams-items_list {list-style-type: none; padding: 0; } 
+.uniparams-items_list .span-value { font-size: 14px; line-height: 18px; }
+.uniparams-oldlist .dialog-window,
+.uniparams-newlist .dialog-window{ min-width: 800px;}
+.uniparams-workarea .parent{ float: none; }
+
+/*responsive*/
+@media (max-width: 1024px){
+    .uniparams-wrapper .uniparams-workarea{ width: 100%; padding: 0; }
+    .uniparams-oldlist .dialog-window,
+    .uniparams-newlist .dialog-window{ min-width: 720px; top: 10%; bottom: 10%; }
+    .uniparams-list-params .uniparams-minitab{ width: calc((100% - 25px)/3); }
+}

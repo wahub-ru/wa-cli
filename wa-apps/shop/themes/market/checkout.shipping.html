@@ -1,0 +1,228 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_delpayfilter = $plugins['shop_delpayfilter']}
+
+    {$current_shipping = $shipping}
+    {$checkout_data = $wa->storage('shop/checkout')}
+    {$current_real_shipping = $checkout_data['shipping']|default:null}
+    {$has_service_agreement_hint = !empty($checkout_steps.shipping.service_agreement_hint)}
+    {$has_global_error = !empty($error)}
+    {$is_shipping_changed = false}
+
+    {if $is_enabled_delpayfilter}
+        {$checkout_shipping_methods = shopDelpayfilterPlugin::filterDeliveryMethods($checkout_shipping_methods)}
+    {/if}
+
+    {if !array_key_exists($current_shipping.id, $checkout_shipping_methods)}
+        {foreach $checkout_shipping_methods as $shipping_method}
+            {$current_shipping = $shipping_method}
+            {$is_shipping_changed = true}
+            {break}
+        {/foreach}
+    {/if}
+    <div class="checkout-shipping checkout-step step-shipping" data-is_shipping_changed="{call bool2str value=$is_shipping_changed}">
+        <div class="checkout-shipping__methods">
+            {foreach $checkout_shipping_methods as $shipping}
+                <div class="checkout-shipping__method">
+                    {* Checkout Shipping Method Start *}
+                        {$has_logo = !empty($shipping.logo)}
+                        {$has_error = !empty($shipping.error)}
+                        {$has_rates = !$has_error && is_array($shipping.rates) && count($shipping.rates) > 0}
+                        {$has_multi_rates = $has_rates && count($shipping.rates) > 1}
+                        {$has_description = !empty($shipping.description)}
+                        {$has_form = !empty($shipping.form)}
+                        {$has_custom_html = !empty($shipping.custom_html)}
+                        {$has_price = !$has_error && $shipping.rate !== null}
+                        {$has_comment = !empty($shipping.comment)}
+                        {$has_est_delivery = !empty($shipping.est_delivery)}
+                        {$is_external = !!$shipping.external}
+                        {$is_disabled = false}
+                        {$is_checked = $shipping.id == $current_shipping.id}
+                        {$is_real_checked = $current_real_shipping && $shipping.id == $current_real_shipping.id}
+                        {$is_loading = !$is_real_checked && $is_external}
+                        {$shipping_rates = null}
+
+                        {$plugins = $wa->globals('plugins')|default:[]}
+                        {$is_enabled_freedelivery = $plugins['shop_freedelivery']}
+
+                        {if !$is_loading}
+                            {$shipping_rates = []}
+
+                            {if $has_rates}
+                                {foreach $shipping.rates as $rate_id => $rate}
+                                    {$shipping_rates[] = [
+                                    'id' => "{$rate_id}",
+                                    'name' => $rate.name|default:'',
+                                    'rate_raw' => floatval(shop_currency($rate.rate, $rate.currency|default:true, null, false)),
+                                    'rate' => shop_currency($rate.rate, $rate.currency|default:true),
+                                    'rate_html' => shop_currency_html($rate.rate, $rate.currency|default:true),
+                                    'est_delivery' => $rate.est_delivery|default:'',
+                                    'comment' => $rate.comment|default:''
+                                    ]}
+                                {/foreach}
+                            {/if}
+                        {/if}
+
+                        {* Делаем то, что не сделали voffa. *}
+                        {if $shipping.plugin === 'novaposhta2'}
+                            {* Не делаем селектор по элементу *}
+                            {$shipping.custom_html = $shipping.custom_html|replace:"li.shipping-{$shipping.id}":".shipping-{$shipping.id}"}
+
+                            {* Не надеемся на баги/фичи старого jQuery *}
+                            {$shipping.custom_html = $shipping.custom_html|replace:'.attr(\'value\', ':'.val('}
+
+                            {* Не ставим стили на элементы *}
+                            {$shipping.custom_html = $shipping.custom_html|replace:".shipping-{$shipping.id} span":".shipping-{$shipping.id} span:not(*)"}
+                            {$shipping.custom_html = $shipping.custom_html|replace:".shipping-{$shipping.id} p":".shipping-{$shipping.id} p:not(*)"}
+                            {$shipping.custom_html = $shipping.custom_html|replace:".shipping-{$shipping.id} p span":".shipping-{$shipping.id} p span:not(*)"}
+                        {/if}
+
+                        <div class="checkout-shipping-method shipping-{$shipping.id|escape} {if $is_loading}checkout-shipping-method_loading{/if} {if $is_checked}checkout-shipping-method_checked{/if} {if $is_disabled}checkout-shipping-method_disabled{/if}" data-shipping_id="{$shipping.id|escape}" {if isset($shipping_rates)}data-shipping_rates="{$shipping_rates|json_encode|escape}"{/if}>
+                            <label class="checkout-shipping-method__label">
+                                <input class="checkout-shipping-method__control" type="radio" name="shipping_id" value="{$shipping.id|escape}" {if $is_checked}checked="checked"{/if} {if $is_disabled}disabled="disabled"{/if}>
+                                <span class="checkout-shipping-method__state-container">
+                                    <span class="checkout-shipping-method__state image-box image-box_fill">
+                                        {call svg_icon classes='checkout-shipping-method__state-icon' icon='available' width=16 height=16 fill='currentColor'}
+                                    </span>
+                                </span>
+                                {if $has_logo}
+                                    <span class="checkout-shipping-method__logo-container">
+                                        <span class="image-box">
+                                            <img src="{$shipping.logo|escape}" alt="{$shipping.name|escape}" />
+                                        </span>
+                                    </span>
+                                {/if}
+                                <span class="checkout-shipping-method__name-container">
+                                    <span class="title title_h4">{$shipping.name|escape}</span>
+                                </span>
+                                <div class="checkout-shipping-method__price-container">
+                                    <span class="checkout-shipping-method__price{if $is_enabled_freedelivery} price{/if}">
+                                        {if $has_price}
+                                            {shop_currency_html($shipping.rate, $shipping.currency)}
+                                        {/if}
+                                    </span>
+                                </div>
+                                {if $is_loading}
+                                    <span class="checkout-shipping-method__loading-container">
+                                        <span class="spinner">
+                                            <span class="image-box">
+                                                {call svg_icon classes="spinner " icon='spinner' width=16 height=16 fill='currentColor'}
+                                            </span>
+                                        </span>
+
+                                    </span>
+                                {/if}
+                            </label>
+
+                            {if $has_description}
+                                <div class="checkout-shipping-method__description-container">
+                                    <div class="content-decorator">
+                                        {$shipping.description}
+                                    </div>
+                                </div>
+                            {/if}
+
+                            <div class="checkout-shipping-method__rates-container {if $has_multi_rates}checkout-shipping-method__rates-container_multi{/if}">
+                                {$options = []}
+
+                                {if $has_rates}
+                                    {foreach $shipping.rates as $rate_id => $rate}
+                                        {$has_name = !empty($rate.name)}
+                                        {$is_selected = $rate_id == $current_shipping.rate_id}
+
+                                        {capture assign='label'}
+                                            {if $has_name}
+                                                {$rate.name|escape} ({shop_currency($rate.rate, $rate.currency)})
+                                            {else}
+                                                {$rate_id|escape}
+                                            {/if}
+                                        {/capture}
+
+                                        {$options[] = [
+                                        'label' => $label,
+                                        'value' => $rate_id
+                                        ]}
+                                    {/foreach}
+                                {/if}
+
+                                {call select classes='checkout-shipping-method__rates' options=$options value=$current_shipping.rate_id select_name="rate_id[{$shipping.id|escape}]"}
+                            </div>
+
+                            <div class="checkout-shipping-method__error-container {if !$has_error}checkout-shipping-method__error-container_empty{/if}">
+                                {if $has_error}
+                                    {$shipping.error}
+                                {/if}
+                            </div>
+
+                            <div class="checkout-shipping-method__comment-container {if !$has_comment}checkout-shipping-method__comment-container_empty{/if}">
+                                {if $has_comment}
+                                    {$shipping.comment}
+                                {/if}
+                            </div>
+
+                            <div class="checkout-shipping-method__est-delivery-container {if !$has_est_delivery}checkout-shipping-method__est-delivery-container_empty{/if}">
+                                [`Приблизительное время доставки`]:
+                                {' '}
+                                <span class="checkout-shipping-method__est-delivery">
+                                    {if $has_est_delivery}
+                                        {$shipping.est_delivery}
+                                    {/if}
+                                </span>
+                            </div>
+
+                            {if $has_form || $has_custom_html}
+                                <div class="checkout-shipping-method__content-container">
+                                    {if $has_form}
+                                        <div class="checkout-shipping-method__form-container">
+                                            <div class="form-decorator wa-form wa-address" data-form_size="xs" data-field_size="s">
+                                                {$shipping.form->html()}
+                                            </div>
+                                        </div>
+
+                                        {if $has_service_agreement_hint}
+                                            <div class="checkout-shipping-method__service-agreement-hint-container">
+                                                <div class="content-decorator">
+                                                    {$checkout_steps.shipping.service_agreement_hint}
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    {/if}
+                                    {if $has_custom_html}
+                                        <div class="checkout-shipping-method__custom-container">
+                                            <div class="form-decorator wa-form" data-form_size="xs" data-field_size="s">
+                                                {$custom_shipping = $shipping.custom_html}
+                                                {if $shipping.plugin == 'courier'}
+                                                    {$custom_shipping = $custom_shipping|replace:'Желаемое время доставки':'Желаемая дата доставки'}
+                                                {/if}
+                                                {$custom_shipping = $custom_shipping|replace:'.attr(\'value\', ':'.val('}
+                                                {$custom_shipping}
+                                                <div class="form-decorator__trigger"></div>
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/if}
+                        </div>
+                    {* Checkout Shipping Method End *}
+                </div>
+            {/foreach}
+        </div>
+
+        {if $has_global_error}
+            <div class="checkout-shipping__error-container">
+                <div class="error">{$error}</div>
+            </div>
+        {/if}
+    </div>
+
+    <script>
+        $(function () {
+            window.market.Update($('.checkout-shipping').parent());
+        });
+    </script>
+
+    {* @event frontend_checkout.%plugin_id% *}
+    {foreach $frontend_checkout as $_}{$_}{/foreach}
+{/strip}

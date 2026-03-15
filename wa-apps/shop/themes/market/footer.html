@@ -1,0 +1,899 @@
+{strip}
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_ordercall = $plugins['shop_ordercall'] && $theme_settings['footer_column_4_ordercall_enabled']}
+    {$is_enabled_htmlmap = $plugins['shop_htmlmap'] && $theme_settings['footer_htmlmap_enabled']}
+    {$is_checkout = $wa->globals('is_checkout')}
+    {$is_show_currency_select = $theme_settings['footer_currency_select_show']}
+    {$variant = $theme_settings['footer_variant']}
+
+    {if $is_checkout}
+        {$variant = 2}
+    {/if}
+
+    {$count_columns = 3}
+
+    {$phone_1 = "{eval var=$theme_settings['phone_1']|default:''}"}
+    {$phone_1_hint = "{eval var=$theme_settings['phone_1_hint']|default:''}"}
+    {$phone_2 = "{eval var=$theme_settings['phone_2']|default:''}"}
+    {$phone_2_hint = "{eval var=$theme_settings['phone_2_hint']|default:''}"}
+    {$email = "{eval var=$theme_settings['email']|default:''}"}
+    {$address = "{eval var=$theme_settings['address']|default:''}"}
+
+    {$footer_organization = "{eval var=$theme_settings['footer_organization']|default:''}"}
+    {$footer_copyright_text = "{eval var=$theme_settings['footer_copyright_text']|default:''}"}
+
+    {function footer_columns count_columns=2 is_tabs=0 is_columns_responsive=0}
+        {* Footer Columns Start *}
+        {$size = 'm'}
+
+        {if $count_columns < 3}
+            {$size = 's'}
+        {/if}
+
+        {* Template *}
+        <div class="footer-columns {if $size}footer-columns_size_{$size}{/if} {if $is_columns_responsive} r-footer__row{/if} {if $is_tabs}list-tabs{/if}">
+            {for $i = 1; $i <= $count_columns; $i++}
+                {* Theme Settings *}
+                {$source = $theme_settings["footer_column_{$i}_source"]}
+                {$pages_urls_raw = $theme_settings["footer_column_{$i}_pages"]}
+
+                {* Variables *}
+                {if $pages_urls_raw == ''}
+                    {$pages_urls = []}
+                {else}
+                    {$pages_urls = explode(',', $pages_urls_raw)}
+                {/if}
+
+                {$links = []}
+
+                {if $source === 'shop_pages'}
+                    {if $wa->globals('market.theme_exists.shop')}
+                        {$pages = []}
+                        {$has_pages_urls = count($pages_urls) > 0}
+
+                        {call get_shop_pages}
+                        {$all_pages = $wa->globals('market.return')}
+
+                        {if $has_pages_urls}
+                            {$pages_by_url = []}
+
+                            {foreach $all_pages as $page}
+                                {$pages_by_url[$page.full_url] = $page}
+                            {/foreach}
+
+                            {foreach $pages_urls as $page_url}
+                                {if isset($pages_by_url[$page_url])}
+                                    {$pages[] = $pages_by_url[$page_url]}
+                                {/if}
+                            {/foreach}
+                        {else}
+                            {$pages = $all_pages}
+                        {/if}
+
+                        {foreach $pages as $page}
+                            {$links[] = $page}
+                        {/foreach}
+                    {/if}
+                {elseif $source === 'wa_apps'}
+                    {$links = $wa->apps()}
+                {elseif $source === 'catalog'}
+                    {if $wa->globals('market.theme_exists.shop')}
+
+                        {$has_exclude_categories = false}
+                        {$enabled_categories = []}
+
+                        {if $source == "catalog" && $theme_settings["footer_column_{$i}_categories_id"]}
+                            {$has_exclude_categories = true}
+                            {$enabled_categories = explode(",",$theme_settings["footer_column_{$i}_categories_id"])}
+                        {/if}
+
+                        {$categories = []}
+                        {if !empty($enabled_categories)}
+                            {foreach $enabled_categories as $category_id}
+                                {$_c = $wa->shop->category($category_id)}
+                                {if $_c}
+                                    {$_c.url = $wa->shop->categoryUrl($_c)}
+                                    {$categories[] = $_c}
+                                {/if}
+                            {/foreach}
+                        {else}
+                            {call get_catalog_categories}
+                            {$categories = $wa->globals('market.return')|default:[]}
+                        {/if}
+
+                        {foreach $categories as $category}
+                            {$is_hidden = $category.params['hidden']|default:false}
+
+                            {if !$is_hidden && $has_exclude_categories && !in_array($category.id, $enabled_categories)}
+                                {$is_hidden = true}
+                            {/if}
+
+                            {if $is_hidden}
+                                {continue}
+                            {/if}
+
+                            {$links[] = $category}
+                        {/foreach}
+                    {/if}
+                {elseif $source === 'menu_app' && $wa->menu}
+                    {$menu_id = $theme_settings["footer_column_{$i}_menu_id"]}
+                    {$links = $wa->menu->get($menu_id)}
+                {/if}
+
+                {$footer_column_limit = $theme_settings["footer_column_{$i}_limit"]}
+                {if wa_is_int($footer_column_limit) && $footer_column_limit != -1}
+                    {$links = array_slice($links, 0, $theme_settings["footer_column_{$i}_limit"])}
+                {/if}
+
+                {if $links}
+                    <section class="footer-columns__column{if $is_tabs} list-tabs__item{/if}">
+                        <div class="footer-block footer-block_size_l">
+                            <div class="footer-block__header list-tabs__header{if $is_tabs} list-tabs__toggle js-list-tabs__toggle{/if}">
+                                {$theme_settings["footer_column_{$i}_header"]|escape}
+                                {if $is_tabs && $links}
+                                    <div class="list-tabs__item-arrow">
+                                        {call svg_icon icon='arrow-bottom' width=10 height=6 fill='currentColor'}
+                                    </div>
+                                {/if}
+                            </div>
+                            <div class="footer-block__content{if $is_tabs} list-tabs__content{/if}">
+                                <nav class="footer-rows{if $is_tabs} list-tabs__content-item{/if}">
+                                    {foreach $links as $link}
+                                        <div class="footer-rows__row">
+                                            <a class="link link_style_hover{if $is_tabs} list-tabs__content-item-link{/if}" href="{$link.url|escape}" {if !empty($link.target)}target="{$link.target}"{/if}>
+                                                {$link.name}
+                                            </a>
+                                        </div>
+                                    {/foreach}
+                                </nav>
+                            </div>
+                        </div>
+                    </section>
+                {/if}
+            {/for}
+        </div>
+        {* Footer Columns End *}
+    {/function}
+
+    {function footer_socials social_icon_size=30}
+        {* Footer Socials Start *}
+        {* Template *}
+        <div class="footer-socials">
+            {if $has_facebook_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$facebook_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-facebook' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_youtube_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$youtube_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-youtube' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_rutube_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$rutube_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-rutube' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_vk_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$vk_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-vk' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_instagram_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$instagram_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-instagram' width=$social_icon_size height=$social_icon_size img=true}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_twitter_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$twitter_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-twitter' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+
+            {if $has_odnoklassniki_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$odnoklassniki_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-odnoklassniki' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+            {if $has_yandex_zen_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$yandex_zen_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-yandex-zen' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+            {if $has_telegram_link}
+                <div class="footer-socials__item">
+                    <a class="image-box" href="{$telegram_link|escape}" target="_blank">
+                        {call svg_icon icon='mc-telegram' width=$social_icon_size height=$social_icon_size}
+                    </a>
+                </div>
+            {/if}
+        </div>
+        {if $has_ozon_link || $has_aliexpress_link || $has_yandex_market_link || $has_wildberries_link}
+            <div class="footer-marketplaces">
+                <div class="footer-marketplaces__title">Мы на маркетплейсах</div>
+                <div class="footer-marketplaces__list">
+                    {if $has_ozon_link}
+                        <div class="footer-marketplaces__item">
+                            <a class="image-box" href="{$ozon_link|escape}" target="_blank">
+                                {call svg_icon icon='mc-ozon' width=$social_icon_size height=$social_icon_size}
+                            </a>
+                        </div>
+                    {/if}
+                    {if $has_aliexpress_link}
+                        <div class="footer-marketplaces__item">
+                            <a class="image-box" href="{$aliexpress_link|escape}" target="_blank">
+                                {call svg_icon icon='mc-aliexpress' width=$social_icon_size height=$social_icon_size}
+                            </a>
+                        </div>
+                    {/if}
+                    {if $has_yandex_market_link}
+                        <div class="footer-marketplaces__item">
+                            <a class="image-box" href="{$yandex_market_link|escape}" target="_blank">
+                                {call svg_icon icon='mc-yandex-market' width=$social_icon_size height=$social_icon_size}
+                            </a>
+                        </div>
+                    {/if}
+                    {if $has_wildberries_link}
+                        <div class="footer-marketplaces__item">
+                            <a class="image-box" href="{$wildberries_link|escape}" target="_blank">
+                                {call svg_icon icon='mc-wildberries' width=$social_icon_size height=$social_icon_size}
+                            </a>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/if}
+        {* Footer Socials End *}
+    {/function}
+
+    {function footer_developers}
+        {* Footer Developers Start *}
+        <div class="footer-developers">
+            {if $theme_settings['footer_bodysite_copyright_enabled']}
+                <div class="footer-developers__item">
+                    [`Разработано в`] <a class="link link_style_alt" href="https://bodysite.ru/" target="_blank">bodysite.ru</a>
+                </div>
+            {/if}
+            {if $theme_settings['footer_webasyst_copyright_enabled']}
+                <div class="footer-developers__item">
+                    Webasyst — <a class="footer-developers__webasyst-icon" href="https://www.webasyst.ru/" rel="nofollow" target="_blank">
+                        {call svg_icon icon='webasyst' width=50 height=5}
+                    </a>
+                </div>
+            {/if}
+        </div>
+        {* Footer Developers End *}
+    {/function}
+
+    {function footer_links}
+        {* Footer Links Start *}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_htmlmap = $plugins['shop_htmlmap'] && $theme_settings['footer_htmlmap_enabled']}
+
+        <div class="footer-links">
+            {if $theme_settings['policy_link'] && $theme_settings['footer_policy_show']}
+                <div class="footer-links__item">
+                    <a class="link link_style_hover" href="{$theme_settings['policy_link']|escape}">
+                        [`Политика персональных данных`]
+                    </a>
+                </div>
+            {/if}
+            {if $is_enabled_htmlmap}
+                <div class="footer-links__item">
+                    <a class="link link_style_hover" href="{shopHtmlmapViewHelper::getUrl()|escape}">
+                        [`Карта сайта`]
+                    </a>
+                </div>
+            {/if}
+        </div>
+        {* Footer Links End *}
+    {/function}
+
+    {function footer_currency_select}
+        {* Footer Currency Select Start *}
+        {$currencies = $wa->shop->currencies()}
+
+        {if count($currencies) > 1}
+            <select class="select-decorator footer-currency-select" data-classes="footer-currency-select-wrapper">
+                {$selected_currency = $wa->shop->currency()}
+
+                {foreach $wa->shop->currencies() as $currency}
+                    {$is_selected = $selected_currency == $currency.code}
+                    <option value="{$currency.code|escape}" {if $is_selected}selected{/if}>
+                        {$currency.code|escape}
+                    </option>
+                {/foreach}
+            </select>
+        {/if}
+        {* Footer Currency Select End *}
+    {/function}
+
+    {function footer_payments}
+        {* Footer Payments Start *}
+        {$payments_icons_count = 0}
+        <div class="footer-payments">
+            {if $theme_settings['footer_payments_cash_enabled']}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        {call svg_icon icon='cash' width=27 height=27 img=true}
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_mastercard_enabled']}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        {call svg_icon icon='mastercard' width=27 height=27}
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_visa_enabled']}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        {call svg_icon icon='visa' width=27 height=27}
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_mir_enabled']}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        {call svg_icon icon='mir' width=27 height=27 img=true}
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_youkassa_enabled']}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        {call svg_icon icon='youkassa' width=27 height=27}
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_custom_1'] && $payments_icons_count < 8}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        <img src="{$theme_settings['footer_payments_custom_1']|escape}" width="27" height="27" alt="Иконка способа оплаты 1" />
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_custom_2'] && $payments_icons_count < 8}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        <img src="{$theme_settings['footer_payments_custom_2']|escape}" width="27" height="27" alt="Иконка способа оплаты 2" />
+                    </span>
+                </div>
+                {$payments_icons_count = $payments_icons_count + 1}
+            {/if}
+            {if $theme_settings['footer_payments_custom_3'] && $payments_icons_count < 8}
+                <div class="footer-payments__item">
+                    <span class="image-box">
+                        <img src="{$theme_settings['footer_payments_custom_3']|escape}" width="27" height="27" alt="Иконка способа оплаты 3" />
+                    </span>
+                </div>
+            {/if}
+        </div>
+        {if $theme_settings['footer_payments_sbp_enabled'] || $theme_settings['footer_payments_sberpay_enabled'] || $theme_settings['footer_payments_yandexsplit_enabled'] || $theme_settings['footer_payments_tpay_enabled']}
+            <div class="footer-payments">
+                {if $theme_settings['footer_payments_sbp_enabled']}
+                    <div class="footer-payments__item">
+                        <span class="image-box">
+                            {call svg_icon icon='sbp' width=27 height=27}
+                        </span>
+                    </div>
+                    {$payments_icons_count = $payments_icons_count + 1}
+                {/if}
+                {if $theme_settings['footer_payments_sberpay_enabled']}
+                    <div class="footer-payments__item">
+                        <span class="image-box">
+                            {call svg_icon icon='sberpay' width=27 height=27 img=true}
+                        </span>
+                    </div>
+                    {$payments_icons_count = $payments_icons_count + 1}
+                {/if}
+                {if $theme_settings['footer_payments_yandexsplit_enabled']}
+                    <div class="footer-payments__item">
+                        <span class="image-box">
+                            {call svg_icon icon='yandexsplit' width=27 height=27 img=true}
+                        </span>
+                    </div>
+                    {$payments_icons_count = $payments_icons_count + 1}
+                {/if}
+                {if $theme_settings['footer_payments_tpay_enabled']}
+                    <div class="footer-payments__item">
+                        <span class="image-box">
+                            {call svg_icon icon='tpay' width=27 height=27}
+                        </span>
+                    </div>
+                    {$payments_icons_count = $payments_icons_count + 1}
+                {/if}
+            </div>
+        {/if}
+        {* Footer Payments End *}
+    {/function}
+
+    {* Theme Settings *}
+    {$vk_link = $theme_settings['vk_link']}
+    {$facebook_link = $theme_settings['facebook_link']}
+    {$twitter_link = $theme_settings['twitter_link']}
+    {$youtube_link = $theme_settings['youtube_link']}
+    {$rutube_link = $theme_settings['rutube_link']}
+    {$instagram_link = $theme_settings['instagram_link']}
+    {$odnoklassniki_link = $theme_settings['odnoklassniki_link']}
+    {$yandex_zen_link = $theme_settings['yandex_zen_link']}
+    {$telegram_link = $theme_settings['telegram_link']}
+
+    {$ozon_link = $theme_settings['ozon_link']}
+    {$aliexpress_link = $theme_settings['aliexpress_link']}
+    {$yandex_market_link = $theme_settings['yandex_market_link']}
+    {$wildberries_link = $theme_settings['wildberries_link']}
+
+    {* Variables *}
+    {$has_vk_link = !empty($vk_link)}
+    {$has_facebook_link = !empty($facebook_link)}
+    {$has_twitter_link = !empty($twitter_link)}
+    {$has_youtube_link = !empty($youtube_link)}
+    {$has_rutube_link = !empty($rutube_link)}
+    {$has_instagram_link = !empty($instagram_link)}
+    {$has_odnoklassniki_link = !empty($odnoklassniki_link)}
+    {$has_yandex_zen_link = !empty($yandex_zen_link)}
+    {$has_telegram_link = !empty($telegram_link)}
+
+    {$has_ozon_link = !empty($ozon_link)}
+    {$has_aliexpress_link = !empty($aliexpress_link)}
+    {$has_yandex_market_link = !empty($yandex_market_link)}
+    {$has_wildberries_link = !empty($wildberries_link)}
+
+    {if $theme_settings['block_footer_counter']}
+        {$counters_block = $wa->block('market.footer.counters')}
+    {else}
+        {$counters_block = null}
+    {/if}
+
+    {capture assign="frontend_footer_content"}
+        {if isset($frontend_footer)}
+            <!-- plugin hook: 'frontend_footer' -->
+            {* @event frontend_footer.%plugin_id% *}
+            {foreach $frontend_footer as $plugin => $_}
+                <!-- frontend_footer.{$plugin} -->
+
+                {if $plugin === 'que-plugin' && $market['plugins']['shop_que']}
+                    {$que_button_regexp = '/(?:<script(?:.*button.*script>))/'}
+                    {$_ = $_|regex_replace:$que_button_regexp:''}
+                {/if}
+
+                {$_}
+            {/foreach}
+        {/if}
+    {/capture}
+
+    {if !$wa->globals('is_mobile')}
+        <div class="footer{if $variant == 2} footer_size_s{/if}">
+            <div class="container">
+                {if $variant == 1}
+                    <div class="footer__content">
+                        <div class="footer-content">
+                            <section class="footer-content__copyright-container">
+                                {$logo_url = null}
+
+                                {if $theme_settings['footer_variant_1_logo']}
+                                    {$logo_url = "{$wa_theme_url}{$theme_settings['footer_variant_1_logo']}"}
+                                {/if}
+
+                                <div class="footer-copyright">
+                                    {if $logo_url}
+                                        <div class="footer-copyright__logo">
+                                            <a class="image-box image-box_contain" href="{$wa_url|escape}">
+                                                <img src="{$logo_url|escape}" alt="{$footer_organization|escape}" />
+                                            </a>
+                                        </div>
+                                    {/if}
+                                    <div class="footer-copyright__text">
+                                        {if $theme_settings['footer_year']}
+                                            {$theme_settings['footer_year']|escape}-
+                                        {/if}
+                                        {date('Y')} © {$footer_organization|escape} — {$footer_copyright_text|escape}
+                                    </div>
+
+                                    {if $theme_settings['footer_banners']}
+                                        <article class="footer-copyright__banners">
+                                            {$theme_settings['footer_banners']}
+                                        </article>
+                                    {/if}
+
+                                    {if $wa->globals('market.theme_exists.shop')}
+                                        <div class="footer-copyright__payments-currency-container">
+                                            <div class="footer-copyright__payments-container">
+                                                {call footer_payments}
+                                            </div>
+                                            {if $is_show_currency_select}
+                                                <div class="footer-copyright__currency-container">
+                                                    {call footer_currency_select}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/if}
+
+                                    <div class="footer-copyright__links">
+                                        {call footer_links}
+                                    </div>
+                                    <div class="footer-copyright__developers">
+                                        {call footer_developers}
+                                    </div>
+                                    {if $counters_block}
+                                        <div class="footer-copyright__counters">
+                                            {$counters_block}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </section>
+                            <div class="footer-content__columns-container">
+                                {call footer_columns count_columns=$count_columns}
+                            </div>
+                            <section class="footer-content__contacts-container">
+                                <div class="footer-block">
+                                    <div class="footer-block__header">
+                                        {$theme_settings['footer_column_4_header']|escape}
+                                    </div>
+                                    <div class="footer-block__content">
+                                        <div class="footer-rows">
+                                            {if $theme_settings['footer_column_4_phones_enabled']}
+                                                {if $phone_1}
+                                                    <div class="footer-rows__row">
+                                                        <div class="footer-phone">
+                                                            <div class="footer-phone__phone">
+                                                                <a class="link-box link-box_style_hover" href="tel:{call clean_phone phone=$phone_1}">
+                                                                    <span class="icon-box icon-box_size_s">
+                                                                        <span class="icon-box__icon">
+                                                                            {call svg_icon icon='phone' width=11 height=15 fill='currentColor'}
+                                                                        </span>
+                                                                        <span class="icon-box__content">
+                                                                            <span class="link-box__link">{$phone_1|escape}</span>
+                                                                        </span>
+                                                                    </span>
+                                                                </a>
+                                                            </div>
+                                                            {if $phone_1_hint}
+                                                                <div class="footer-phone__hint">
+                                                                    {$phone_1_hint|escape}
+                                                                </div>
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+                                                {if $phone_2}
+                                                    <div class="footer-rows__row">
+                                                        <div class="footer-phone">
+                                                            <div class="footer-phone__phone">
+                                                                <a class="link-box link-box_style_hover" href="tel:{call clean_phone phone=$phone_2}">
+                                                                    <span class="icon-box icon-box_size_s">
+                                                                        <span class="icon-box__icon">
+                                                                            {call svg_icon icon='phone' width=11 height=15 fill='currentColor'}
+                                                                        </span>
+                                                                        <span class="icon-box__content">
+                                                                            <span class="link-box__link">{$phone_2|escape}</span>
+                                                                        </span>
+                                                                    </span>
+                                                                </a>
+                                                            </div>
+                                                            {if $phone_2_hint}
+                                                                <div class="footer-phone__hint">
+                                                                    {$phone_2_hint|escape}
+                                                                </div>
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+                                            {/if}
+                                            {if $is_enabled_ordercall}
+                                                <div class="footer-rows__row">
+                                                    <span class="link link_style_alt ordercall-button call-back-button">[`Заказать звонок`]</span>
+                                                </div>
+                                            {/if}
+                                            {if $theme_settings['footer_column_4_address_enabled'] && $address}
+                                                <div class="footer-rows__row">
+                                                    <span class="icon-box icon-box_size_s">
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon='map' width=9 height=10 fill='currentColor'}
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            {$address|escape|nl2br}
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            {/if}
+                                            {if $theme_settings['footer_column_4_email_enabled'] && $email}
+                                                <div class="footer-rows__row">
+                                                    <a class="link-box link-box_style_hover" href="mailto:{$email|escape}">
+                                                        <span class="icon-box icon-box_size_s">
+                                                            <span class="icon-box__icon">
+                                                                {call svg_icon icon='mail' width=9 height=7 fill='currentColor'}
+                                                            </span>
+                                                            <span class="icon-box__content">
+                                                                <span class="link-box__link">{$email|escape}</span>
+                                                            </span>
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    {if $theme_settings['footer_column_4_social_enabled']}
+                                        <div class="footer-block__footer">
+                                            {call footer_socials}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                {/if}
+                {$frontend_footer_content}
+                {if $variant == 2}
+                    <section class="footer__copyright">
+                        <div class="footer-copyright-row">
+                            <div class="footer-copyright-row__text">
+                                {if $theme_settings['footer_year']}
+                                    {$theme_settings['footer_year']|escape}-
+                                {/if}
+                                {date('Y')} © {$footer_organization|escape}&nbsp;—&nbsp;{$footer_copyright_text|escape}
+                            </div>
+                            <div class="footer-copyright-row__links">
+                                {call footer_links}
+                            </div>
+
+                            {if $wa->globals('market.theme_exists.shop')}
+                                <div class="footer-copyright-row__payments">
+                                    <div class="footer-copyright-row__payments-currency-container">
+                                        <div class="footer-copyright-row__payments-container">
+                                            {call footer_payments}
+                                        </div>
+                                        {if $is_show_currency_select}
+                                            <div class="footer-copyright-row__currency-container">
+                                                {call footer_currency_select}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {if $theme_settings['footer_bodysite_copyright_enabled'] || $theme_settings['footer_webasyst_copyright_enabled']}
+                                <div class="footer-copyright-row__developers">
+                                    {call footer_developers}
+                                </div>
+                            {/if}
+                        </div>
+                    </section>
+                {/if}
+            </div>
+        </div>
+
+        {if $variant == 2 && $counters_block}
+            <div class="r-hidden-all">
+                {$counters_block}
+            </div>
+        {/if}
+    {else}
+        <div class="r-hidden-all">
+            {$frontend_footer_content}
+        </div>
+        {if $counters_block}
+            <div class="r-hidden-all">
+                {$counters_block}
+            </div>
+        {/if}
+    {/if}
+
+    {if $wa->globals('is_mobile')}
+        {* Footer Responsive Start *}
+        {* Theme Settings *}
+        {$telegram = "{eval var=$theme_settings['telegram']}"}
+        {$whatsapp = "{eval var=$theme_settings['whatsapp']}"}
+
+        {* Variables *}
+        {$has_telegram = !empty($telegram)}
+        {$has_whatsapp = !empty($whatsapp)}
+
+        {$dark_color_hsl = $wa->globals('market.colors.dark_color_hsl')}
+
+        <div class="footer{if $dark_color_hsl[2] == 0} footer_dark{/if} r-footer">
+            <div class="container">
+                <div class="footer__content">
+                    <div class="footer-content">
+                        <div class="r-footer__row r-footer__copyright">
+                            {if $theme_settings['footer_year']}
+                                {$theme_settings['footer_year']|escape}-
+                            {/if}
+                            {date('Y')} © {$footer_organization|escape}
+                            {if $wa->globals('market.theme_exists.shop')}
+                                {if $footer_copyright_text}
+                                    &nbsp;—&nbsp;{$footer_copyright_text|escape}
+                                {/if}
+                            {/if}
+                        </div>
+                        <div class="r-footer__row r-footer__contacts">
+                            {if $phone_1|escape}
+                                <div class="r-footer__phone">
+                                    <a href="tel:{call clean_phone phone=$phone_1}" class="r-footer__phone-link">
+                                        <span class="r-footer__phone-name">
+                                            {$phone_1|escape}
+                                        </span>
+                                        {if $phone_1_hint}
+                                            <span class="r-footer__phone-hint">
+                                                {$phone_1_hint|escape}
+                                            </span>
+                                        {/if}
+                                    </a>
+                                </div>
+                            {/if}
+                            {if $phone_2|escape}
+                                <div class="r-footer__phone">
+                                    <a href="tel:{call clean_phone phone=$phone_2}" class="r-footer__phone-link">
+                                        <span class="r-footer__phone-name">
+                                            {$phone_2|escape}
+                                        </span>
+                                        {if $phone_2_hint}
+                                            <span class="r-footer__phone-hint">
+                                                {$phone_2_hint|escape}
+                                            </span>
+                                        {/if}
+                                    </a>
+                                </div>
+                            {/if}
+                            {if $theme_settings['footer_messengers_mobile_enabled'] && ($has_telegram || $has_whatsapp)}
+                                <div class="r-footer__messengers">
+                                    <div class="r-footer__messengers-header">[`Написать в мессенджеры`]:</div>
+                                    <div class="r-footer__messengers-list">
+                                        {if $has_telegram}
+                                            <div class="r-footer__messengers-item">
+                                                <a class="button button_style_inverse button_size_l button_fill" href="https://t.me/{$telegram|replace:' ':''|escape}" target="_blank" data-analytic-click="telegram">
+                                                    <span class="icon-box">
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon='telegram' width=24 height=24 img=true}
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            [`Написать в`] Telegram
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        {/if}
+                                        {if $has_whatsapp}
+                                            <div class="r-footer__messengers-item">
+                                                <a class="button button_style_inverse button_size_l button_fill" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                                    <span class="icon-box">
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon='whatsapp' width=24 height=24}
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            [`Написать в`] Whatsapp
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                        {if $theme_settings['footer_column_4_address_enabled'] && $address
+                        || $theme_settings['footer_column_4_email_enabled'] && $email}
+                            <div class="r-footer__row r-footer__block r-footer__address">
+                                <div class="r-footer__block-header">[`Контакты`]:</div>
+                                {if $theme_settings['footer_column_4_address_enabled'] && $address}
+                                    <div class="r-footer__address-item">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon='map' width=10 height=14 fill='currentColor'}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                {$address|escape}
+                                            </span>
+                                        </span>
+                                    </div>
+                                {/if}
+                                {if $theme_settings['footer_column_4_email_enabled'] && $email}
+                                    <div class="r-footer__address-item">
+                                        <a class="link-box" href="mailto:{$email|escape}">
+                                            <span class="icon-box icon-box_size_s">
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon icon='mail' width=14 height=11 fill='currentColor'}
+                                                </span>
+                                                <span class="icon-box__content">
+                                                    <span class="link-box__link">{$email|escape}</span>
+                                                </span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+
+                        {if $theme_settings['coordinates_link_adaptive']}
+                            <div class="r-footer__row r-footer__block r-footer__map">
+                                {$address_url = $theme_settings['coordinates_link_adaptive']}
+
+                                {$coordinates = json_decode($theme_settings['coordinates_link_adaptive'])}
+                                {if is_array($coordinates) && is_float($coordinates[0]) && is_float($coordinates[1])}
+                                    {$address_url = "{$coordinates[0]},{$coordinates[1]}"}
+                                {/if}
+
+                                {if $theme_settings['map_link_source'] == 'yandex'}
+                                    {$map_link = "https://maps.yandex.ru/?text={$address_url|escape:'url'}"}
+                                {else}
+                                    {$map_link = "https://www.google.com/maps/place/{$address_url|replace:' ':'+'|escape:'url'}"}
+                                {/if}
+
+                                <a href="{$map_link}" class="r-footer__map-link" target="_blank">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='yandex-map' width=20 height=20}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="link-box__link">[`Проложить маршрут`]</span>
+                                        </span>
+                                    </span>
+                                </a>
+                            </div>
+                        {/if}
+
+                        {if $wa->globals('market.theme_exists.shop')}
+                            {$has_currencies = count($wa->shop->currencies()) > 1}
+                        {else}
+                            {$has_currencies = false}
+                        {/if}
+
+                        {if $theme_settings['footer_column_4_social_enabled'] || $has_currencies}
+                            <div class="r-footer__row r-footer__block r-footer__block_cols">
+                                {if $theme_settings['footer_column_4_social_enabled'] && ($has_facebook_link || $has_youtube_link || $has_vk_link || $has_instagram_link || $has_twitter_link || $has_odnoklassniki_link || $has_yandex_zen_link || $has_telegram_link)}
+                                    <div class="r-footer__block-header">[`Мы в социальных сетях`]:</div>
+                                {/if}
+                                <div class="r-footer__block-content">
+                                    {if $theme_settings['footer_column_4_social_enabled']}
+                                        <div class="r-footer__socials">
+                                            {call footer_socials social_icon_size=30}
+                                        </div>
+                                    {/if}
+                                    {if $has_currencies && $is_show_currency_select}
+                                        <div class="r-footer__currency">
+                                            {call footer_currency_select}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/if}
+
+                        {call footer_columns count_columns=3 is_tabs=1 is_columns_responsive=1}
+                        {call footer_links}
+                        {call footer_developers}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {* Footer Responsive End *}
+    {/if}
+{/strip}

@@ -1,0 +1,66 @@
+/*
+ * @link https://warslab.ru/
+ * @author waResearchLab
+ * @Copyright (c) 2021 waResearchLab
+ */
+i.hidset-icon48 {
+    background-repeat: no-repeat;
+    background-size: 48px 48px;
+    background-position: 0 0;
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    vertical-align: middle;
+}
+i.hidset-icon48.attention {
+    background-image: url(../img/attention.png);
+}
+i.hidset-icon48.danger {
+    background-image: url(../img/danger.png);
+}
+i.hidset-icon48.wow {
+    background-image: url(../img/wow.png);
+}
+i.hidset-icon20 {
+    background-image: url(../img/icon20.png);
+    background-repeat: no-repeat;
+    background-size: auto;
+    display: inline-block; ;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+}
+
+i.hidset-icon20.add {
+    background-position: 0 0;
+}
+
+i.hidset-icon20.cancel {
+    background-position: -20px 0;
+}
+
+i.hidset-icon20.edit {
+    background-position: 0 -20px;
+}
+
+i.hidset-icon20.premium {
+    background-position: -20px -20px;
+}
+
+i.hidset-icon20.reload {
+    background-position: -40px 0;
+}
+
+i.hidset-icon20.save {
+    background-position: -40px -20px;
+}
+
+i.hidset-icon20.trash {
+    background-position: 0 -40px;
+}
+
+i.hidset-icon20.loading {
+    background-image: url(../img/loading.gif);
+    background-size: 20px 20px;
+    background-position: 0 0;
+}

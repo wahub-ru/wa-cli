@@ -1,0 +1,46 @@
+.s-plugin-syrattach-upload-dropzone {
+  border: 2px dashed #ccc;
+  margin-bottom: 20px;
+}
+.s-plugin-syrattach-upload-dropzone.highlighted {
+  background-color: #fea;
+}
+
+#s-plugin-syrattach-product-files-list {
+  padding-left: 0;
+  list-style-type: none;
+}
+#s-plugin-syrattach-product-files-list li {
+  display: block;
+  margin-bottom: 15px;
+  padding: 5px;
+  border: 1px solid #ccc;
+}
+#s-plugin-syrattach-product-files-list .s-plugin-syrattach-filelink {
+  font-size: 146%;
+}
+#s-plugin-syrattach-product-files-list .s-plugin-syrattach-file-description {
+  margin: 10px 0;
+  padding: 3px;
+  line-height: 120%;
+}
+
+#s-plugin-syrattach-upload-files-link {
+  position: relative;
+  overflow: hidden;
+}
+#s-plugin-syrattach-upload-files-link input[type=file] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  cursor: pointer;
+}
+
+.s-plugin-syrattach-dialog__error {
+  height: 100%;
+  overflow-y: auto;
+}

@@ -1,0 +1,146 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_my', true)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Мой профиль")}"])}
+    {$has_errors = !empty($form->errors)}
+    {$is_saved = !empty($saved)}
+    {$email_is_confirmed = $wa->get('emailconfirmed') == 1}
+
+    <div class="block block_secondary my-profile {if $has_errors}my-profile_edit{/if} {if $is_saved || $email_is_confirmed}my-profile_success{/if}">
+        <div class="block__header block__header_text">
+            [`Мой профиль`]
+        </div>
+        <div class="block__content">
+            <div class="my-profile__info">
+                <div class="my-profile__success-message">
+                    [`Контактная информация успешно обновлена`]!
+                </div>
+                <div class="values">
+                    {foreach $user_info as $id => $info}
+                        {$is_photo = $id === 'photo'}
+                        {$is_email = $id === 'email'}
+                        {$is_phone = $id === 'phone'}
+                        {$value = $info.value}
+
+                        {if $value == ''}
+                            {$value = "&mdash;"}
+                        {/if}
+
+                        <div class="values__item">
+                            <div class="value value_fixed my-profile__field my-profile__field_{$id}">
+                                {if !$is_photo}
+                                    <div class="value__label-text">
+                                        {$info.name}:
+                                    </div>
+                                {/if}
+                                <div class="value__value-text">
+                                    {if $is_email || $is_phone}
+                                        <div class="link-decorator">
+                                            {$value}
+                                        </div>
+                                    {else}
+                                        {$value}
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/foreach}
+                </div>
+            </div>
+            <div class="my-profile__edit-button-box">
+                <button class="button button_wide my-profile__edit-button">[`Редактировать`]</button>
+            </div>
+            <div class="my-profile__form">
+                <form action="" method="post" enctype="multipart/form-data">
+                    <div class="form-decorator">
+                        {$form->html()}
+                        <div class="form-decorator__trigger"></div>
+                    </div>
+                    <div class="my-profile__control-buttons-box">
+                        <button class="button button_wide">[`Сохранить`]</button>
+                        <button class="button button_wide button_style_transparent my-profile__cancel-button" type="button">[`Отмена`]</button>
+                    </div>
+                </form>
+            </div>
+            {$auth_adapters = $wa->authAdapters(true)}
+            {$has_auth_adapters = count($auth_adapters) > 0}
+
+            {if $has_auth_adapters}
+                {$linked_adapters = []}
+                {$other_adapters = []}
+
+                {foreach $auth_adapters as $name => $adapter}
+                    {if $wa->user("{$adapter->getId()}_id")}
+                        {$linked_adapters[$name] = $adapter}
+                    {else}
+                        {$other_adapters[$name] = $adapter}
+                    {/if}
+                {/foreach}
+
+                <div class="my-profile__auth-adapters">
+                    <div class="block block_size_s">
+                        <div class="block__header block__header_text">
+                            [`Связанные аккаунты`]
+                        </div>
+                        <div class="block__content">
+                            {if count($linked_adapters) > 0}
+                                <div class="auth-adapters">
+                                    {foreach $linked_adapters as $adapter_id => $adapter}
+                                        {$custom_icons_adapters = [
+                                            'facebook',
+                                            'google',
+                                            'twitter',
+                                            'vkontakte',
+                                            'yandex',
+                                            'mailru'
+                                        ]}
+
+                                        {$styles = null}
+                                        {if !in_array($adapter_id, $custom_icons_adapters)}
+                                            {$adapter_icon = $adapter->getIcon()}
+                                            {$styles = 'style="background-image: url('|cat:{$adapter_icon}|cat:')"'}
+                                        {/if}
+
+                                        <div class="auth-adapters__item">
+                                            <span class="auth-adapter auth-adapter_{$adapter_id}" {$styles}></span>
+                                            
+                                        </div>
+                                    {/foreach}
+                                </div>
+                            {/if}
+
+                            <div class="content-decorator">[`Подключите этот аккаунт к вашим аккаунтам в соцсетях`], [`чтобы в следующий раз входить на сайт без ввода пароля`]:</div>
+                            {if count($other_adapters) > 0}
+                                <div class="auth-adapters">
+                                    {foreach $other_adapters as $adapter_id => $adapter}
+                                        {$custom_icons_adapters = [
+                                            'facebook',
+                                            'google',
+                                            'twitter',
+                                            'vkontakte',
+                                            'yandex',
+                                            'mailru'
+                                        ]}
+
+                                        {$styles = null}
+                                        {if !in_array($adapter_id, $custom_icons_adapters)}
+                                            {$adapter_icon = $adapter->getIcon()}
+                                            {$styles = 'style="background-image: url('|cat:{$adapter_icon}|cat:')"'}
+                                        {/if}
+
+                                        <div class="auth-adapters__item">
+                                            
+                                            <a class="auth-adapter auth-adapter_{$adapter_id}" href="{$adapter->getUrl()}" {$styles}></a>
+                                        </div>
+                                    {/foreach}
+                                </div>
+                            {/if}
+
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        </div>
+    </div>
+{/strip}

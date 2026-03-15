@@ -1,0 +1,640 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {if !isset($_currency)}
+        {$_currency = $wa->shop->currency()}
+    {/if}
+
+    {if $wa->get('product_id')}
+        {$wa->globals('market.index.only_content', true)}
+        {$all_product_ids = $wa->shop->inComparison()}
+        {$products_count = count($all_product_ids)}
+
+        {* Compare Info Panel Start *}
+            {$product_id = $wa->get('product_id')}
+            {$product = $wa->shop->product($product_id)}
+
+            {if $product}
+                {$has_image = $product.image_id}
+                {$is_dummy_image = !$has_image}
+                <div class="info-panel compare-info-panel">
+                    <div class="container">
+                        <div class="info-panel__container">
+                            <div class="info-panel__content-container">
+                                <div class="info-panel-content">
+                                    <div class="info-panel-content__image-container">
+                                        <div class="info-panel-content__image-box image-box image-box_fill">
+                                            {if $has_image}
+                                                <img class="product-thumb__image" src="{$wa->shop->productImgUrl($product, '50')|escape}" alt="{$product.name|escape}" data-rjs="2" />
+                                            {else}
+                                                {if !empty($theme_settings['product_dummy_image'])}
+                                                    <img class="product-thumb__image" src="{$theme_settings['product_dummy_image']|escape}" alt="{$product.name|escape}" width="50" />
+                                                {else}
+                                                    {call svg_icon classes='product-thumb__image product-thumb__image_dummy' icon='no-thumb' width=40 height=40 fill='#CFCFCF'}
+                                                {/if}
+                                            {/if}
+                                        </div>
+                                    </div>
+                                    <div class="info-panel-content__info-container">
+                                        <div class="info-panel-content__header">
+                                            {$product.name|escape} [`добавлен к сравнению`]
+                                        </div>
+                                        <div class="info-panel-content__sub-header">
+                                            [`Всего в списке`] {$products_count|escape} {call plural n=$products_count forms=["{_wp("товар")}", "{_wp("товара")}", "{_wp("товаров")}"]}
+                                        </div>
+                                    </div>
+                                    <div class="info-panel-content__button-container">
+                                        <a class="button button_style_inverse" href="{"{call get_compare_url}"|trim|escape}">[`Сравнить`]</a>
+                                        
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="info-panel__close-button-container">
+                                <span class="info-panel__close-button">
+                                    <span class="image-box">
+                                        {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {/if}
+        {* Compare Info Panel End *}
+    {else}
+        {* Compare Page Start *}
+            {$wa->globals('is_show_breadcrumbs', true)}
+            {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Сравнение товаров")}"])}
+            {$wa->globals('market.main.only_content', true)}
+
+            {$wa->title("{_wp("Сравнение товаров")}")}
+
+            {$all_product_ids = $wa->shop->inComparison()}
+            {$all_products = []}
+
+            {$products_count = count($all_product_ids)}
+            {$product_ids = array_keys($products)}
+            {$current_products = []}
+
+            {foreach $all_product_ids as $product_id}
+                {$all_products[$product_id] = $wa->shop->product($product_id)}
+            {/foreach}
+
+            {foreach $product_ids as $product_id}
+                {$current_products[] = $wa->shop->product($product_id)}
+            {/foreach}
+
+            {$products = $current_products}
+
+            {$types = []}
+            {$products_ids_by_type = []}
+
+            {foreach $all_products as $product}
+                {if !isset($types[$product.type_id])}
+                    {$types[$product.type_id] = $product.type}
+                    {$products_ids_by_type[$product.type_id] = []}
+                {/if}
+
+                {$products_ids_by_type[$product.type_id][] = $product.id}
+            {/foreach}
+
+            {$has_multi_types = count($types) > 1}
+
+            {$selected_type = null}
+
+            {foreach $products_ids_by_type as $type_id => $_product_ids}
+                {$is_selected = !!"{call equal_arrays array1=$_product_ids array2=$product_ids}"}
+
+                {if $is_selected}
+                    {$selected_type = $type_id}
+                {/if}
+            {/foreach}
+
+            {$is_index = !!"{call equal_arrays array1=$product_ids array2=$all_product_ids}"}
+
+            {if !isset($selected_type) && $is_index}
+                {$selected_type = 'all'}
+            {/if}
+
+            {if !isset($selected_type)}
+                {$selected_type = 'custom'}
+            {/if}
+
+            {if !$wa->globals('is_mobile')}
+                <div class="compare-page" data-product_ids="{$product_ids|json_encode|escape}" data-selected_type="{$selected_type|escape}">
+                    {if count($products) > 0}
+                        <div class="compare-page__header">
+                            <div class="compare-page__header-top">
+                                <div class="container">
+                                    <div class="content">
+                                        <div class="content__breadcrumbs">
+                                            {include './breadcrumbs.html'}
+                                        </div>
+                                        <div class="content__content">
+                                            <div class="block-header">
+                                                <div class="block-header__main">
+                                                    <h1 class="title title_h1">[`Сравнение товаров`]</h1>
+                                                </div>
+                                                <div class="block-header__additional">
+                                                    {call slider_arrows prev_arrow_classes='compare-page__prev-arrow' next_arrow_classes='compare-page__next-arrow'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="compare-page__header-bottom">
+                                <div class="container">
+                                    <div class="compare-page__columns">
+                                        <div class="compare-page__column-features">
+                                            <div class="compare-page__row compare-page__row_header compare-page__row_control">
+                                                {* Compare Control Start *}
+                                                <div class="compare-control">
+                                                    <div class="compare-control__type-container">
+                                                        <select class="compare-control__type select-decorator" data-size="s" data-fill="1">
+                                                            {$is_all = $selected_type === 'all'}
+                                                            {$has_custom = $selected_type === 'custom'}
+
+                                                            {if $has_multi_types}
+                                                                <option value="{$wa->getUrl('shop/frontend/compare')}" data-count="{count($all_product_ids)}" {if $selected_type === 'all'}selected="selected"{/if} data-label="{"{_wp("Все")}<span class=\"compare-control__type-count\">{count($all_product_ids)}</span>"|escape}">
+                                                                    [`Все`]
+                                                                </option>
+                                                            {/if}
+
+                                                            {if $selected_type === 'custom'}
+                                                                <option value="" data-count="{count($product_ids)}" selected="selected" data-label="{"{_wp("Свой список")}<span class=\"compare-control__type-count\">{count($product_ids)}</span>"|escape}">
+                                                                    [`Свой список`]
+                                                                </option>
+                                                            {/if}
+
+                                                            {foreach $types as $type}
+                                                                {$is_selected = $type.id == $selected_type}
+                                                                {$_product_ids = $products_ids_by_type[$type.id]}
+
+                                                                <option value="{$wa->getUrl('shop/frontend/compare', ['id' => implode(',', $_product_ids)])}" data-count="{count($_product_ids)}" {if $is_selected}selected="selected"{/if} data-label="{"{$type.name}<span class=\"compare-control__type-count\">{count($_product_ids)}</span>"|escape}">
+                                                                    {$type.name|escape}
+                                                                </option>
+                                                            {/foreach}
+                                                        </select>
+                                                    </div>
+                                                    <div class="compare-control__view-container">
+                                                        <div class="form">
+                                                            <div class="form__group">
+                                                                <div class="form__fields">
+                                                                    <div class="form__field">
+                                                                        <label class="radio">
+                                                                            <input class="radio__control compare-control__view" type="radio" name="view" value="all" checked="checked" />
+                                                                            <span class="radio__mark"></span>
+                                                                            <span class="radio__label">
+                                                                                {_wp("Все параметры")}
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="form__field">
+                                                                        <label class="radio">
+                                                                            <input class="radio__control compare-control__view" type="radio" name="view" value="hide_same" />
+                                                                            <span class="radio__mark"></span>
+                                                                            <span class="radio__label">
+                                                                                {_wp("Различающиеся")}
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="compare-control__delete-list-container">
+                                                        <span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link compare-control__delete-list-button">
+                                                            <span class="icon-box">
+                                                                <span class="icon-box__icon">
+                                                                    {call svg_icon icon="trash" classes="pseudo-link-box__icon" width=14 height=18}
+                                                                </span>
+                                                                <span class="icon-box__content">
+                                                                    <span class="pseudo-link-box__link">
+                                                                        {_wp("Удалить список")}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {* Compare Control End *}
+                                            </div>
+                                        </div>
+                                        <div class="compare-page__column-products">
+                                            <div class="compare-page__products compare-page__products_header swiper" data-count="{count($products)|escape}">
+                                                <div class="compare-page__products-wrapper swiper-wrapper">
+                                                    {foreach $products as $product}
+                                                        <div class="compare-page__product compare-page__product_header swiper-slide">
+                                                            <div class="compare-page__row compare-page__row_header compare-page__row_product">
+                                                                {* Compare Product Start *}
+                                                                    {if class_exists('shopFrac')}
+                                                                        {$product = shopFrac::inheritSkuFieldsFromProduct($product)}
+                                                                    {/if}
+
+                                                                    {$image_id = $product.image_id}
+                                                                    {$has_image = isset($image_id)}
+
+                                                                    {if $has_image}
+                                                                        {$image_url = $wa->shop->productImgUrl($product, '80')}
+                                                                    {/if}
+
+                                                                    {$primary_sku = $product.skus[$product["sku_id"]]}
+                                                                    {$has_compare_price = $primary_sku.compare_price > 0 && $primary_sku.compare_price > $primary_sku.price}
+
+                                                                    {$_show_fractional = !empty($formatted_units[$product["stock_unit_id"]]) && !empty($formatted_units[$product["base_unit_id"]]) && ($product["stock_unit_id"] !== $product["base_unit_id"]) && !empty($primary_sku["stock_base_ratio"]) && $wa->globals('market.has_premium')}
+
+                                                                    {$product_price = null}
+                                                                    {$stock_unit = null}
+                                                                    {$base_unit = null}
+                                                                    {$base_price = null}
+                                                                    {$product_compare_price = shop_currency($primary_sku["compare_price"], ["in_currency" => $_currency, "format" => "price_wrapper"])}
+
+                                                                    {if !empty($_show_fractional)}
+                                                                        {$stock_unit = $formatted_units[$product["stock_unit_id"]]}
+                                                                        {$base_unit = $formatted_units[$product["base_unit_id"]]}
+                                                                        {$product_price = shop_currency($primary_sku["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+                                                                        {$base_price = ($primary_sku["price"]/$primary_sku["stock_base_ratio"])}
+                                                                        {$base_price = shop_currency($base_price, ["unit" => $base_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+                                                                    {else}
+                                                                        {$product_price = shop_currency($primary_sku["price"], ["in_currency" => $_currency, "format" => "price_wrapper"])}
+
+                                                                        {if !empty($formatted_units) && $formatted_units[$product["stock_unit_id"]] && $wa->globals('market.has_premium')}
+                                                                            {$stock_unit = $formatted_units[$product["stock_unit_id"]]}
+                                                                            {if !empty($fractional_config) && $fractional_config["stock_units_enabled"]}
+                                                                                {$product_price = shop_currency($primary_sku["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+                                                                            {/if}
+                                                                        {/if}
+                                                                    {/if}
+
+                                                                    <div class="compare-product" data-product_id="{$product.id|escape}">
+                                                                        <div class="compare-product__delete-button-container">
+                                                                            <span class="button button_style_gray button_size_s button_icon compare-product__delete-button">
+                                                                                <span class="image-box image-box_fill">
+                                                                                    {call svg_icon icon='cross' classes='button__icon' width=12 height=12}
+                                                                                </span>
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="compare-product__image-container">
+                                                                            <a class="compare-product__image-box image-box image-box_fill" href="{$wa->shop->productUrl($product)|escape}">
+                                                                                {if $has_image}
+                                                                                    <img class="compare-product__image" src="{$image_url|escape}" alt="{$product.name|escape}" data-rjs="2" />
+                                                                                {else}
+                                                                                    {if !empty($theme_settings['product_dummy_image'])}
+                                                                                        <img class="compare-product__image" src="{$theme_settings['product_dummy_image']|escape}" alt="{$product.name|escape}" />
+                                                                                    {else}
+                                                                                        {call svg_icon
+                                                                                        classes='compare-product__image compare-product__image_dummy'
+                                                                                        icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                                                                    {/if}
+                                                                                {/if}
+                                                                            </a>
+                                                                        </div>
+                                                                        <div class="compare-product__name-container">
+                                                                            <a class="link link_style_hover" href="{$wa->shop->productUrl($product)|escape}">
+                                                                                {$product.name}
+                                                                            </a>
+                                                                        </div>
+                                                                        <div class="compare-product__price-container">
+                                                                            {$product_price}
+                                                                            {if $has_compare_price}
+                                                                                <span class="compare-product__product-compare-price">{$product_compare_price}</span>
+                                                                            {/if}
+                                                                        </div>
+                                                                        {if $base_price}
+                                                                            <div class="compare-product__base-price">{$base_price}</div>
+                                                                        {/if}
+                                                                    </div>
+                                                                {* Compare Product End *}
+                                                            </div>
+                                                        </div>
+                                                    {/foreach}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="compare-page__content">
+                            <div class="container container_content">
+                                <div class="compare-page__columns">
+                                    <div class="compare-page__column-features">
+                                        {foreach $features as $feature}
+                                            {$is_divider = $feature.type === 'divider'}
+                                            {$is_same = !!$feature.same}
+
+                                            {if $is_divider}
+                                                <div class="compare-page__row compare-page__row_divider">
+                                                    <span class="title title_h3">
+                                                        {$feature.name|escape}
+                                                    </span>
+                                                </div>
+                                            {else}
+                                                <div class="compare-page__row compare-page__row_feature {if $is_same}compare-page__row_same{/if}">
+                                                    {$feature.name|escape}
+                                                </div>
+                                            {/if}
+                                        {/foreach}
+                                    </div>
+                                    <div class="compare-page__column-products">
+                                        <div class="compare-page__products compare-page__products_features swiper" data-count="{count($products)}">
+                                            <div class="compare-page__products-wrapper swiper-wrapper">
+                                                {foreach $products as $p}
+                                                    <div class="compare-page__product compare-page__product_features swiper-slide">
+                                                        {foreach $features as $feature_code => $feature}
+                                                            {$is_divider = $feature.type === 'divider'}
+                                                            {$is_same = !!$feature.same}
+
+                                                            {if $is_divider}
+                                                                <div class="compare-page__row compare-page__row_divider-value"></div>
+                                                            {else}
+                                                                <div class="compare-page__row compare-page__row_feature-value  {if $is_same}compare-page__row_same{/if}">
+                                                                    {if isset($p.features[$feature_code])}
+                                                                        {$value = $p.features[$feature_code]}
+
+                                                                        {call product_feature_value product_id=$p.id value=$value feature=$feature}
+                                                                    {else}
+                                                                        —
+                                                                    {/if}
+                                                                </div>
+                                                            {/if}
+                                                        {/foreach}
+                                                    </div>
+                                                {/foreach}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {else}
+                        <div class="container container_content">
+                            <div class="content-container">
+                                <div class="compare-page__header">
+                                    <div class="content">
+                                        <div class="content__breadcrumbs">
+                                            {include './breadcrumbs.html'}
+                                        </div>
+                                        <div class="content__content">
+                                            <div class="block">
+                                                <div class="block__header block__header_text">
+                                                    [`Сравнение товаров`]
+                                                </div>
+                                                <div class="block__content">
+                                                    <div class="not-found-block">
+                                                        <div class="not-found-block__header">
+                                                            [`Список сравнения пуст.`]
+                                                        </div>
+                                                        <div class="not-found-block__content">
+                                                            [`Для добавления товаров к сравнению`] <a class="link" href="{$wa_app_url|escape}">[`перейдите на главную.`]</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                	    </div>
+				    {/if}
+			    </div>
+            {else}
+			{* Compare Responsive Start *}
+				<div class="r-compare-page" data-product_ids="{$product_ids|json_encode|escape}" data-selected_type="{$selected_type|escape}">
+					<div class="content-container">
+						<div class="container">
+							<div class="content">
+								<div class="content__breadcrumbs">
+                                    {include './breadcrumbs.html'}
+								</div>
+								<div class="content__content">
+									<div class="r-compare-page__header-container">
+										<div class="block-header">
+											<div class="block-header__main">
+												<h1 class="title title_h1">[`Сравнение товаров`]</h1>
+											</div>
+											<div class="block-header__additional">
+												{if $products_count > 0}
+													<span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link r-compare-page__delete-button image-box">
+														{call svg_icon classes='pseudo-link-box__icon' icon='trash' width=14 height=18 fill='currentColor'}
+													</span>
+												{/if}
+											</div>
+										</div>
+									</div>
+									{if count($products) > 0}
+										<div class="r-compare-page__type-container">
+											<select class="r-compare-control__type select-decorator" data-fill="1">
+												{$is_all = $selected_type === 'all'}
+												{$has_custom = $selected_type === 'custom'}
+
+												{if $has_multi_types}
+													<option value="{$wa->getUrl('shop/frontend/compare')}" data-count="{count($all_product_ids)}" {if $selected_type === 'all'}selected="selected"{/if} data-label="{"{_wp("Все")}<span class=\"compare-control__type-count\">{count($all_product_ids)}</span>"|escape}">
+														[`Все`]
+													</option>
+												{/if}
+
+												{if $selected_type === 'custom'}
+													<option value="" data-count="{count($product_ids)}" selected="selected" data-label="{"{_wp("Свой список")}<span class=\"compare-control__type-count\">{count($product_ids)}</span>"|escape}">
+														[`Свой список`]
+													</option>
+												{/if}
+
+												{foreach $types as $type}
+													{$is_selected = $type.id == $selected_type}
+													{$_product_ids = $products_ids_by_type[$type.id]}
+
+													<option value="{$wa->getUrl('shop/frontend/compare', ['id' => implode(',', $_product_ids)])}" data-count="{count($_product_ids)}" {if $is_selected}selected="selected"{/if} data-label="{"{$type.name}<span class=\"compare-control__type-count\">{count($_product_ids)}</span>"|escape}">
+														{$type.name|escape}
+													</option>
+												{/foreach}
+											</select>
+										</div>
+										<div class="r-compare-page__products-container">
+											{for $i = 0; $i < 2; $i++}
+												<div class="r-compare-page__product-container">
+													<div class="r-compare-page__products-slider-container swiper" data-index="{$i}">
+														<div class="r-compare-page__products-slider swiper-wrapper">
+															{foreach $products as $p}
+																{if class_exists('shopFrac')}
+																	{$p = shopFrac::inheritSkuFieldsFromProduct($p)}
+																{/if}
+
+																{$image_id = $p.image_id}
+																{$has_image = isset($image_id)}
+
+																{if $has_image}
+																	{$image_url = $wa->shop->productImgUrl($p, '80')}
+																{/if}
+
+																{$primary_sku = $p.skus[$p["sku_id"]]}
+																{$has_compare_price = $primary_sku.compare_price > 0 && $primary_sku.compare_price > $primary_sku.price}
+
+																{$_show_fractional = !empty($formatted_units[$p["stock_unit_id"]]) && !empty($formatted_units[$p["base_unit_id"]]) && ($p["stock_unit_id"] !== $p["base_unit_id"]) && !empty($primary_sku["stock_base_ratio"]) && $wa->globals('market.has_premium')}
+
+																{$product_price = null}
+																{$stock_unit = null}
+																{$base_unit = null}
+																{$base_price = null}
+																{$product_compare_price = shop_currency($primary_sku["compare_price"], ["in_currency" => $_currency, "format" => "price_wrapper"])}
+
+																{if !empty($_show_fractional)}
+																	{$stock_unit = $formatted_units[$p["stock_unit_id"]]}
+																	{$base_unit = $formatted_units[$p["base_unit_id"]]}
+																	{$product_price = shop_currency($primary_sku["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+																	{$base_price = ($primary_sku["price"]/$primary_sku["stock_base_ratio"])}
+																	{$base_price = shop_currency($base_price, ["unit" => $base_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+																{else}
+																	{$product_price = shop_currency($primary_sku["price"], ["in_currency" => $_currency, "format" => "price_wrapper"])}
+
+																	{if !empty($formatted_units) && $formatted_units[$product["stock_unit_id"]] && $wa->globals('market.has_premium') }
+																		{$stock_unit = $formatted_units[$p["stock_unit_id"]]}
+																		{if !empty($fractional_config) && $fractional_config["stock_units_enabled"]}
+																			{$product_price = shop_currency($primary_sku["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $_currency, "format" => "price_wrapper"])}
+																		{/if}
+																	{/if}
+																{/if}
+
+																{$features_html = []}
+
+																{foreach $features as $feature_code => $feature}
+																	{$is_divider = $feature.type === 'divider'}
+																	{$is_same = !!$feature.same}
+
+																	{if !$is_divider}
+																		{capture assign='feature_html'}
+																			{if isset($p.features[$feature_code])}
+																				{$value = $p.features[$feature_code]}
+
+																				{call product_feature_value product_id=$p.id value=$value feature=$feature}
+																			{else}
+																				—
+																			{/if}
+																		{/capture}
+
+																		{$features_html[$feature_code] = $feature_html}
+																	{/if}
+																{/foreach}
+
+																<div class="r-compare-page__product swiper-slide" data-features="{$features_html|json_encode|escape}">
+																	<div class="r-compare-page__product-delete-button-container" data-product_id="{$p.id|escape}">
+                                                                        <span class="button button_style_gray button_size_xs button_icon r-compare-page__product-delete-button">
+                                                                            <span class="image-box image-box_fill">
+                                                                                {call svg_icon icon='cross' classes='button__icon' width=10 height=10}
+                                                                            </span>
+                                                                        </span>
+																	</div>
+																	<div class="r-compare-page__product-image-container">
+																		<div class="image-box image-box_fill">
+																			{if $has_image}
+																				<img class="r-compare-page__image" src="{$image_url|escape}" alt="{$product.name|escape}" data-rjs="2" />
+																			{else}
+																				{call svg_icon
+																				classes='r-compare-page__image r-compare-page__image_dummy'
+																				icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+																			{/if}
+																		</div>
+																	</div>
+																	<div class="r-compare-page__product-name-container">
+																		<a class="link link_style_hover" href="{$wa->shop->productUrl($p)|escape}">
+																			{$p.name}
+																		</a>
+																	</div>
+																	<div class="r-compare-page__product-price-container">
+																		{$product_price}
+																	</div>
+																	{if $has_compare_price}
+																		<div class="r-compare-page__product-compare-price-container">
+																			<span class="r-compare-page__product-compare-price">{$product_compare_price}</span>
+																		</div>
+																	{/if}
+																	{if $base_price}
+																		<div class="r-compare-page__product-base-price">{$base_price}</div>
+																	{/if}
+																</div>
+															{/foreach}
+														</div>
+													</div>
+													<div class="r-compare-page__slider-index r-compare-page__slider-index_index_{$i}">
+														1/{$products_count}
+													</div>
+												</div>
+											{/for}
+										</div>
+										<label class="r-compare-page__mode-container">
+											<span class="r-compare-page__mode-text">
+												[`Только различающиеся`]
+											</span>
+											<span class="r-compare-page__mode-checkbox">
+												<label class="switch-checkbox">
+													<input class="switch-checkbox__control r-compare-page__mode-control" type="checkbox" />
+													<span class="switch-checkbox__box"></span>
+												</label>
+											</span>
+										</label>
+										<div class="r-compare-page__features-container">
+											{$product = reset($products)}
+
+											{foreach $features as $feature_code => $feature}
+												{$is_divider = $feature.type === 'divider'}
+												{$is_same = !!$feature.same}
+
+												{if $is_divider}
+													<div class="r-compare-page__divider-container">
+														<span class="title title_h4">
+															{$feature.name|escape}
+														</span>
+													</div>
+												{else}
+													<div class="r-compare-page__feature-container {if $is_same}r-compare-page__feature-container_same{/if}">
+														<div class="r-compare-page__feature-name">
+															{$feature.name|escape}
+														</div>
+														<div class="r-compare-page__feature-values">
+															{for $i = 0; $i < 2; $i++}
+																<div class="r-compare-page__feature-value r-compare-page__feature-value_index_{$i}" data-feature_code="{$feature_code|escape}">
+																	{if isset($product.features[$feature_code])}
+																		{$value = $product.features[$feature_code]}
+
+																		{call product_feature_value product_id=$product.id value=$value feature=$feature}
+																	{else}
+																		—
+																	{/if}
+																</div>
+															{/for}
+														</div>
+													</div>
+												{/if}
+											{/foreach}
+										</div>
+									{else}
+										<div class="r-compare-page__not-found-container">
+											<div class="not-found-block">
+												<div class="not-found-block__header">
+													[`Список сравнения пуст.`]
+												</div>
+												<div class="not-found-block__content">
+													[`Для добавления товаров к сравнению`] <a class="link" href="{$wa_app_url|escape}">[`перейдите на главную.`]</a>
+												</div>
+											</div>
+										</div>
+									{/if}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			{* Compare Responsive End *}
+			{/if}
+
+		    <!-- plugin hook: 'frontend_compare' -->
+		    {foreach $frontend_compare as $plugin => $_}
+			    <!-- frontend_compare.{$plugin} -->
+			    {$_}
+		    {/foreach}
+	    {* Compare Page End *}
+	{/if}
+{/strip}

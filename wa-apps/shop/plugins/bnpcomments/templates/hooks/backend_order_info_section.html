@@ -1,0 +1,179 @@
+<div id="bnpcomments-main" style='margin-bottom: 25px;'>
+    <div class="bnpcomments-all">
+        {if $comments}
+            {$comments}
+        {/if}
+    </div>
+    <form id="s-plugin-bnpcomments-form">
+        <input type="hidden" value="{$order_id}" name="data[order_id]"/>
+        <div class="fields" style="width: 100%">
+            <div class="long inline field">
+                <label for="s-plugin-bnpcomments-comment" class="name">Комментарий</label>
+                <textarea id="s-plugin-bnpcomments-comment" class="long" name="data[text]"></textarea>
+            </div>
+            <div class="field-group">
+                <div id="s-plugin-bnpcomments-form-submit">
+                    <button type="submit" class="button green">Добавить</button>
+                    <span id="s-plugin-bnpcoments-form-result"></span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    ;(function(){
+
+        // Пытаемся разобраться с шириной (ss6 и ss7)
+        var commentsMainContainer = $("#bnpcomments-main");
+        var orderContainer = commentsMainContainer.closest('.s-order');
+
+        if(orderContainer.length) {
+            if(orderContainer.hasClass('double-padded')) {
+                commentsMainContainer.css('margin-right', '220px');
+            }
+        }
+
+
+        var f = $('#s-plugin-bnpcomments-form');
+        var result = $("#s-plugin-bnpcoments-form-result");
+
+        attachTableHandlers();
+
+        f.on('submit', function() {
+
+            $.ajax({
+                url: '?plugin=bnpcomments&action=addComment',
+                data: f.serialize(),
+                dataType: 'json',
+                type: 'post',
+
+                success: function(response) {
+                    if(response.status === 'fail') {
+                        console.log(response);
+                        result.html('<i class="icon16 no" style="vertical-align: baseline;"></i>' + response.errors);
+                        return;
+                    }
+
+                    if(typeof response.data.comments !== 'undefined') {
+                        $("#s-plugin-bnpcomments-comment").val('');
+                        result.html('<i class="icon16 yes" style="vertical-align: baseline;"></i> Добавлен');
+                        $(".bnpcomments-all").html(response.data.comments);
+                        attachTableHandlers();
+                    }
+                },
+
+                complete: function() {
+
+                    setTimeout(function() {
+                        result.empty();
+                    }, 2000);
+                }
+
+            });
+
+            return false;
+        });
+
+        function attachTableHandlers() {
+
+            $('.bnpcomments-delete').off();
+            $('.bnpcomments-edit').off();
+
+            $('.bnpcomments-edit').on('click', function() {
+
+                var commentTR = $(this).closest('tr');
+
+                var commentID = commentTR.data('comment-id');
+
+                var commentDIV = commentTR.find('.editable-comment');
+
+                if(typeof commentID === 'undefined') {
+                    return;
+                }
+
+                commentDIV.waDialog({
+                    width: '300px',
+                    height: '200px',
+                    disableButtonsOnSubmit: true,
+                    title: 'Редактирование комментария',
+                    buttons: '<input type="submit" value="Сохранить" /><input type="button" class="cancel" value="Закрыть"/>',
+                    onSubmit: function(d) {
+
+                        $.ajax({
+                            url: '?plugin=bnpcomments&action=editComment',
+                            data: $(this).serialize(),
+                            dataType: 'json',
+                            type: 'post',
+
+                            success: function(response) {
+
+                                if(response.status === 'fail') {
+                                    console.log(response);
+                                    return false;
+                                }
+
+                                if(typeof response.data.comments !== 'undefined') {
+                                    $(".bnpcomments-all").html(response.data.comments);
+                                    attachTableHandlers();
+                                }
+
+                                d.trigger('close');
+                            }
+
+                        });
+
+                        return false;
+                    }
+                });
+
+
+            });
+
+            $('.bnpcomments-delete').on('click', function() {
+
+                var commentTR = $(this).closest('tr');
+
+                var commentID = commentTR.data('comment-id');
+                var orderID = commentTR.data('order-id');
+
+                if(typeof commentID === 'undefined') {
+                    return;
+                }
+
+                if(!confirm('Уверен, что хочешь удалить этот комментарий?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '?plugin=bnpcomments&action=deleteComment',
+                    data: {
+                        id: commentID,
+                        order_id: orderID
+                    },
+                    dataType: 'json',
+                    type: 'post',
+
+                    success: function(response) {
+
+                        if(response.status === 'fail') {
+                            console.log(response);
+                            return;
+                        }
+
+                        commentTR.remove();
+
+                        if(typeof response.data.count !== 'undefined') {
+
+                            if(response.data.count == 0) {
+                                $('.bnpcomments-all').empty();
+                            }
+
+                        }
+                    }
+                });
+
+
+            });
+        }
+    }());
+</script>

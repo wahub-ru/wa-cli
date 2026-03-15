@@ -1,0 +1,84 @@
+{strip}
+
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+    {$wa->globals('is_show_sidebar', true)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => '[`My subscriptions`]'])}
+
+    {function subscription_informer text='' status='success'}
+        {if $text}
+            <div class="mailer-subscription-page__informer {if $status}mailer-subscription-page__informer_{$status}{/if}">
+                {$text}
+            </div>
+        {/if}
+    {/function}
+
+    <div class="mailer-subscription-page">
+        <div class="block">
+            <div class="block__header">
+                <h1 class="title title_h2">[`My subscriptions`]</h1>
+            </div>
+
+            {if $just_confirmed}
+                {call subscription_informer text='[`Thanks for subscription!`]'}
+            {/if}
+
+            {if $just_updated}
+                {call subscription_informer text='[`Your subscription list successfully updated.`]'}
+            {/if}
+
+            {if $just_unsubscribed || $unsubscriber}
+                {call subscription_informer text='[`You are unsubscribed from all mailing campaigns.`]' status=''}
+            {/if}
+
+            <form action="{$wa->getUrl('mailer/frontend/mySubscriptions')}" method="post">
+
+                {if $unsubscriber}
+                    <div class="subscriptions subscriptions_unsubscriber">
+                        <div class="subscriptions__controls">
+                            <div class="subscriptions__control">
+                                <button class="button button_size_l" value="[`Subscribe again`]" type="submit" name="subscribe_again">[`Subscribe again`]</button>
+                            </div>
+                        </div>
+                    </div>
+                {else}
+                    {if $subscriptions}
+                        <div class="subscriptions">
+                            <div class="subscriptions__description">
+                                [`Select emailing campaigns you would like to participate in:`]
+                            </div>
+                            <div class="subscriptions__list">
+                                {foreach $subscriptions as $subscription}
+                                    <div class="subscriptions__item">
+                                        <label class="checkbox">
+                                            <input type="checkbox" name="list[]" value="{$subscription.subscription_info.list_id}" class="checkbox__control" id="subscription-{$subscription.subscription_info.list_id}" {if $subscription.subscribed}checked{/if}/>
+	                                        <span class="checkbox__mark"></span>
+	                                        <span class="checkbox__label">
+		                                        {$subscription.subscription_info.list_name}
+                                            </span>
+                                        </label>
+                                    </div>
+                                {/foreach}
+                            </div>
+                            <div class="subscriptions__controls">
+                                <div class="subscriptions__control">
+                                    <button class="button button_size_l" value="[`Save`]" type="submit" name="update_subscriptions">[`Save`]</button>
+                                </div>
+                                <div class="subscriptions__control">
+                                    <button class="button button_size_l button_style_gray" value="[`Unsubscribe from all mailings`]" type="submit" name="unsubscribe_from_all">[`Unsubscribe from all mailings`]</button>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                {/if}
+
+                {$wa->csrf()}
+            </form>
+
+        </div>
+    </div>
+
+    {$wa->globals('is_show_sidebar', false)}
+    {$wa->globals('is_my', true)}
+{/strip}

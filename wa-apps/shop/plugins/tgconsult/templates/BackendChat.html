@@ -1,0 +1,23 @@
+{* Диалог — просмотр *}
+
+<div class="block double-padded">
+  <h1>Диалог №{$chat.id}</h1>
+
+  {if $contact_name}
+    <p class="hint">
+      Покупатель: <a href="{$contact_link|escape}" target="_blank">{$contact_name|escape}</a>
+    </p>
+  {/if}
+
+  <div class="tgc-chat">
+    {foreach $messages as $m}
+      <div class="tgc-row {if $m.sender=='manager'}is-manager{else}is-visitor{/if}">
+        <div class="tgc-meta">
+          {if $m.sender=='manager'}Менеджер{else}Посетитель{/if}
+          &middot; {$m.created|strtotime|date_format:"%d.%m.%Y %H:%M"}
+        </div>
+        <div class="tgc-text">{$m.text|escape|nl2br}</div>
+      </div>
+    {/foreach}
+  </div>
+</div>

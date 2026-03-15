@@ -1,0 +1,1103 @@
+{strip}
+    {$blocks = []}
+    {$sidebar_side = $wa->globals('sidebar_side')}
+    {$is_mobile = $wa->globals('is_show_sidebar_mobile')}
+
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_searchpro = $plugins['shop_searchpro']}
+    {$is_enabled_productbrands = $plugins['shop_productbrands']}
+    {$is_catalogreviews_page = $wa->param('plugin') === 'catalogreviews'}
+
+    {function filters_block}
+        {$is_enabled_searchpro = $plugins['shop_searchpro']}
+
+        {if $is_enabled_searchpro}
+            {$searchpro_filters = $wa->globals('market_searchpro_filters')}
+
+            {if $searchpro_filters}
+                {$filters = $searchpro_filters}
+            {/if}
+        {/if}
+
+        {if !empty($filters) && count($filters) > 0}
+            {include './filters.html' sidebar_side=$sidebar_side}
+        {/if}
+    {/function}
+
+    {function social_block args=[]}
+        {$header_text = $args['header_text']|default:$theme_settings['shop_home_sidebar_social_header']|default:''}
+        {$vk_widget = $theme_settings['vk_widget']}
+        {$facebook_widget = $theme_settings['facebook_widget']}
+        {$twitter_widget = $theme_settings['twitter_widget']}
+        {$instagram_widget = $theme_settings['instagram_widget']}
+        {$odnoklassniki_widget = $theme_settings['odnoklassniki_widget']}
+
+        {* Variables *}
+        {$_widgets = [
+            [
+                'icon' => "{call svg_icon icon='vk-classic' width=19 height=10 fill='currentColor'}",
+                'class' => 'vk',
+                'content' => $vk_widget
+            ],
+            [
+                'icon' => "{call svg_icon icon='facebook' width=9 height=19 fill='currentColor'}",
+                'class' => 'facebook',
+                'content' => $facebook_widget
+            ],
+            [
+                'icon' => "{call svg_icon icon='twitter' width=17 height=14 fill='currentColor'}",
+                'class' => 'twitter',
+                'content' => $twitter_widget
+            ],
+            [
+                'icon' => "{call svg_icon icon='instagram' width=18 height=18 fill='currentColor'}",
+                'class' => 'instagram',
+                'content' => $instagram_widget
+            ],
+            [
+                'icon' => "{call svg_icon icon='odnoklassniki' width=18 height=18 fill='currentColor'}",
+                'class' => 'odnoklassniki',
+                'content' => $odnoklassniki_widget
+            ]
+        ]}
+        {$widgets = []}
+
+        {foreach $_widgets as $widget}
+            {if !empty($widget.content)}
+                {$widgets[] = $widget}
+            {/if}
+        {/foreach}
+
+        {if count($widgets) > 0}
+            <div class="social-block block block_secondary">
+                <div class="block__header block__header_text">
+                    {$header_text|escape}
+                </div>
+                <div class="social-block__tabs">
+                    {foreach $widgets as $widget}
+                        <div class="social-block__tab social-block__tab_{$widget.class|escape} {if $widget@first}social-block__tab_active{/if}">
+                            <span class="image-box">
+                                {$widget.icon}
+                            </span>
+                        </div>
+                    {/foreach}
+                </div>
+                <div class="social-block__contents">
+                    {foreach $widgets as $widget}
+                        <div class="social-block__content {if $widget@first}social-block__content_active{/if}">
+                            {$widget.content}
+                        </div>
+                    {/foreach}
+                </div>
+            </div>
+        {/if}
+    {/function}
+
+    {function pages_block args=[]}
+        {if $wa->param('action') === 'page' || ($wa_app === 'site' && $wa->param('action') == '') || $wa_app === 'photos' || $wa_app === 'blog'}
+            {$variant = $args['variant']|default:$theme_settings['site_sidebar_information_menu_variant']}
+
+            {if $variant == "subpages"}
+                {$pages = $wa->__get($wa_app)->pages($page.id)}
+                {if empty($pages)}
+                    {$pages = $wa->__get($wa_app)->pages($page.parent_id|default:0)}
+                {/if}
+            {else}
+                {$pages = $wa->__get($wa_app)->pages()}
+            {/if}
+
+            {call filter_hidden_pages pages=$pages}
+            {$pages = $wa->globals('market.return')}
+
+            {$selected_ids = []}
+            {$page_parents = []}
+            {$parent_page = null}
+
+            {if !empty($page) && $wa->param('action') === 'page'}
+                {$selected_ids = [$page.id]}
+                {$parent_page = $wa->__get($wa_app)->page($page.parent_id)}
+            {/if}
+
+            {while !empty($parent_page) && !empty($parent_page.id)}
+                {$page_parents[] = $parent_page}
+                {$parent_page = $wa->__get($wa_app)->page($parent_page.parent_id)}
+            {/while}
+
+            {foreach $page_parents as $_page}
+                {$selected_ids[] = $_page.id}
+            {/foreach}
+
+            {* Template *}
+            {if !empty($pages)}
+                {call pages_tree pages=$pages selected_ids=$selected_ids}
+            {/if}
+        {/if}
+    {/function}
+
+    {if $wa_app == 'shop'}
+        {$home_is_enabled_catalog = $theme_settings['shop_home_sidebar_catalog_enabled']}
+        {$home_header_catalog = $theme_settings['shop_home_sidebar_catalog_header']}
+        {$home_limit_catalog = $theme_settings['shop_home_sidebar_catalog_limit']}
+        {$home_is_enabled_image_catalog = !!$theme_settings['shop_home_sidebar_catalog_image_enabled']}
+        {$home_show_products_count_catalog = !!$theme_settings['shop_home_sidebar_catalog_count_enabled']}
+        {$home_is_enabled_overlay_catalog = !!$theme_settings['shop_home_sidebar_catalog_shadow']}
+        {$home_variant_catalog = $theme_settings['shop_home_sidebar_catalog_variant']}
+
+        {$home_is_enabled_banners = $theme_settings['shop_home_sidebar_banners_enabled']}
+
+        {$home_is_enabled_news = !!$theme_settings['shop_home_sidebar_news_enabled']}
+        {$home_title_news = $theme_settings['shop_home_sidebar_news_title']}
+        {$home_block_id_news = $theme_settings['shop_home_sidebar_news_block_id']}
+        {$home_limit_news = $theme_settings['shop_home_sidebar_news_limit']}
+        {$home_is_enabled_recently_viewed = $theme_settings['shop_home_sidebar_recently_viewed_enabled']}
+        {$home_recently_viewed_title = $theme_settings['shop_home_sidebar_recently_viewed_title']}
+        {$home_recently_viewed_limit= $theme_settings['shop_home_sidebar_recently_viewed_limit']}
+        {$home_is_enabled_reviews = $theme_settings['shop_home_sidebar_reviews_enabled']}
+        {$home_header_reviews = $theme_settings['shop_home_sidebar_reviews_header']}
+        {$home_limit_reviews = $theme_settings['shop_home_sidebar_reviews_limit']}
+        {$home_is_enabled_tags = $theme_settings['shop_home_sidebar_tags_enabled']}
+        {$home_header_tags = $theme_settings['shop_home_sidebar_tags_header']}
+        {$home_limit_tags = $theme_settings['shop_home_sidebar_tags_limit']}
+        {$home_is_enabled_photos = $theme_settings['shop_home_sidebar_photos_enabled']}
+        {$home_header_photos = $theme_settings['shop_home_sidebar_photos_header']}
+        {$home_limit_photos = $theme_settings['shop_home_sidebar_photos_limit']}
+        {$home_is_enabled_social = $theme_settings['shop_home_sidebar_social_enabled']}
+        {$home_header_social = $theme_settings['shop_home_sidebar_social_header']}
+        {$sidebar_catalog_source = $theme_settings['shop_home_sidebar_catalog_source']}
+        {$sidebar_catalog_menu_id = $theme_settings['shop_home_sidebar_catalog_menu_id']}
+        {$break_avoid = !!$theme_settings['header_catalog_break_avoid']}
+
+        {$category_filter_setting = $theme_settings['shop_catalog_filter_variant']}
+        {$category_is_enabled_filter = $category_filter_setting === 'sidebar' || ($wa->globals('is_mobile') && $category_filter_setting !== 'disabled')}
+        {$category_is_enabled_catalog = $theme_settings['shop_catalog_sidebar_catalog_enabled']}
+        {$category_is_enabled_recently = $theme_settings['shop_catalog_sidebar_recently_enabled']}
+        {$category_recently_limit = $theme_settings['shop_catalog_sidebar_recently_limit']}
+        {$category_is_enabled_news = $theme_settings['shop_catalog_sidebar_news_enabled']}
+        {$category_is_enabled_reviews = $theme_settings['shop_catalog_sidebar_reviews_enabled']}
+        {$category_is_enabled_tags = $theme_settings['shop_catalog_sidebar_tags_enabled']}
+        {$category_is_enabled_photos = $theme_settings['shop_catalog_sidebar_photos_enabled']}
+        {$category_is_enabled_social = $theme_settings['shop_catalog_sidebar_social_enabled']}
+        {$category_order = $theme_settings['shop_catalog_sidebar_order']}
+        {$category_is_enabled_banners = $theme_settings['shop_catalog_sidebar_banners_enabled']}
+        {$category_catalog_variant = $theme_settings['shop_catalog_sidebar_catalog_variant']}
+
+        {$information_header_pages = $theme_settings['shop_information_sidebar_header']}
+        {$information_variant_pages = $theme_settings['shop_information_sidebar_variant']}
+        {$information_is_enabled_social = $theme_settings['shop_information_social_enabled']}
+
+
+        {function news_block args=[]}
+            {if $wa->blog}
+                {$header_text = $args['header_text']|default:$theme_settings['shop_home_sidebar_news_title']}
+                {$blog_id = $args['blog_id']|default:$theme_settings['shop_home_sidebar_news_block_id']}
+                {$limit = $args['limit']|default:$theme_settings['shop_home_sidebar_news_limit']}
+
+                {$blog = $wa->blog->blog($blog_id)}
+                {$posts = $wa->blog->posts($blog_id, $limit)}
+
+                {if is_array($posts) && count($posts) > 0}
+                    <article class="block blog-sidebar-news">
+                        <div class="block__header">
+                            <div class="blog-sidebar-news__header-container">
+                                <div class="blog-sidebar-news__header-text-container">
+                                    <span class="title title_h2">
+                                        {$header_text|escape}
+                                    </span>
+                                </div>
+                                <div class="blog-sidebar-news__link-container">
+                                    <a class="link" href="{blogBlog::getUrl($blog)|escape}">
+                                        [`Все новости`]
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="block__content">
+                            <div class="blog-posts-mini">
+                                {foreach $posts as $post}
+                                    <div class="blog-posts-mini__item">
+                                        <div class="blog-post-mini">
+                                            <div class="blog-post-mini__date-container">
+                                                {$post.datetime|wa_datetime:'humandate'}
+                                            </div>
+                                            <div class="blog-post-mini__title-container">
+                                                <a class="link link_style_hover" href="{$post.link}">
+                                                    {$post.title}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                    </article>
+                {/if}
+            {/if}
+
+        {/function}
+
+        {function photos_block}
+            {if $wa->photos}
+                {$args = $args|default:[]}
+                {$header_text = $args['header_text']|default:$theme_settings['shop_home_sidebar_photos_header']}
+                {$limit = $args['limit']|default:$theme_settings['shop_home_sidebar_photos_limit']}
+
+                {$photos = $wa->photos->photos('', '60x60', 0, 100)}
+
+                {if count($photos) > 0}
+                    <div class="block block_secondary">
+                        <div class="block__header block__header_text">
+                            {$header_text|escape}
+                        </div>
+                        <div class="block__content">
+                            {$count_hidden = 0}
+
+                            {$_photos = []}
+                            {foreach $photos as $photo}
+                                {if empty($photo.description) || (!empty($photo.description) && !preg_match('/^promo_id=\d+/', $photo.description))}
+                                    {$_photos[] = $photo}
+                                {/if}
+                            {/foreach}
+                            {$photos = $_photos}
+
+                            {if count($photos) > 0}
+                                <div class="photos-mini toggle-block">
+                                    <div class="photos-mini__list">
+                                        {foreach $photos as $photo}
+                                            {$is_hidden = $limit != -1 && $photo@iteration > $limit}
+
+                                            {if $is_hidden}
+                                                {$count_hidden = $count_hidden + 1}
+                                            {/if}
+
+                                            <div class="photos-mini__item {if $is_hidden}photos-mini__item_hidden{/if}">
+                                                <a class="photos-photo-mini" href="{$photo.frontend_link|escape}">
+                                                    <span class="image-box">
+                                                        {call image
+                                                            src=$photo.thumb_60x60.url
+                                                            alt=$photo.name
+                                                        }
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        {/foreach}
+                                    </div>
+                                    {if $count_hidden > 0}
+                                        <div class="photos-mini__footer">
+                                            <span class="photos-mini__show-button pseudo-link toggle-block__button">[`Показать все`]</span>
+                                            <span class="photos-mini__hide-button pseudo-link toggle-block__button">[`Скрыть`]</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+
+        {/function}
+
+        {function catalog_block args=[]}
+            {$categories = $args['categories']|default:null}
+            {$current_category_id = $args['current_category_id']|default:null}
+            {$catalog_variant = $args['catalog_variant']|default:$theme_settings['shop_home_sidebar_catalog_variant']}
+            {$limit = $args['limit']|default:$theme_settings['shop_home_sidebar_catalog_limit']}
+            {$show_products_count = !!$args['show_products_count']|default:$theme_settings['shop_home_sidebar_catalog_count_enabled']}
+            {$show_real_count = $args['show_real_count']|default:false}
+            {$use_field_url = $args['use_field_url']|default:'url'}
+            {$is_enabled_image = !!$args['is_enabled_image']|default:$theme_settings['shop_home_sidebar_catalog_image_enabled']}
+            {$sidebar_side = $args['sidebar_side']|default:null}
+
+            {if is_null($categories)}
+                {if $wa->globals('market.theme_exists.shop')}
+                    {$depth = 3}
+                    {if $catalog_variant == 'disabled'}
+                        {$depth = 0}
+                    {/if}
+
+                    {call get_catalog_categories args=['depth' => $depth]}
+                    {$categories = $wa->globals('market.return')|default:[]}
+                {else}
+                    {$categories = []}
+                {/if}
+            {/if}
+
+            {$_categories = $categories}
+
+            {$categories = []}
+            {$hidden_categories = []}
+
+            {foreach $_categories as $i => $category}
+                {$is_hidden = $limit != -1 && $limit < $category@iteration}
+
+                {if $is_hidden}
+                    {$hidden_categories[$i] = $category}
+                {else}
+                    {$categories[$i] = $category}
+                {/if}
+            {/foreach}
+
+            {$has_hidden = count($hidden_categories) > 0}
+
+            {if $has_hidden}
+                {$categories['-1'] = ['id' => '-1', 'name' => "{_wp("Ещё")}", 'childs' => $hidden_categories]}
+            {/if}
+
+            {* Template *}
+            {if count($categories) > 0}
+                {if $catalog_variant === 'tree' || ($catalog_variant == 'disabled' && $has_hidden)}
+                    {call catalog_tree
+                        categories=$categories
+                        show_products_count=$show_products_count
+                        show_real_count=$show_real_count
+                        use_field_url=$use_field_url
+                        is_enabled_image=$is_enabled_image
+                        sidebar_side=$sidebar_side
+                        current_category_id=$current_category_id
+                    }
+                {elseif $catalog_variant === 'extend'}
+                    {call catalog_extend
+                        categories=$categories
+                        current_category_id=$current_category_id
+                        show_products_count=$show_products_count
+                        show_real_count=$show_real_count
+                        use_field_url=$use_field_url
+                        is_enabled_image=$is_enabled_image
+                        break_avoid=$break_avoid
+                        sidebar_side=$sidebar_side
+                        limit_columns=$limit
+                    }
+                {else}
+                    {call catalog_list
+                        categories=$categories
+                        current_category_id=$current_category_id
+                        show_products_count=$show_products_count
+                        show_real_count=$show_real_count
+                        use_field_url=$use_field_url
+                        is_enabled_image=$is_enabled_image
+                        sidebar_side=$sidebar_side
+                    }
+                {/if}
+            {/if}
+
+        {/function}
+
+        {function products_block args=[]}
+            {$products = $args['products']}
+            {$limit = $args['limit']|default:3}
+            {$header_text = $args['header_text']|default:''}
+
+            {if count($products) > 0}
+                <div class="block block_secondary">
+                    <div class="block__header block__header_text">
+                        {$header_text|escape}
+                    </div>
+                    <div class="block__content">
+                        {call products_mini products=$products}
+                    </div>
+                </div>
+            {/if}
+        {/function}
+
+        {function recently_block}
+            {$limit = $limit|default:3}
+            {$header_text = $args['header_text']|default:"[`Просмотренные`]"}
+
+            {$viewed_products = explode(',', $wa->cookie('shop_recently'))}
+            {$viewed_products = array_slice($viewed_products, 0, $limit)}
+
+            {$products = $wa->shop->products($viewed_products, ['fields' => '*,skus'])}
+
+            {if count($products) > 0}
+                {call products_block args=['products'=>$products, 'limit'=>$limit, 'header_text'=>$header_text] }
+            {/if}
+        {/function}
+
+        {function banner_block number=null}
+            {$image = $theme_settings["promo_sidebar_banner_{$number}_image"]}
+            {$link = $theme_settings["promo_sidebar_banner_{$number}_link"]}
+
+            {$has_image = !empty($image)}
+
+            {if $has_image}
+                {$image_url = "{$wa->shop->themeUrl(waRequest::getTheme())}{$image}"}
+            {else}
+                {$image_url = null}
+            {/if}
+
+            {if $has_image}
+                <div class="sidebar-banner">
+                    <a class="image-box image-box_contain" href="{$link|escape}">
+                        {call image
+                            src=$image_url
+                        }
+                    </a>
+                </div>
+            {/if}
+        {/function}
+
+        {function reviews_block args=[]}
+            {$header_text = $args['header_text']|default:$theme_settings['shop_home_sidebar_reviews_header']}
+            {$limit = $args['limit']|default:$theme_settings['shop_home_sidebar_reviews_limit']}
+
+            {$reviews = $wa->shop->reviews($limit)}
+
+            {if count($reviews) > 0}
+                <div class="block block_secondary">
+                    <div class="block__header block__header_text">
+                        {$header_text|escape}
+                    </div>
+                    <div class="block__content">
+                        {$product_ids = []}
+
+                        {foreach $reviews as $review}
+                            {$product_ids[] = $review.product_id}
+                        {/foreach}
+
+                        {$product_ids = array_unique($product_ids)}
+                        {$products = $wa->shop->products($product_ids)}
+
+                        <div class="reviews-mini">
+                            {foreach $reviews as $review}
+                                {if !isset($products[$review.product_id])}
+                                    {continue}
+                                {/if}
+
+                                <div class="reviews-mini__item">
+                                    {$product = $products[$review.product_id]}
+
+                                    {$has_image = isset($product.image_id)}
+                                    {$is_dummy_image = !$has_image}
+
+                                    {if $has_image}
+                                        {$image_url = $wa->shop->productImgUrl($product, '60')}
+                                    {/if}
+
+                                    <div class="review-mini">
+                                        <div class="review-mini__product">
+                                            <div class="review-mini__product-image-box">
+                                                <span class="image-box">
+                                                    {if $is_dummy_image}
+                                                        {if !empty($theme_settings['product_dummy_image'])}
+                                                            {call image
+                                                                src=$theme_settings['product_dummy_image']
+                                                                classes='review-mini__product-image'
+                                                                alt=$product.name
+                                                                attrs=[
+                                                                    'width' => 60
+                                                                ]
+                                                            }
+                                                        {else}
+                                                            {call svg_icon classes='review-mini__product-image review-mini__product-photo_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                                        {/if}
+                                                    {else}
+                                                        {call image
+                                                            src=$image_url
+                                                            classes='review-mini__product-image'
+                                                            alt=$product.name
+                                                            r2x=true
+                                                        }
+                                                    {/if}
+                                                </span>
+                                            </div>
+                                            <div class="review-mini__product-content">
+                                                <div class="review-mini__product-name">
+                                                    <a class="link link_style_hover" href="{call get_product_url product=$product}">
+                                                        {$product.name}
+                                                    </a>
+                                                </div>
+                                                <div class="review-mini__product-rating">
+                                                    {call rating_overview rating=$review.rate show_rating=true is_compact=true}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {if isset($review.author)}
+                                            <div class="review-mini__author">
+                                                {$review.author.name}
+                                            </div>
+                                        {/if}
+                                        <div class="review-mini__text">
+                                            {$review.text}
+                                        </div>
+                                        <div class="review-mini__date">
+                                            {$review.datetime|wa_datetime:'humandate'}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/foreach}
+                        </div>
+                    </div>
+                </div>
+            {/if}
+
+        {/function}
+
+        {function tags_block args=[]}
+            {$header_text = $args['header_text']|default:$theme_settings['shop_home_sidebar_tags_header']}
+            {$limit = $args['limit']|default:$theme_settings['shop_home_sidebar_tags_limit']}
+
+            {$tags = $wa->shop->tags()}
+
+            {if count($tags) > 0}
+                <div class="block block_secondary">
+                    <div class="block__header block__header_text">
+                        {$header_text|escape}
+                    </div>
+                    <div class="block__content">
+                            {$count_hidden = 0}
+
+                            {if count($tags) > 0}
+                                <div class="tags toggle-block">
+                                    <div class="tags__list">
+                                        {foreach $tags as $tag}
+                                            {$is_hidden = $limit != -1 && $tag@iteration > $limit}
+
+                                            {if $is_hidden}
+                                                {$count_hidden = $count_hidden + 1}
+                                            {/if}
+
+                                            <div class="tags__item {if $is_hidden}tags__item_hidden{/if}">
+                                                <a class="tag" href="{$wa->getUrl('shop/frontend/tag', ['tag' => $tag.uri_name])|escape}">
+                                                    {$tag.name|escape}
+                                                </a>
+                                            </div>
+                                        {/foreach}
+                                    </div>
+                                    {if $count_hidden > 0}
+                                        <div class="tags__footer">
+                                            <span class="tags__show-button pseudo-link toggle-block__button">[`Показать все`]</span>
+                                            <span class="tags__hide-button pseudo-link toggle-block__button">[`Скрыть`]</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/if}
+                    </div>
+                </div>
+            {/if}
+
+        {/function}
+
+        {if $is_mobile && ($wa->param('action') === 'category' || $wa->param('plugin') === 'searchpro' || $is_catalogreviews_page)}
+            {if $category_is_enabled_filter}
+                {$blocks['filters'] = [
+                    'content' => "{call filters_block}",
+                    'classes' => "sidebar-filters",
+                    'icon' => "{call svg_icon icon='tune' width=18 height=18 fill='currentColor'}",
+                    'title' => _wp('Фильтр подбора'),
+                    'header_classes' => 'sidebar-filters__header'
+                ]}
+            {/if}
+        {elseif $wa->param('action') === 'category' || $wa->param('plugin') === 'searchpro' || $wa->param('plugin') === 'brand' || $wa->param('plugin') === 'productbrands' || $is_catalogreviews_page}
+            {$catalog_html = ''}
+
+            {if $is_enabled_searchpro && $wa->param('plugin') === 'searchpro'}
+                {$searchpro_categories = $wa->globals('market_searchpro_categories')}
+
+                {if $searchpro_categories}
+                    {$blocks['searchpro_catalog'] = [
+                        'content' => "{call catalog_block
+                            args=[
+                            'categories' => $searchpro_categories,
+                            'show_products_count' => false,
+                            'show_real_count' => true,
+                            'use_field_url' => 'search_url'
+                        ]}",
+                        'classes' => 'sidebar-catalog',
+                        'data-attrs' => 'data-is_overlay_enabled="'|cat:"{call bool2str value=$home_is_enabled_overlay_catalog}"|cat:'"',
+                        'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+                        'title' => $home_header_catalog
+                    ]}
+                {/if}
+            {elseif $is_enabled_productbrands && $wa->param('plugin') === 'productbrands'}
+
+            {elseif $category_is_enabled_catalog}
+                {if $sidebar_catalog_source == 'menu_app' && !empty($sidebar_catalog_menu_id)}
+                    {$menu_links = $wa->menu->get($sidebar_catalog_menu_id)}
+                    {$catalog_html = "{call catalog_block
+                    args=[
+                    'categories' => $menu_links,
+                    'sidebar_side' => $sidebar_side
+                    ]}"}
+                {else}
+                    {if $wa->param('action') === 'category' && ($category_catalog_variant === 'subcategories' || $category_catalog_variant === 'parent_subcategories')}
+                        {$depth = 3}
+                        {if $home_variant_catalog == 'disabled'}
+                            {$depth = 1}
+                        {/if}
+
+                        {if $category_catalog_variant === 'parent_subcategories' && count($category.subcategories) === 0}
+                            {call get_catalog_categories args=['id' => $category.parent_id, 'depth' => $depth, 'tree' => true]}
+                        {else}
+                            {call get_catalog_categories args=['id' => $category.id, 'depth' => $depth, 'tree' => true]}
+                        {/if}
+
+                        {$categories_tree = $wa->globals('market.return')}
+                        {$catalog_html = "{call catalog_block
+                        args=[
+                        'categories' => $categories_tree,
+                        'current_category_id' => $category.id,
+                        'sidebar_side' => $sidebar_side
+                        ]}"}
+                    {elseif $category_catalog_variant === 'categories'}
+                        {$catalog_html = "{call catalog_block
+                        args=[
+                        'sidebar_side' => $sidebar_side,
+                        'current_category_id' => $category.id
+                        ]}"}
+                    {/if}
+                {/if}
+            {/if}
+
+            {if $category_order === 'filter_catalog'}
+                {if $category_is_enabled_filter}
+                    {$blocks['filters'] = [
+                        'content' => "{call filters_block}",
+                        'classes' => "sidebar-filters accordion-block {if $theme_settings['shop_catalog_filter_opened']}accordion-block_open{/if}",
+                        'icon' => "{call svg_icon icon='tune' width=18 height=18 fill='currentColor'}",
+                        'title' => _wp('Фильтр подбора'),
+                        'header_classes' => 'sidebar-filters__header accordion-block__button',
+                        'content_classes' => 'accordion-block__content',
+                        'is_accordion' => true
+                    ]}
+                {/if}
+
+                {if $category_is_enabled_catalog}
+                    {$blocks['catalog'] = [
+                        'content' => $catalog_html,
+                        'classes' => 'sidebar-catalog',
+                        'data-attrs' => 'data-is_overlay_enabled="'|cat:"{call bool2str value=$home_is_enabled_overlay_catalog}"|cat:'"',
+                        'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+                        'title' => $home_header_catalog
+                    ]}
+                {/if}
+            {elseif $category_order === 'catalog_filter'}
+                {if $category_is_enabled_catalog}
+                    {$blocks['catalog'] = [
+                        'content' => $catalog_html,
+                        'classes' => 'sidebar-catalog',
+                        'data-attrs' => 'data-is_overlay_enabled="'|cat:"{call bool2str value=$home_is_enabled_overlay_catalog}"|cat:'"',
+                        'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+                        'title' => $home_header_catalog
+                    ]}
+                {/if}
+
+                {if $category_is_enabled_filter}
+                    {$blocks['filters'] = [
+                        'content' => "{call filters_block}",
+                        'classes' => "sidebar-filters accordion-block {if $theme_settings['shop_catalog_filter_opened']}accordion-block_open{/if}",
+                        'icon' => "{call svg_icon icon='tune' width=18 height=18 fill='currentColor'}",
+                        'title' => _wp('Фильтр подбора'),
+                        'header_classes' => 'sidebar-filters__header accordion-block__button',
+                        'content_classes' => 'accordion-block__content',
+                        'is_accordion' => true
+                    ]}
+                {/if}
+            {/if}
+
+            {if !$is_catalogreviews_page}
+                {if $category_is_enabled_recently}
+                    {$blocks['recently'] = "{call recently_block
+                    limit=$category_recently_limit
+                    args=[
+                        'header_text' => $home_recently_viewed_title
+                    ]}"}
+                {/if}
+
+                {if $category_is_enabled_banners}
+                    {$blocks['banner_1'] = "{call banner_block number=1}"}
+                    {$blocks['banner_2'] = "{call banner_block number=2}"}
+                {/if}
+
+                {if $category_is_enabled_news}
+                    {$blocks['news'] = "{call news_block args=[]}"}
+                {/if}
+
+                {if $category_is_enabled_reviews}
+                    {$blocks['reviews'] = "{call reviews_block}"}
+                {/if}
+
+                {if $category_is_enabled_tags}
+                    {$blocks['tags'] = "{call tags_block}"}
+                {/if}
+
+                {if $category_is_enabled_photos}
+                    {$blocks['photos'] = "{call photos_block}"}
+                {/if}
+
+                {if $category_is_enabled_social}
+                    {$blocks['social'] = "{call social_block}"}
+                {/if}
+            {/if}
+        {elseif $wa->param('action') == ''}
+            {if $home_is_enabled_catalog}
+                {if $sidebar_catalog_source == 'menu_app' && !empty($sidebar_catalog_menu_id)}
+                    {$menu_links = $wa->menu->get($sidebar_catalog_menu_id)}
+                {/if}
+                {$blocks['catalog'] = [
+                    'content' => "{call catalog_block
+                        args=[
+                        'categories' => $menu_links|default:null,
+                        'catalog_variant' => $home_variant_catalog,
+                        'limit' => $home_limit_catalog,
+                        'is_enabled_image' =>$home_is_enabled_image_catalog,
+                        'show_products_count' => $home_show_products_count_catalog
+                    ]}",
+                    'classes' => 'sidebar-catalog',
+                    'data-attrs' => 'data-is_overlay_enabled="'|cat:"{call bool2str value=$home_is_enabled_overlay_catalog}"|cat:'"',
+                    'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+                    'title' => $home_header_catalog|default:''
+                ]}
+            {/if}
+
+            {if $home_is_enabled_banners}
+                {$blocks['banner_1'] = "{call banner_block number=1}"}
+                {$blocks['banner_2'] = "{call banner_block number=2}"}
+            {/if}
+
+            {if $home_is_enabled_recently_viewed}
+                {$blocks['recently'] = "{call recently_block
+                                                limit=$home_recently_viewed_limit
+                                                args=[
+                                                'header_text' => $home_recently_viewed_title
+                                                ]}"}
+            {/if}
+
+            {if $home_is_enabled_news}
+                {$blocks['news'] = "{call news_block
+                    args=[
+                    'header_text' => $home_title_news,
+                    'block_id' => $home_block_id_news,
+                    'limit' => $home_limit_news
+                    ]}"
+                }
+            {/if}
+
+            {if $home_is_enabled_reviews}
+                {$blocks['reviews'] = "{call reviews_block
+                    args=[
+                        'header_text' => $home_header_reviews,
+                        'limit' => $home_limit_reviews
+                    ]
+                }"}
+            {/if}
+
+            {if $home_is_enabled_tags}
+                {$blocks['tags'] = "{call tags_block
+                    args=[
+                    'header_text' => $home_header_tags,
+                    'limit' => $home_limit_tags
+                    ]
+                }"}
+            {/if}
+
+            {if $home_is_enabled_photos}
+                {$blocks['photos'] = "{call photos_block
+                    args=[
+                    'header_text' => $home_header_photos,
+                    'limit' => $home_limit_photos
+                    ]
+                }"}
+            {/if}
+
+            {if $home_is_enabled_social}
+                {$blocks['social'] = "{call social_block
+                    args=[
+                        'header_text' => $home_header_social
+                    ]
+                }"}
+            {/if}
+
+        {elseif $wa->param('action') === 'page'}
+            {$blocks['pages'] = [
+                'content' => "{call pages_block args=['variant' => $information_variant_pages]}",
+                'classes' => 'sidebar-pages',
+                'icon' => "{{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}}",
+                'title' => $information_header_pages|default:$theme_settings['site_sidebar_header']
+            ]}
+
+            {if $information_is_enabled_social}
+                {$blocks['social'] = "{call social_block}"}
+            {/if}
+
+        {/if}
+    {elseif $wa_app == 'site'}
+        {$is_enabled_social = !!$theme_settings['site_sidebar_social_enabled']}
+        {$has_filters = $has_filters|default:false}
+
+        {$blocks['pages'] = [
+            'content' => "{call pages_block}",
+            'classes' => 'sidebar-pages',
+            'icon' => "{{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}}",
+            'title' => $theme_settings['site_sidebar_header']|default:''
+        ]}
+
+        {if $has_filters && $filters}
+            {$blocks['filters'] = [
+                'content' => "{call filters_block}",
+                'classes' => "sidebar-filters accordion-block {if $theme_settings['shop_catalog_filter_opened']}accordion-block_open{/if}",
+                'icon' => "{call svg_icon icon='tune' width=18 height=18 fill='currentColor'}",
+                'title' => _wp('Фильтр подбора'),
+                'header_classes' => 'sidebar-filters__header accordion-block__button',
+                'content_classes' => 'accordion-block__content',
+                'is_accordion' => true
+            ]}
+        {/if}
+
+        {if $is_enabled_social}
+            {$blocks['social'] = "{call social_block}"}
+        {/if}
+    {elseif $wa_app == 'blog'}
+        {$is_enabled_blogs = !!$theme_settings['blog_sidebar_navigation_enabled']}
+        {$is_enabled_social = !!$theme_settings['blog_sidebar_social_enabled']}
+        {$is_enabled_timeline  = !!$theme_settings['blog_sidebar_timeline_enabled']}
+        {$is_enabled_categories = !!$theme_settings['blog_sidebar_categories_enabled']}
+        {$is_enabled_pages = !!$theme_settings['blog_sidebar_pages_enabled']}
+        {$header_pages = $theme_settings['blog_sidebar_pages_header']}
+        {$variant_pages = $theme_settings['blog_information_sidebar_variant']}
+
+        {if $is_enabled_blogs}
+            {capture assign="blogs_block"}
+                {$_blogs = $wa->blog->blogs()}
+                {$blogs = []}
+
+                {foreach $_blogs as $blog }
+                    {$blog.url = $blog.link}
+                    {$blogs[] = $blog}
+                {/foreach}
+
+                {call pages_tree pages=$blogs}
+            {/capture}
+
+            {$blocks['blogs'] = [
+                'content' => $blogs_block,
+                'classes' => 'sidebar-pages',
+                'icon' => "{{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}}",
+                'title' => $theme_settings['blog_sidebar_navigation_header']|escape
+            ]}
+        {/if}
+
+        {if $is_enabled_categories && $plugins['blog_category']}
+            {capture assign="blog_categories_block"}
+                {$variant = $theme_settings['site_sidebar_information_menu_variant']}
+                {$is_show_count = $theme_settings['blog_sidebar_categories_count']|default:''}
+
+                {$categories = blogCategory::getAll()}
+                {if count($categories) > 0}
+                    {$blog_url =$wa->getUrl('blog/frontend', ['category' => '%CATEGORY_URL%']) }
+                    <div class="blog-sidebar-categories">
+                        {foreach $categories as $category}
+                            {$category['link'] = $blog_url|replace:'%CATEGORY_URL%':urlencode($category['url'])}
+                            {$is_active = $wa->currentUrl() == $category['link']}
+                            <div class="blog-sidebar-categories__item">
+                                <a class="blog-sidebar-categories__link {if $is_active}blog-sidebar-categories__link_active{/if} link" href="{$category['link']|escape}">
+                                    {$category['name']|escape}
+                                    {if $is_show_count}
+                                        <span class="blog-sidebar-categories__link_count">
+                                            {$category['qty']|escape}
+                                        </span>
+                                    {/if}
+                                </a>
+                            </div>
+                        {/foreach}
+                    </div>
+                {/if}
+            {/capture}
+
+            {$blocks['categories'] = [
+                'content' => $blog_categories_block,
+                'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+                'title' => $theme_settings['blog_sidebar_categories_header']|default:''
+            ]}
+        {/if}
+
+        {if $is_enabled_timeline}
+            {capture assign="blog_timeline_block"}
+                {$_timeline = $wa->blog->timeline([], ['month' => $wa->param('month'), 'year' => $wa->param('year')])}
+                {$timeline = []}
+
+                {foreach $_timeline as $k => $year_month}
+                    {if !isset($timeline[$year_month['year']])}
+                        {$timeline[$year_month['year']] = [
+                        'year' => $year_month['year'],
+                        'link' => $year_month['year_link'],
+                        'month_selected' => $year_month['selected'],
+                        'selected' => $year_month['year_selected'],
+                        'months' => []
+                        ]}
+                    {/if}
+
+                    {if $year_month['selected']}
+                        {$timeline[$year_month['year']]['month_selected'] = $year_month['selected']}
+                    {/if}
+
+                    {$timeline[$year_month['year']]['months'][$k] = $year_month}
+                {/foreach}
+
+                <div class="blog-sidebar-timeline">
+                    <div class="blog-sidebar-timeline__years">
+                        {foreach $timeline as $year}
+                            {$has_active_month = $year.month_selected}
+                            {$is_active_year = $year.selected}
+                            {$is_active = $has_active_month || $is_active_year}
+
+                            <div class="blog-sidebar-timeline__year">
+                                <div class="blog-sidebar-timeline-year {if $is_active}blog-sidebar-timeline-year_open blog-sidebar-timeline-year_active{/if}">
+                                    <div class="blog-sidebar-timeline-year__header-container">
+                                        <span class="icon-box icon-box_size_xl">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon="date" classes="blog-sidebar-timeline-year__icon" width=18 height=20}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                {$year.year} {_wp("год")}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="blog-sidebar-timeline-year__content-container">
+                                        <div class="blog-sidebar-timeline-year__months">
+                                            <div class="blog-sidebar-timeline-year__month blog-sidebar-timeline-year__month_all">
+                                                <a class="blog-sidebar-timeline-year__month-link {if $is_active_year}blog-sidebar-timeline-year__month-link_active{/if} link" href="{$year.link|escape}">
+                                                    [`Весь год`]
+                                                </a>
+                                            </div>
+
+                                            {foreach $year.months as $month}
+                                                {$is_active = $month.selected}
+
+                                                <div class="blog-sidebar-timeline-year__month">
+                                                    {$month_name = date('F', gmmktime(0, 0, 0, $month.month, 1))}
+
+                                                    <a class="blog-sidebar-timeline-year__month-link {if $is_active}blog-sidebar-timeline-year__month-link_active{/if} link" href="{$month.link|escape}">
+                                                        {_ws($month_name)}
+                                                    </a>
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
+            {/capture}
+
+            {$blocks['timeline'] = $blog_timeline_block}
+        {/if}
+
+        {if $is_enabled_pages}
+            {$blocks['pages'] = [
+            'content' => "{call pages_block args=['variant' => $variant_pages]}",
+            'classes' => 'sidebar-pages',
+            'icon' => "{{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}}",
+            'title' => $header_pages|default:$theme_settings['site_sidebar_header']|default:''
+            ]}
+        {/if}
+
+        {if $is_enabled_social}
+            {$blocks['social'] = "{call social_block}"}
+        {/if}
+    {elseif $wa_app == 'photos'}
+        {$is_enabled_pages = !!$theme_settings['photos_sidebar_information_enabled']}
+        {$header_pages = $theme_settings['photos_sidebar_information_header']}
+        {$variant_pages = $theme_settings['photos_information_sidebar_variant']}
+
+        {capture assign="albums_block"}
+            {$_albums = $wa->photos->childAlbums()}
+
+            {$albums = []}
+            {$album = $wa->globals('album')}
+
+            {$selected_ids = [$album.id, $album.parent_id]}
+
+            {foreach $_albums as $album}
+                {$_childs = $wa->photos->childAlbums($album.id)}
+                {$childs = []}
+                {foreach $_childs as $album_child}
+                    {$album_child.url = $album_child.full_url}
+                    {$childs[] = $album_child}
+                {/foreach}
+                {$album['childs'] = $childs}
+                {$album['url'] = {$album.full_url}}
+                {$albums[] = $album}
+            {/foreach}
+
+            {* Template *}
+            {if $albums}
+                {call pages_tree pages=$albums}
+            {/if}
+        {/capture}
+
+        {$blocks['albums'] = [
+            'content' => $albums_block,
+            'classes' => 'sidebar-pages',
+            'icon' => "{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}",
+            'title' => $theme_settings['photos_sidebar_albums_header']|default:"{_wp("Альбомы")}"
+        ]}
+
+        {if $is_enabled_pages}
+            {$blocks['pages'] = [
+                'content' => "{call pages_block args=['variant' => $variant_pages]}",
+                'classes' => 'sidebar-pages',
+                'icon' => "{{call svg_icon icon='burger' width=18 height=12 fill='currentColor'}}",
+                'title' => $header_pages|default:$theme_settings['site_sidebar_header']|default:''
+            ]}
+        {/if}
+    {/if}
+
+    {$_blocks = $blocks}
+    {$blocks = []}
+
+    {foreach $_blocks as $i => $block}
+        {if is_array($block) && empty($block['content'])}
+            {continue}
+        {/if}
+
+        {if is_string($block) && empty($block)}
+            {continue}
+        {/if}
+
+        {$blocks[$i] = $block}
+    {/foreach}
+
+    {* Template *}
+    {if count($blocks) > 0}
+        <div class="blocks">
+            {foreach $blocks as $block_name => $block}
+                {* TODO: Fix $block['is_accordion'] не задано значение по умолчанию => $is_accordion *}
+                {$is_accordion = $block['is_accordion']|default:false}
+                <div class="blocks__item  blocks__item_{$block_name}">
+                    {if is_array($block)}
+                        <div class="sidebar-block {$block['classes']|default:''}" {$block['data-attrs']|default:''}>
+                            {if $block['title']}
+                                <div class="sidebar-block__header {$block['header_classes']|default:''} {if $is_accordion}sidebar-block_pointer{/if}">
+                                    {if $block['icon']}
+                                        <span class="icon-box icon-box_size_xl">
+                                            <span class="icon-box__icon">
+                                                {$block['icon']}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                {$block['title']}
+                                            </span>
+                                        </span>
+                                    {else}
+                                        {$block['title']}
+                                    {/if}
+                                    {if $is_accordion}
+                                        <span class="icon-box icon-box_size_xl">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon classes='sidebar-block__toggle-icon' icon='arrow-bottom' width=14 height=8 fill='currentColor'}
+                                            </span>
+                                        </span>
+                                    {/if}
+                                </div>
+                            {/if}
+                            <div class="sidebar-block__content {$block['content_classes']|default:''}">
+                                {$block['content']}
+                            </div>
+                        </div>
+                    {elseif is_string($block)}
+                        {$block}
+                    {/if}
+                </div>
+            {/foreach}
+        </div>
+    {/if}
+{/strip}

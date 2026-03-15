@@ -1,0 +1,35 @@
+<div id="blog-category-sidebar-block">
+    <details data-id="categories">
+        <summary class="heading">
+        <span class="cursor-pointer">
+            <span class="caret"><i class="fas fa-caret-right"></i></span>
+            [`Categories`]
+        </span>
+            <a class="count action" href="?module=plugins#/category/"><i class="fas fa-plus-circle"></i></a>
+        </summary>
+
+        <section class="b-sidebar-section box custom-py-0" id="blog-plugin-categories-section" data-id="blog-plugin-categories">
+            {if !empty($categories)}
+                <ul class="menu" id="blog-plugin-categories-menu">
+                    {foreach $categories as $category}
+                        <li class="rounded{if $category.url === $category_url} selected{/if}" data-id="{$category.id|escape}">
+                            <a href="?search=category&amp;category={$category.url|escape}">
+                                {if $category.icon}
+                                    <i class="icon16 {$category.icon}"></i>
+                                {else}
+                                    <i class="fas fa-folder"></i>
+                                {/if}
+                                <span class="name">{$category.name|escape}</span>
+                                <span class="count">{$category.qty}</span>
+                            </a>
+                        </li>
+                    {/foreach}
+                </ul>
+            {else}
+                <p class="align-center hint box custom-mt-16">
+                    {'?module=plugins#/category/'|string_format:'[`Add at least one category in the <a href="%s">plugin settings</a>`]'}
+                </p>
+            {/if}
+        </section>
+    </details>
+</div>

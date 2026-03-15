@@ -1,0 +1,26 @@
+{foreach $settings_controls as $name => $control}
+    <div class="field">
+        {$control}
+    </div>
+{/foreach}
+
+<div class="field">
+    <div class="name">Статусы заявки</div>
+    <div class="value">
+        <div class="shop-sk-statuses js-sk-statuses">
+            <table class="shop-sk-statuses__table zebra mode-sales">
+                <tbody class="js-sk-statuses-tbody">
+                    {foreach $statuses as $status}
+                        {include file="./SettingsFieldStatus.html" status=$status}
+                    {/foreach}
+                </tbody>
+            </table>
+            <div class="shop-sk-statuses__add">
+                <a href="javascript:void(0)" class="shop-sk-statuses__add-link js-sk-statuses-add-link"><i class="icon16 add"></i>Добавить статус</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<iframe style="display:none" name="plugins-settings-iframe" id="plugins-settings-iframe"></iframe>
+

@@ -1,0 +1,671 @@
+{strip}{function products_compact products=[] feature_codes=null}
+    {$options = []}
+    {$options['extend_feature_codes'] = ifset($market['extend_settings']['catalog_products_compact_features_ids'], [])}
+
+    {if !empty($theme_settings['shop_catalog_products_compact_features_ids'])}
+        {$options['default_features_codes'] = explode(',', $theme_settings['shop_catalog_products_compact_features_ids'])}
+    {else}
+        {$options['default_features_codes'] = []}
+    {/if}
+
+    {$plugins = $wa->globals('plugins')}
+    {$options['show_changing_button'] = $theme_settings['shop_misc_change_add2cart']}
+    {$options['show_video_icon'] = $theme_settings['shop_catalog_products_compact_video_enabled']}
+    {$options['show_sku'] = $theme_settings['shop_catalog_products_compact_sku_enabled']}
+    {$options['show_quantity'] = $theme_settings['shop_catalog_products_compact_quantity_enabled']}
+    {$options['add_cart_action'] = $theme_settings['shop_catalog_products_default_add_cart_action']}
+    {$options['features_variant'] = $theme_settings['shop_catalog_products_compact_features_variant']}
+    {$options['show_rating'] = $theme_settings['shop_catalog_products_compact_rating_enabled']}
+    {$options['show_count_reviews'] = $theme_settings['shop_catalog_products_compact_count_reviews_enabled']}
+    {$options['features_limit'] = $theme_settings['shop_catalog_products_compact_features_limit']}
+    {$options['show_stocks_count'] = $theme_settings['shop_catalog_products_show_stocks_count']}
+    {$options['show_price_text'] = !empty($theme_settings['shop_catalog_products_compact_price_text'])}
+    {$options['show_zero_price_text'] = !empty($theme_settings['shop_misc_zero_price_text'])}
+    {$options['price_variant'] = $theme_settings['shop_catalog_products_price_variant']}
+    {$options['show_unit_price'] = $wa->globals('market.has_premium') && !empty($formatted_units) && !empty($fractional_config) && $fractional_config["stock_units_enabled"]}
+    {$options['show_available'] = $theme_settings['shop_catalog_products_compact_available_enabled']}
+    {$options['show_bonuses'] = $theme_settings['shop_misc_bonuses_block']}
+    {$options['show_arrived'] = $plugins['shop_arrived']}
+    {$options['show_pnotice'] = $plugins['shop_pnotice']}
+    {$options['show_listfeatures'] = $plugins['shop_listfeatures']}
+    {$options['show_estdelivery'] = $theme_settings['shop_catalog_products_compact_estdelivery_enabled']}
+
+    {if isset($category.params['catalog_compact_features_limit'])}
+        {$options['features_limit'] = $category['params']['catalog_compact_features_limit']}
+    {elseif isset($category.params['catalog_features_limit'])}
+        {$options['features_limit'] = $category['params']['catalog_features_limit']}
+    {/if}
+
+    {if $options['features_variant'] == 'listfeatures' && !$options['show_listfeatures']}
+        {$options['features_variant'] = 'disable'}
+    {/if}
+
+    {$listfeatures_plugin_set_id = 1}
+    {if !empty($theme_settings['shop_catalog_products_compact_listfeatures_set_id'])}
+        {$listfeatures_plugin_set_id = $theme_settings['shop_catalog_products_compact_listfeatures_set_id']}
+    {/if}
+
+    {$options['show_features'] = $options['features_variant'] !== 'disable'}
+
+    {$features = null}
+    {if $options['features_variant'] === 'default'}
+        {if $options['features_limit'] == 0}
+            {$options['show_features'] = false}
+        {/if}
+
+        {if $options['show_features']}
+            {$features = $wa->shop->features($products)}
+        {/if}
+    {/if}
+
+    {$options['variants_type'] = $theme_settings['shop_catalog_products_compact_variants']}
+    {$options['variants_limit'] = $theme_settings['shop_catalog_products_compact_variants_limit']|intval|default:0}
+    {$options['variants_as_links'] = $theme_settings['shop_catalog_products_compact_variants_as_links']|default:false}
+    {$options['variants_hide_no_available'] = $theme_settings['shop_catalog_products_compact_variants_hide_no_available']|default:false}
+
+    {if !$plugins['shop_estdelivery']}
+        {$options['show_estdelivery'] = false}
+    {/if}
+
+    {if isset($category)}
+        {if isset($category['params']['products_variants'])}
+            {$options['variants_type'] = $category['params']['products_variants']}
+        {/if}
+    {/if}
+
+    {$stocks = $market['stocks']}
+
+    {if empty($stocks)}
+        {$options['show_stocks_count'] = false}
+    {/if}
+
+    {$product_ids = []}
+
+    {foreach $products as $p}
+        {$product_ids[] = $p['id']}
+    {/foreach}
+
+    {if $theme_settings['shop_catalog_products_compact_count_reviews_enabled']}
+        {$reviews_count_by_product_id = $wa->shop->products($product_ids, ['fields' => 'id,reviews_count', 'no_plugins' => true])}
+    {else}
+        {$reviews_count_by_product_id = null}
+    {/if}
+
+    {$is_stocks = $options['show_stocks_count'] || $wa->globals('market.stocks_available_statuses')}
+    {$skus_by_product_id = []}
+    {if $is_stocks}
+        {$skus_by_product_id = $wa->shop->products($product_ids, ['fields' => 'id,skus,stock_counts', 'no_plugins' => true])}
+    {/if}
+
+    {function product_compact p=null features=null feature_codes=null options=null reviews_count=null}
+        {$p_info = []}
+        {$p_info['available'] = false}
+        {$p_info['min_price'] = null}
+        {$p_info['max_price'] = null}
+        {$p_info['max_compare_price_from_min_price'] = null}
+        {$p_info['count'] = $p['count']}
+        {$p_info['skus'] = []}
+
+        {foreach $p['skus'] as $sku}
+            {if !isset($p_info['min_price'])}
+                {$p_info['min_price'] = $sku['price']}
+            {/if}
+
+            {if !isset($p_info['max_price'])}
+                {$p_info['max_price'] = $sku['price']}
+            {/if}
+
+            {$p_info['min_price'] = min($p_info['min_price'], $sku['price'])}
+            {$p_info['max_price'] = max($p_info['max_price'], $sku['price'])}
+
+            {$is_sku_available = $sku['available']}
+
+            {if $is_sku_available}
+                {$p_info['available'] = true}
+            {/if}
+
+            {if isset($skus_by_product_id[$p['id']]) && isset($skus_by_product_id[$p['id']]['skus'][$sku.id]['stock'])}
+                {$sku['stock'] = $skus_by_product_id[$p['id']]['skus'][$sku.id]['stock']}
+                {foreach shopHelper::fillVirtulStock($sku['stock']) as $key => $value}
+                    {if array_key_exists($key, $sku['stock']) && $sku['stock'][$key] === null}
+                        {continue}
+                    {/if}
+
+                    {$sku['stock'][$key] = $value}
+                {/foreach}
+            {/if}
+
+            {$is_sku_available = $is_sku_available && $sku.status && ($wa->shop->settings('ignore_stock_count') || $sku.count === null || $sku.count > 0)}
+            {$sku['is_available'] = $is_sku_available}
+            {$p_info['skus'][$sku.id] = $sku}
+        {/foreach}
+
+        {foreach $p['skus'] as $sku}
+            {if $p_info['min_price'] == $sku['price']}
+                {if $p_info['max_compare_price_from_min_price'] < $sku['compare_price']}
+                    {$p_info['max_compare_price_from_min_price'] = $sku['compare_price']}
+                {/if}
+            {/if}
+        {/foreach}
+
+        {if !$p['status']}
+            {$p_info['available'] = false}
+        {/if}
+
+        {if $p_info['count'] !== null && $p_info['count'] == 0 && !$market['ignore_stock_count']}
+            {$p_info['available'] = false}
+        {/if}
+
+        {$p_info['favorite'] = isset($market['favorite_products'][$p['id']])}
+        {$p_info['compare'] = isset($market['compare_products'][$p['id']])}
+        {$p_info['cart'] = isset($market['cart_skus'][$p['sku_id']])}
+        {$p_info['cart_quantity'] = ifset($market['cart_skus'][$p['sku_id']], 0)}
+        {$p_info['sku'] = $p['skus'][$p['sku_id']]}
+        {$p_info['multi_skus'] = count($p['skus']) > 1}
+
+        {if isset($p['stock_unit_id']) && isset($formatted_units[$p['stock_unit_id']])}
+            {$p_info['stock_unit'] = $formatted_units[$p['stock_unit_id']]}
+        {else}
+            {$p_info['stock_unit'] = null}
+        {/if}
+
+        {if isset($p['base_unit_id']) && isset($formatted_units[$p['base_unit_id']])}
+            {$p_info['base_unit'] = $formatted_units[$p['base_unit_id']]}
+        {else}
+            {$p_info['base_unit'] = null}
+        {/if}
+
+        {if class_exists('shopFrac')}
+            {$p = shopFrac::inheritSkuFieldsFromProduct($p)}
+            {$p_info['order_multiplicity_factor'] = floatval($p['order_multiplicity_factor']|default:1)}
+            {$p_info['order_count_step'] = floatval($p['skus'][$p['sku_id']]['order_count_step']|default:1)}
+            {$p_info['order_count_min'] = floatval($p['skus'][$p['sku_id']]['order_count_min']|default:1)}
+        {else}
+            {$p_info['order_multiplicity_factor'] = 1}
+            {$p_info['order_count_step'] = 1}
+            {$p_info['order_count_min'] = 1}
+        {/if}
+
+        {if $p_info['sku']['count'] !== null && !$market['ignore_stock_count']}
+            {$p_info['order_count_max'] = max(0, $p_info['sku']['count'] - $p_info['cart_quantity'])}
+        {else}
+            {$p_info['order_count_max'] = null}
+        {/if}
+
+        {if isset($images) && count($images) > 1}
+            {$p_image_id = $p['image_id']}
+            {$sorted_images = []}
+            {$_other_images = []}
+            {foreach $images as $image}
+                {if $image.id === $p_image_id}
+                    {$sorted_images[] = $image}
+                {else}
+                    {$_other_images[] = $image}
+                {/if}
+            {/foreach}
+
+            {$sorted_images = array_merge($sorted_images, $_other_images)}
+            {$images = array_slice($sorted_images, 0, $options['gallery_limit'])}
+        {/if}
+
+
+        {if !isset($feature_codes)}
+            {if !empty($options['extend_feature_codes'][$p['type_id']])}
+                {$feature_codes = $options['extend_feature_codes'][$p['type_id']]}
+            {else}
+                {$feature_codes = $options['default_features_codes']}
+            {/if}
+        {/if}
+
+        {$options['stocks'] = []}
+        {if $is_stocks}
+            {call get_product_stocks_count product_skus=$p_info['skus']}
+            {$options['stocks'] = $wa->globals('market.return')}
+        {/if}
+
+        {$variants = []}
+        {if $options['variants_type'] == 'productgroup'}
+            {if !empty($theme_settings['shop_catalog_products_compact_productgroup_ids'])}
+                {$productgroup_ids = explode(',', $theme_settings['shop_catalog_products_compact_productgroup_ids'])}
+            {else}
+                {$productgroup_ids = []}
+            {/if}
+            {$productgroup_limit = $theme_settings['shop_catalog_products_compact_productgroup_limit']|intval|default:0}
+
+            {call get_productgroups_products product=$p ids=$productgroup_ids limit=$productgroup_limit}
+            {$variants = $wa->globals('market.return')}
+        {elseif $options['variants_type'] == 'skus' && $p_info['multi_skus'] && !$is_slider}
+            {$variants[] = $p_info['skus']}
+        {/if}
+
+        {if !$p_info['stock_unit']}
+            {$options['show_unit_price'] = false}
+        {/if}
+
+        {if $options['add_cart_action'] == 'show_modal' && $p_info['multi_skus']}
+            {$options['show_changing_button'] = false}
+        {/if}
+
+        {if !$p_info['cart']}
+            {$options['show_changing_button'] = false}
+        {/if}
+
+        {if $p_info['min_price'] === $p_info['max_price']}
+            {$options['price_variant'] = 'primary_sku_price'}
+        {/if}
+
+        {$options['show_compare_price'] = $options['price_variant'] === 'primary_sku_price'}
+
+        {if $p_info['sku']['compare_price'] == 0 || $p_info['sku']['compare_price'] <= $p_info['sku']['price']}
+            {$options['show_compare_price'] = false}
+        {/if}
+
+        {if empty($p_info['sku']['sku'])}
+            {$options['show_sku'] = false}
+        {/if}
+
+        {if $p.rating == 0}
+            {$options['show_rating'] = false}
+        {/if}
+
+        {if $reviews_count == 0}
+            {$options['show_count_reviews'] = false}
+        {/if}
+
+        {if $p_info['available']}
+            {$options['show_arrived'] = false}
+            {$options['show_pnotice'] = false}
+        {/if}
+
+        {if $options['show_arrived']}
+            {$options['show_pnotice'] = false}
+        {/if}
+
+        {if $options['show_arrived']}
+            {$arrived_button = shopArrivedPlugin::getListFormHtml($p)}
+
+            {if empty($arrived_button)}
+                {$options['show_arrived'] = false}
+            {/if}
+        {/if}
+
+        {if !$p_info['available'] || $options['add_cart_action'] == 'open_product_card' || ($options['add_cart_action'] == 'show_modal' && $p_info['multi_skus'])}
+            {$options['show_quantity'] = false}
+        {/if}
+
+        {if empty($p['video_url'])}
+            {$options['show_video_icon'] = false}
+        {/if}
+
+        {if $p_info['sku']['price'] != 0}
+            {$options['show_zero_price_text'] = false}
+        {/if}
+
+        {if $options['show_zero_price_text']}
+            {$options['show_price_text'] = false}
+        {/if}
+
+        {$warehouse_block = null}
+        {if $options['show_available'] && $plugins['shop_warehouse']}
+            {$warehouse_block = shopWarehouseViewHelper::getStocksButton($p, [ 'mode' => 'async', 'from' => 'list' ])}
+        {/if}
+
+        {* Template *}
+        <div class="product {if $p_info['cart']} product_added{else} product_add2cart{/if}{if $p_info['multi_skus'] && $options['add_cart_action'] === 'show_modal'} product_has-multi-skus{elseif $options['add_cart_action'] === 'open_product_card'} product_no-add{/if} product-compact"{' '}
+            data-product_id="{$p['id']|escape}"{' '}
+            data-product_name="{$p['name']|escape}"{' '}
+            data-url="{$p['frontend_url']|escape}">
+            <div class="product-compact__container">
+                {if $theme_settings['shop_catalog_products_compact_image_enabled']}
+                    <div class="product-compact__image-container">
+                        {if $options['show_video_icon']}
+                            <div class="product-compact__video">
+                                <span class="tooltip">
+                                    <span class="tooltip__content">
+                                        [`Есть видео`]
+                                    </span>
+                                </span>
+                                <span class="image-box">
+                                    {call svg_icon
+                                    icon='indicator-youtube' width=22 height=22}
+                                </span>
+                            </div>
+                        {/if}
+
+                        <div class="product-compact__badges">
+                            {if !empty($p['badge'])}
+                                <div class="product-compact__badge">
+                                    {call product_badge product=$p size='s'}
+                                </div>
+                            {/if}
+
+                            {if $options['show_compare_price']}
+                                <div class="product-compact__badge">
+                                    {call product_badge product=$p is_discount=true size='s'}
+                                </div>
+                            {/if}
+                        </div>
+                        <div class="product-compact__image-box">
+                            <a class="image-box image-box_fill" href="{$p['frontend_url']|escape}">
+                                {if !empty($p['image_id'])}
+                                    {call image
+                                        src=$wa->shop->productImgUrl($p, '80')
+                                        classes='product-compact__image product__image'
+                                        alt=$p['name']
+                                        r2x=true
+                                    }
+                                {else}
+                                    {if !empty($theme_settings['product_dummy_image'])}
+                                        {call image
+                                            src=$theme_settings['product_dummy_image']
+                                            classes='product-compact__image product__image'
+                                            alt=$p['name']
+                                        }
+                                    {else}
+                                        {call svg_icon classes='product-compact__image product-compact__image_dummy product__image'
+                                        icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                    {/if}
+                                {/if}
+                            </a>
+                        </div>
+                    </div>
+                {/if}
+                <div class="product-compact__info-container">
+                    <a class="product-compact__name link link_style_hover" href="{$p['frontend_url']|escape}">
+                        <span>
+                            {$p['name']}
+                        </span>
+                    </a>
+
+                    <div class="product-compact__info">
+                        {if $options['show_sku']}
+                            <div class="product-compact__sku">
+                                <span class="product-compact__sku-value">
+                                    {$p_info['sku']['sku']|escape}
+                                </span>
+                            </div>
+                        {/if}
+
+                        {if $options['show_rating']}
+                            <div class="product-compact__rating">
+                                {call rating_overview product=$p show_rating=true show_count=$options['show_count_reviews'] is_compact=true size=null is_icon=true count_reviews=$reviews_count}
+                            </div>
+                        {/if}
+                    </div>
+                    {if $options['show_features']}
+                        <div class="product-compact__features">
+                            {if $options['features_variant'] === 'listfeatures'}
+                                {shopListfeaturesPlugin::display($p, $products, $listfeatures_plugin_set_id)}
+                            {elseif !empty($p['features'])}
+                                {call product_features features=$features product=$p limit=$options['features_limit'] feature_codes=$feature_codes inline=true}
+                            {/if}
+                        </div>
+                    {/if}
+                    {if !empty($variants)}
+                        <div class="product-compact__variants">
+                            {foreach $variants as $variants_group}
+                                {$variants_list_html = "{call variants_list variants=$variants_group limit=$options['variants_limit'] nowrap=!$options['variants_limit'] hide_no_available=$options['variants_hide_no_available'] is_links=$options['variants_as_links']}"}
+                                {if !empty($variants_list_html)}
+                                    <div class="product-compact__variants-list">
+                                        {$variants_list_html}
+                                    </div>
+                                {/if}
+                            {/foreach}
+                        </div>
+                    {/if}
+                </div>
+                <div class="product-compact__prices-quantity-container">
+                    <div class="product-compact__prices-quantity">
+                        <div class="product-compact__prices-block">
+                            <div class="product-compact__prices">
+                                {capture assign='price_html'}
+                                    <div class="product-compact__price{if $options['show_compare_price']} product-compact__price_with-compare{/if}{if $options['show_zero_price_text']} zero-price-text{/if}">
+                                        {if $options['show_zero_price_text']}
+                                            {$theme_settings['shop_misc_zero_price_text']}
+                                        {else}
+                                            {if $options['price_variant'] === 'primary_sku_price'}
+                                                {if $options['show_unit_price']}
+                                                    {shop_currency($p_info['sku']['price'], [
+                                                    'unit' => $p_info['stock_unit']['name_short'],
+                                                    'in_currency' => $p['currency'],
+                                                    'format' => 'price_wrapper'
+                                                    ])}
+                                                {else}
+                                                    {shop_currency($p_info['sku']['price'], [
+                                                    'in_currency' => $p['currency'],
+                                                    'format' => 'price_wrapper'
+                                                    ])}
+                                                {/if}
+                                            {elseif $options['price_variant'] === 'min_price'}
+                                                от {shop_currency($p_info['min_price'], [
+                                            'in_currency' => $p['currency'],
+                                            'format' => 'price_wrapper'
+                                            ])}
+                                            {elseif $options['price_variant'] === 'range_price'}
+                                                {shop_currency($p_info['min_price'], [
+                                                'in_currency' => $p['currency'],
+                                                'format' => 'price_wrapper'
+                                                ])}
+                                                {' ... '}
+                                                {shop_currency($p_info['max_price'], [
+                                                'in_currency' => $p['currency'],
+                                                'format' => 'price_wrapper'
+                                                ])}
+                                            {/if}
+                                        {/if}
+                                    </div>
+                                {/capture}
+
+                                {if $options['show_price_text']}
+                                    <div class="product-compact__price-block">
+                                        <span class="product-compact__price-text">
+                                            {$theme_settings['shop_catalog_products_compact_price_text']}
+                                        </span>
+                                        {$price_html}
+                                    </div>
+                                {else}
+                                    {$price_html}
+                                {/if}
+
+                                {if $options['show_compare_price']}
+                                    <div class="product-compact__compare-price">
+                                        {shop_currency_html($p_info['sku']['compare_price'], [
+                                        'in_currency' => $p['currency'],
+                                        'format' => 'price_wrapper'
+                                        ])}
+                                    </div>
+                                {/if}
+
+                                {if $options['show_unit_price'] && $options['show_second_unit_price'] && $p['base_unit_id'] !== $p['stock_unit_id']}
+                                    <span class="product-compact__price-base">
+                                        {shop_currency($p_info['sku']['price']/$p['stock_base_ratio'], [
+                                        'unit' => $p_info['base_unit']['name_short'],
+                                        'in_currency' => $p['currency'],
+                                        'format' => 'price_wrapper'
+                                        ])}
+                                    </span>
+                                {/if}
+
+                                {if $theme_settings['block_product_under_price']}
+                                    {$custom_text = $wa->block('market.product.under.price')}
+
+                                    {if $custom_text}
+                                        <div class="product-compact__custom-text">
+                                            {$custom_text}
+                                        </div>
+                                    {/if}
+                                {/if}
+                            </div>
+
+                            {if $options['show_bonuses']}
+                                <div class="product-compact__bonuses">
+                                    {call bonus_block price=$p_info['sku']['price']}
+                                </div>
+                            {/if}
+
+                            {if $options['show_available']}
+                                {if $warehouse_block}
+                                    <div class="product-compact__available product-compact__available_warehouse product__warehouse">
+                                        {$warehouse_block}
+                                    </div>
+                                {else}
+                                    {if $options['show_stocks_count']}
+                                        {$stocks_available_block = "{call product_stocks_available product_stocks=$options['stocks'] show_exact_count=$theme_settings['shop_catalog_products_show_exact_count'] show_only_status=$theme_settings['shop_catalog_products_show_only_status']}"}
+                                        {if empty($stocks_available_block)}
+                                            {$options['show_stocks_count'] = false}
+                                        {/if}
+                                    {/if}
+
+                                    {$custom_available_status = []}
+                                    {if !$theme_settings['shop_catalog_products_show_exact_count']}
+                                        {call get_available_status_depends_on_stocks product_stocks=$options['stocks']}
+                                        {$custom_available_status = $wa->globals('market.return')}
+                                    {/if}
+
+                                    <div class="product-compact__available{if $options['show_stocks_count']} product-compact__available_stocks dropdown{/if}">
+                                        {call product_available low=5 critical=2 n=$p_info['count'] size='s' show_exact_count=$theme_settings['shop_catalog_products_show_exact_count'] show_only_status=$theme_settings['shop_catalog_products_show_only_status'] decorated=$options['show_stocks_count'] custom_status=$custom_available_status stock_unit=$p_info['stock_unit']['name_short']}
+                                        {if $options['show_stocks_count']}
+                                            <div class="product-compact__stocks dropdown__dropdown dropdown__dropdown_left-arrow">
+                                                {$stocks_available_block}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            {if $options['show_estdelivery']}
+                                {$estdelivery_text = shopEstdeliveryViewHelper::renderAllPlaceholders($p.sku_id)|join:''}
+                                {if $estdelivery_text}
+                                    <div class="product-compact__estdelivery">
+                                        <div class="shop-estdelivery-plugin">
+                                            {call svg_icon icon='delivery-truck' width=17 height=17 fill='currentColor'}
+                                            {$estdelivery_text}
+                                        </div>
+                                    </div>
+                                {/if}
+
+                            {/if}
+                        </div>
+
+                        {if $options['show_quantity']}
+                            <div class="product-compact__quantity">
+                                <span class="quantity quantity_size_l quantity_min {if $market['ignore_stock_count']}quantity_ignore-max{/if} {if $p_info['order_count_step'] > 1}quantity_step{/if}">
+                                    <span class="quantity__button quantity__minus-button">
+                                        <span class="image-box">
+                                            {call svg_icon icon='minus' width=9 height=9 fill='currentColor'}
+                                        </span>
+                                        <span class="quantity__step">
+                                            {$p_info['order_count_step']}
+                                        </span>
+                                    </span>
+
+                                    <span class="quantity__input-box">
+                                        <input class="quantity__input quantity__field quantity__field_active input-text"
+                                            {if $wa->globals('is_mobile')}type="number"{/if}
+                                            value="{$p_info['order_count_min']}"
+                                            data-min="{$p_info['order_count_min']}"
+                                            {if $p_info['order_count_max'] !== null}data-max="{$p_info['order_count_max']}"{/if}
+                                            data-step="{$p_info['order_count_step']}"
+                                            data-multiplicity="{$p_info['order_multiplicity_factor']}"
+                                        />
+                                    </span>
+
+                                    <span class="quantity__button quantity__plus-button">
+                                        <span class="image-box">
+                                            {call svg_icon icon='plus' width=9 height=9 fill='currentColor'}
+                                        </span>
+                                        <span class="quantity__step">
+                                            {$p_info['order_count_step']}
+                                        </span>
+                                    </span>
+                                </span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+                <div class="product-compact__add-to-cart-container">
+                    <div class="product-compact__buttons">
+                        <div class="product-compact__buttons-main">
+                            {if $options['show_arrived'] || $options['show_pnotice']}
+                                <div class="product-compact__arrived">
+                                    {if $options['show_arrived']}
+                                        <button class="product-compact__arrived-button button button_style_inverse button_fill" type="button">[`Уведомить`]</button>
+                                        {$arrived_button}
+                                    {else}
+                                        {shopPnoticePlugin::displayListButton($p)}
+                                    {/if}
+                                </div>
+                            {else}
+                                {capture assign="button_text"}
+                                    {if $options['show_changing_button']}
+                                        [`В корзине`]
+                                    {else}
+                                        {eval var=$theme_settings['shop_misc_add2cart_button_text']|default:''}
+                                    {/if}
+                                {/capture}
+
+                                <form class="product__add-to-cart-form" action="{$market['cart_add_url']|escape}" method="post"
+                                    {if $options['show_quantity']}
+                                        data-sku-count="{$p_info['sku']['count']}"
+                                        {if $p_info['order_count_max'] !== null}data-max-count="{$p_info['order_count_max']}"{/if}
+                                        data-sku-name="{$p['name']} ({$p_info['sku']['name']})"
+                                    {/if}
+                                >
+                                    <input type="hidden" name="product_id" value="{$p['id']|escape}" />
+                                    <input type="hidden" class="product-compact__quantity-value" name="quantity" value="1" />
+
+                                    {if $theme_settings['shop_misc_add2cart_button_tag'] === 'default'}
+                                        <button class="add-to-cart button button_fill{if $options['show_changing_button']} button_style_inverse{/if}" {if !$p_info['available']}disabled="disabled"{/if} data-success-text="{_wp('В корзине')}">
+                                            {$button_text}
+                                        </button>
+                                    {/if}
+                                </form>
+                                {if $theme_settings['shop_misc_add2cart_button_tag'] === 'link'}
+                                    <a class="product__add-to-cart-button add-to-cart button button_fill{if $options['show_changing_button']} button_style_inverse{/if}{if !$p_info['available']} button_disabled{/if}" href="#" data-success-text="{_wp('В корзине')}">
+                                        {$button_text}
+                                    </a>
+                                {/if}
+                            {/if}
+                        </div>
+
+                        {if $theme_settings['shop_catalog_products_compare_enabled'] || $theme_settings['shop_catalog_products_favorite_enabled']}
+                            <div class="product-compact__buttons-additional">
+                                <div class="product-compact__additional-buttons">
+                                    {if $theme_settings['shop_catalog_products_compare_enabled']}
+                                        <span class="product-compact__additional-button product-compare {if $p_info['compare']}product-compare_active{/if}" data-product_id="{$p['id']|escape}" title="{if $p_info['compare']}[`Удалить из сравнения`]{else}[`К сравнению`]{/if}">
+                                            <span class="image-box">
+                                                {call svg_icon icon='compare' width=24 height=24 fill='none'}
+                                            </span>
+                                        </span>
+                                    {/if}
+
+                                    {if $theme_settings['shop_catalog_products_favorite_enabled']}
+                                        <span class="product-compact__additional-button product-favorite {if $p_info['favorite']}product-favorite_active{/if}" data-product_id="{$p['id']|escape}" title="{if $p_info['favorite']}[`Удалить из избранного`]{else}[`В избранное`]{/if}">
+                                            <span class="image-box">
+                                                {call svg_icon icon='favorite' width=24 height=24 fill='none'}
+                                            </span>
+                                        </span>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/function}
+
+    <div class="products-compact">
+        {foreach $products as $p}
+            <div class="products-compact__item">
+                {call product_compact
+                    p=$p
+                    features=$features
+                    feature_codes=$feature_codes
+                    options=$options
+                    reviews_count=ifset($reviews_count_by_product_id[$p['id']]['reviews_count'], 0)
+                }
+            </div>
+        {/foreach}
+    </div>
+{/function}{/strip}

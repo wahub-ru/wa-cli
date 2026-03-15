@@ -1,0 +1,51 @@
+span.enter-password, span.enter-password-return {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+span.enter-password:hover, span.enter-password-return:hover {
+    color: #087990b8;
+}
+
+.cardPassword {
+    width: 400px;
+}
+
+.form-group {
+    margin: 10px 0 0 0;
+}
+
+button.btn.btn-primary.save-settings {
+    margin-top: 20px;
+}
+
+button#save-embedding {
+    margin-top: 23px;
+}
+
+.spinnerAiAsist {
+    position: absolute;
+    max-width: 100%;
+    width: 100%;
+}
+img.imgSpinnerAiAsist {
+    width: 40%;
+    margin-left: 10%;
+}
+.spinnerAiAsist {
+    opacity: 0.4;
+    margin-top: 50px;
+}
+
+.card.preview-icon{
+    width: 8rem;
+}
+img.preview-icon.card-img-top {
+    padding: 15px;
+}
+span.characters {
+    font-weight: 700;
+}
+button#save-rules {
+    margin-top: 20px;
+}

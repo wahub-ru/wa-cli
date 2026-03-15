@@ -1,0 +1,227 @@
+{strip}
+    {* Theme Settings *}
+    {$is_enabled_sidebar = !!$theme_settings['blog_post_sidebar_enabled'] && !!$theme_settings['blog_sidebar_enabled']  && $theme_settings['blog_variant'] != 'thumbs'}
+    {$is_rss_enabled = !!$theme_settings['blog_rss_enabled']}
+    {$social_source = $theme_settings['blog_social_source']}
+    {$social_services = $theme_settings['blog_social_services']}
+    {$is_subscribe_enabled = !!$theme_settings['blog_subscribe_enabled']}
+    {$subscribe_id = $theme_settings['blog_subscribe_id']}
+    {$is_author_enabled = $theme_settings['blog_enable_author']}
+
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_mainpic = $plugins['blog_mainpic']}
+    {$is_post_image_param = isset($post.post_image)}
+
+    {$image_url = "{call blog_post_image post=$post size='l'}"|trim}
+
+    {$is_social_enabled = $social_source !== 'disabled'}
+
+    {$wa->globals('is_show_sidebar', $is_enabled_sidebar)}
+
+    {$has_image = !!($image_url|default:null)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+    {$blog = $wa->blog->blog($post.blog_id)}
+
+    {$wa->globals('breadcrumbs', [
+        ['url' => $blog.link, 'name' => $blog.name]
+    ])}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $post.title])}
+    {$wa->globals('is_show_responsive_social', $is_social_enabled)}
+
+    {function post_user is_responsive=false}
+        {if $post.user}
+            <div class="blog-post-page__author-container {if !$is_responsive}r-hidden-md{else}r-hidden-desktop{/if}">
+                {call contact_block contact=$wa->contact($post.user.id) link=$post.user.posts_link}
+            </div>
+        {/if}
+    {/function}
+
+    <div class="microdata">
+        <div itemscope itemtype="http://schema.org/Article">
+            <meta itemprop="headline" content="{$post.title|escape}" />
+            <meta itemprop="articleBody" content="{$post.text|escape}" />
+            <meta itemprop="author" content="{$post.user.name|escape}" />
+            <div itemprop="mainEntityOfPage" itemscope itemtype="http://schema.org/WebPage">
+                <link itemprop="url" href="{$wa->currentUrl(true)|escape}" />
+            </div>
+            {if $has_image}
+                <div itemprop="image" itemscope itemtype="http://schema.org/ImageObject">
+                    <link itemprop="contentUrl" href="{$image_url|escape}" />
+                    <link itemprop="url" href="{$image_url|escape}" />
+                </div>
+            {/if}
+            <meta itemprop="datePublished" content="{$post.datetime|date_format:'c'}" />
+            <meta itemprop="dateModified" content="{$post.datetime|date_format:'c'}" />
+            <div itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+                <meta itemprop="name" content="{_wp("Название организации")}" />
+                <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+                    <link itemprop="contentUrl" href="/logo.jpg" />
+                    <link itemprop="url" href="/logo.jpg" />
+                </div>
+            </div>
+            {if $show_comments && $post.comments_allowed}
+                {foreach $post.comments as $comment}
+                    <div itemprop="comment" itemscope itemtype="http://schema.org/Comment">
+                        <meta itemprop="text" content="{$comment.text|escape}" />
+                        <meta itemprop="author" content="{$comment.user.name|escape}" />
+                    </div>
+                {/foreach}
+            {/if}
+        </div>
+    </div>
+
+    <div class="blog-post-page">
+        <div class="block">
+            <div class="block__header">
+                <div class="blog-post-page__header-container">
+                    <div class="blog-post-page__header-text-container">
+                        <h1 class="title title_h1">
+                            {$post.title}
+                        </h1>
+                    </div>
+                    {if $is_rss_enabled}
+                    <div class="blog-post-page__rss-container">
+                        <a class="link-box link-box_style_hover" href="{$wa->blog->rssUrl()}" target="_blank">
+                            <span class="icon-box">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="rss" classes="link-box__icon" width=12 height=12}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="link-box__link">
+                                        RSS
+                                    </span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                    {/if}
+                </div>
+            </div>
+            <div class="block__content">
+                <div class="blog-post-page__info-container">
+
+                    {if $is_author_enabled}
+                        {call post_user}
+                    {/if}
+
+                    <div class="blog-post-page__datetime-container">
+                        <span class="datetime icon-box">
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='date' width=18 height=20 fill='#CFCFCF'}
+                            </span>
+                            <span class="icon-box__content">
+                                {$post.datetime|wa_datetime:'humandate'}
+                            </span>
+                        </span>
+
+                    </div>
+
+                    {if $post.comments_allowed && !empty($post.comment_count)}
+                        <div class="blog-post-page__info-comments-container">
+                            <span class="pseudo-link-box">
+                                <span class="icon-box">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon="comments" classes="pseudo-link-box__icon" width=18 height=18}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        <span class="pseudo-link-box__link" data-plain-text="{$post.comment_count}">
+                                            {$post.comment_count} {call plural forms=["{_wp("комментарий")}", "{_wp("комментария")}", "{_wp("комментариев")}"] n=$post.comment_count}
+                                        </span>
+                                    </span>
+                                </span>
+                            </span>
+                        </div>
+                    {/if}
+                </div>
+                <div class="blog-post-page__content-container">
+                    <div class="content-decorator">
+                        {$post.text}
+                    </div>
+
+                    {if $post.album_id && $post.album.id && $post.album.photos}
+                        <div class="blog-post-page__photos-album">
+                            {foreach $post.album.photos as $photo}
+                                <div class="blog-post-page__photos-album-item" itemscope itemtype ="http://schema.org/Photograph">
+                                    <a href="{$photo.frontend_link}">
+                                        {call image
+                                            src=$photo.thumb_crop.url
+                                            alt=$photo.name
+                                        }
+                                    </a>
+                                </div>
+                            {/foreach}
+                        </div>
+                    {/if}
+
+                    {if $is_author_enabled}
+                        {call post_user is_responsive=true}
+                    {/if}
+                </div>
+                <div class="blog-post-page__footer-container">
+                    {if $is_subscribe_enabled && $wa->globals('market.theme_exists.mailer')}
+                        <div class="blog-post-page__subscribe-container">
+                            <div class="block block_size_xs">
+                                <div class="block__header">
+                                    <span class="title title_h5">
+                                        [`Подписаться на рассылку`]:
+                                    </span>
+                                </div>
+                                <div class="block__content">
+                                    <div class="mailer-post-decorator">
+                                        <div class="form-decorator" data-field_size="s">
+                                            {$mailer_form = $wa->mailer->form($subscribe_id)}
+                                            {$mailer_form = $mailer_form|regex_replace:'/<style>.*?<\/style>/s':''}
+                                            {$mailer_form = $mailer_form|replace:'placeholder=""':''}
+                                            {$mailer_form}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                    {if $is_social_enabled}
+                        {if !$image_url}
+                            {$social_services = $social_services|replace:'pinterest':''}
+                        {/if}
+
+                        {if !empty($social_services)}
+                            <div class="blog-post-page__share-container r-hidden-md">
+                                <div class="pseudo-link-box pseudo-link-box_link pseudo-link-box_style_gray dropdown{if $is_subscribe_enabled} dropdown_right{/if} dropdown_click">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='share' width=16 height=16}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="pseudo-link-box__link title title_h5">
+                                                [`Поделиться в соц.`] [`сетях`]
+                                            </span>
+                                        </span>
+                                    </span>
+                                    {call share_block classes="share_dropdown dropdown__dropdown" pinterest_image=$image_url source=$social_source services=$social_services}
+                                </div>
+                            </div>
+                        {/if}
+                    {/if}
+                </div>
+                {if $show_comments && $post.comments_allowed}
+                    <a name="comments"></a>
+
+                    {if $post.status == blogPostModel::STATUS_PUBLISHED}
+                        <div class="blog-post-page__comments-container">
+                            {include './post-comments.html'}
+                        </div>
+                    {else}
+                        <div class="blog-post-page__comments-container">
+                            <span class="title title_h4">
+                                [`Comments for non published posts are disabled`]
+                            </span>
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+        </div>
+    </div>
+{/strip}

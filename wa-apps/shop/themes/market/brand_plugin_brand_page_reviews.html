@@ -1,0 +1,339 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$limit = 10}
+
+    {capture assign='review_form'}
+        {* Brand Review Form Start *}
+            {$current_user_id = $wa->userId()}
+            {$is_auth = !empty($current_user_id)}
+
+            <div class="brand-review-form">
+                <form class="form ajax-form" action="{$add_review_url|escape}" method="post">
+                    {$wa->csrf()}
+                    <input type="hidden" name="review[brand_id]" value="{$brand.id}">
+                    {if $is_auth}
+                        <div class="form__group">
+                            {call contact_block contact=$wa->user()}
+                        </div>
+                    {/if}
+                    <div class="form__group">
+                        <div class="form__fields">
+                            {if !$is_auth}
+                                <div class="form__field form-field" data-field_name="name">
+                                    <div class="form-field__name">
+                                        {_wp("Ваше имя")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <input name="review[name]" class="input-text" placeholder="{_wp("Ваше имя")}" />
+                                    </div>
+                                </div>
+                            {else}
+                                <input name="review[name]" type="hidden" value="" />
+                            {/if}
+                            <div class="form__field form-field" data-field_name="rate">
+                                <div class="form-field__name">
+                                    {_wp("Оцените бренд")}:
+                                </div>
+                                <div class="form-field__value">
+                                    <div class="rating-select">
+                                        <input type="hidden" class="rating-select__input" name="review[rate]" value="" />
+                                        <div class="rating-select__stars-container">
+                                            <span class="rating-select__stars">
+                                                <span class="rating-select__star" data-text="{_wp("Ужасный")}" data-value="1"></span>
+                                                <span class="rating-select__star" data-text="{_wp("Плохой")}" data-value="2"></span>
+                                                <span class="rating-select__star" data-text="{_wp("Обычный")}" data-value="3"></span>
+                                                <span class="rating-select__star" data-text="{_wp("Хороший")}" data-value="4"></span>
+                                                <span class="rating-select__star" data-text="{_wp("Отличный")}" data-value="5"></span>
+                                            </span>
+                                        </div>
+                                        <div class="rating-select__value-container">
+                                            <span class="rating-select__hover-value"></span>
+                                            <span class="rating-select__active-value"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form__field form-field" data-field_name="pros">
+                                <div class="form-field__name">
+                                    {_wp("Достоинства")}:
+                                </div>
+                                <div class="form-field__value">
+                                    <textarea class="textarea textarea_fill" name="review[pros]" placeholder="{_wp("Достоинства")}"></textarea>
+                                </div>
+                            </div>
+                            <div class="form__field form-field" data-field_name="cons">
+                                <div class="form-field__name">
+                                    {_wp("Недостатки")}:
+                                </div>
+                                <div class="form-field__value">
+                                    <textarea class="textarea textarea_fill" name="review[cons]" placeholder="{_wp("Недостатки")}"></textarea>
+                                </div>
+                            </div>
+                            <div class="form__field form-field" data-field_name="content">
+                                <div class="form-field__name">
+                                    {_wp("Комментарий")}:
+                                </div>
+                                <div class="form-field__value">
+                                    <textarea class="textarea textarea_fill" name="review[content]" placeholder="{_wp("Ваш комментарий о бренде")}"></textarea>
+                                </div>
+                            </div>
+                            {if !$disable_add_review_captcha}
+                                <div class="form__field form-field" data-field_name="captcha">
+                                    <div class="form-field__name">
+                                        {_wp("Капча")}:
+                                    </div>
+                                    <div class="form-field__value">
+                                        <div class="captcha-decorator">
+                                            {$wa->captcha()}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="form__group">
+                        <div class="form-row">
+                            <button class="button button_wide">[`Отправить`]</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {* Brand Review Form End *}
+    {/capture}
+
+    <div class="brand-page">
+        <div class="block">
+            <h1 class="block__header block__header_text">
+                {if !empty($h1)}
+                    {$h1|escape}
+                {else}
+                    {$brand.name|escape}
+                {/if}
+            </h1>
+            <div class="block__content">
+                <div class="brand-page__tabs-container">
+                    {$pages_tabs}
+                </div>
+
+                <div class="brand-page__content-container">
+                    {* Brand Reviews Container Start *}
+                        <div class="brand-reviews-container">
+                            <input type="hidden" name="brand_review_form" value="{$review_form|escape}">
+                            <div class="block">
+                                <div class="block__header">
+                                    <div class="brand-reviews-container__header-container">
+                                        <div class="brand-reviews-container__header-text-container">
+                                            <span class="title title_h2">
+                                                [`Все отзывы`] {$reviews_count}
+                                            </span>
+                                        </div>
+                                        <div class="brand-reviews-container__button-container">
+                                            <button class="brand-reviews-container__review-button button button_size_l">
+                                                [`Написать отзыв`]
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="block__content">
+                                    <div class="brand-reviews-container__reviews-container r-clear-offsets">
+                                        {if count($reviews) > 0}
+                                            {* Brand Reviews Start *}
+                                            {$has_hidden = false}
+
+                                            <div class="brand-reviews">
+                                                <div class="brand-reviews__reviews-container">
+                                                    {foreach $reviews as $review}
+                                                        {$is_hidden = $limit != -1 && $review@iteration > $limit}
+
+                                                        {if $is_hidden}
+                                                            {$has_hidden = true}
+                                                        {/if}
+
+                                                        <div class="brand-reviews__review {if $is_hidden}brand-reviews__review_hidden{/if}">
+                                                            {* Brand Review Start *}
+                                                            {$is_product = !!$review.product}
+
+                                                            <div class="brand-review">
+                                                                <div class="brand-review__header-container">
+                                                                    <div class="brand-review__image-container">
+                                                                        <span class="brand-review__image-box image-box image-box_fill">
+                                                                            {if $is_product}
+                                                                                {$product = $wa->shop->product($review.product.id)}
+                                                                                {$has_image = isset($product.image_id)}
+
+                                                                                {if $has_image}
+                                                                                    <img src="{$wa->shop->productImgUrl($product, '80')|escape}" alt="{$product.name|escape}" />
+                                                                                {else}
+                                                                                    {if !empty($theme_settings['product_dummy_image'])}
+                                                                                        <img src="{$theme_settings['product_dummy_image']|escape}" alt="{$product.name|escape}" width="80" />
+                                                                                    {else}
+                                                                                        {call svg_icon icon='no-thumb' width=50 height=50 fill='#CFCFCF'}
+                                                                                    {/if}
+                                                                                {/if}
+                                                                            {else}
+                                                                                {if $brand.image_url}
+                                                                                    <img src="{$brand.image_url|escape}" alt="{$brand.name|escape}" />
+                                                                                {else}
+                                                                                    {call svg_icon icon='no-thumb' width=50 height=50 fill='#CFCFCF'}
+                                                                                {/if}
+                                                                            {/if}
+            															</span>
+																	</div>
+																	<div class="brand-review__info-container">
+																		<div class="brand-review__title-container">
+																			{if $is_product}
+																				[`Отзыв о товаре`]
+																				{' '}
+																				<a class="brand-review__product-name link link_style_hover" href="{$review.product.url|escape}">{$review.product.name|escape}</a>
+																			{else}
+																				[`Отзыв о бренде`]
+																				{' '}
+																				<span class="brand-review__brand-name">{$brand.name}</span>
+																			{/if}
+																		</div>
+																		<div class="brand-review__rating-container">
+																			<span class="rating">
+																			    {$rating_stars = explode(',', "{call rating_stars rating=$review.rate}")}
+																			    {foreach $rating_stars as $star}
+																			        <span class="rating__star rating__star_{$star}"></span>
+																			    {/foreach}
+																			</span>
+
+																		</div>
+																	</div>
+																</div>
+																<div class="brand-review__author-container">
+																	{$review.contact.name}
+																</div>
+																<div class="brand-review__content-container">
+																	{if $is_product}
+																		<div class="brand-review__block">
+																			<div class="brand-review__block-content">
+																				<div class="content-decorator">
+																					{$review.content}
+																				</div>
+																			</div>
+																		</div>
+																	{else}
+																		{if $review.pros}
+																			<div class="brand-review__block">
+																				<div class="brand-review__block-header">
+																					[`Преимущества`]:
+																				</div>
+																				<div class="brand-review__block-content">
+																					<div class="content-decorator">
+																						{$review.pros}
+																					</div>
+																				</div>
+																			</div>
+																		{/if}
+
+																		{if $review.cons}
+																			<div class="brand-review__block">
+																				<div class="brand-review__block-header">
+																					[`Недостатки`]:
+																				</div>
+																				<div class="brand-review__block-content">
+																					<div class="content-decorator">
+																						{$review.cons}
+																					</div>
+																				</div>
+																			</div>
+																		{/if}
+
+																		{if $review.content}
+																			<div class="brand-review__block">
+																				<div class="brand-review__block-header">
+																					[`Комментарий`]:
+																				</div>
+																				<div class="brand-review__block-content">
+																					<div class="content-decorator">
+																						{$review.content}
+																					</div>
+																				</div>
+																			</div>
+																		{/if}
+																	{/if}
+																</div>
+																<div class="brand-review__date-container">
+																	{$review.datetime|wa_datetime:'j f Y / H:i'}
+																</div>
+																{if $is_product && !empty($review.images)}
+																	{capture assign='gallery_content'}
+																		<div class="popup-gallery" data-popup-gallery-id="{$review@iteration}" style="max-width: 100%;width: 1300px;">
+																			<div class="popup-gallery__images-container">
+																				<div class="popup-gallery__images">
+																					<div class="popup-gallery__images-wrapper">
+																						{foreach $review.images as $image}
+																							<div class="popup-gallery__image" data-image_id="{$image.id|escape}">
+																								<span class="image-box image-box_fill">
+																									<img src="{$image.url_1|escape}" alt="{$image.description}" />
+																								</span>
+																							</div>
+																						{/foreach}
+																					</div>
+																				</div>
+																				<div class="popup-gallery__arrow popup-gallery__arrow_prev">
+																					{call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-left' width=16 height=26}
+																				</div>
+																				<div class="popup-gallery__arrow popup-gallery__arrow_next">
+																					{call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-right' width=16 height=26}
+																				</div>
+																			</div>
+																			{if $wa->globals('is_mobile') && count($review.images) > 1}
+																				<div class="popup-gallery__pagination gallery-pagination gallery-pagination_product"></div>
+																			{/if}
+																		</div>
+																	{/capture}
+																	<div class="brand-review__images review-images" data-popup-gallery-id="{$review@iteration}" data-gallery="{$gallery_content|escape}">
+																		{foreach $review.images as $image}
+																			<a class="product-review__images-link" href="{$image.url_1|escape}" data-index="{$image@iteration - 1}">
+																				{call image
+                                                                                    src=$image.url_3
+                                                                                    alt=$image.description
+																				}
+																			</a>
+																		{/foreach}
+																	</div>
+																{/if}
+															</div>
+															{* Brand Review End *}
+														</div>
+													{/foreach}
+												</div>
+
+												{if $has_hidden}
+													<div class="brand-reviews__more-container">
+														<button class="brand-reviews__more-button button button_style_inverse button_size_l" type="button">
+                                                            <span class="icon-box">
+                                                                <span class="icon-box__content">
+                                                                    [`Показать ещё`]
+                                                                </span>
+                                                                <span class="icon-box__icon">
+                                                                    {call svg_icon icon="dict-arrow-bottom" classes="button__icon" width=12 height=12}
+                                                                </span>
+                                                            </span>
+														</button>
+													</div>
+												{/if}
+											</div>
+											{* Brand Reviews End *}
+										{else}
+											<div class="not-found-block">
+												<div class="not-found-block__header">
+													[`Отзывов ещё нет`] — [`ваш может стать первым.`]
+												</div>
+											</div>
+										{/if}
+									</div>
+								</div>
+							</div>
+						</div>
+					{* Brand Reviews Container End *}
+				</div>
+			</div>
+		</div>
+	</div>
+{/strip}

@@ -1,0 +1,62 @@
+{strip}
+    {* Arguments *}
+    {$breadcrumbs = $breadcrumbs|default:[]}
+    {$current_item_mode = $current_item_mode|default:'show'}
+    {$separator = $separator|default:null}
+    {$breadcrumbs_data = $breadcrumbs_data|default:[]}
+
+    {* Template *}
+    <div class="microdata">
+        <div itemscope itemtype="http://schema.org/BreadcrumbList">
+            {foreach $breadcrumbs as $breadcrumb}
+                <div itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                    <meta itemprop="position" content="{$breadcrumb@iteration}" />
+                    <link itemprop="item" href="{$breadcrumb.url|escape}" />
+                    <meta itemprop="name" content="{_wp($breadcrumb.name)|escape}" />
+                </div>
+            {/foreach}
+        </div>
+    </div>
+
+    <div class="breadcrumbs breadcrumbs_current-item-mode_{$current_item_mode} {if !$separator}breadcrumbs_default-separator{/if}">
+        {if !empty($breadcrumbs_data)}
+            <input type="hidden" name="breadcrumbs_data" value="{json_encode($breadcrumbs_data)|escape}">
+        {/if}
+        <div class="breadcrumbs__wrapper">
+            {foreach $breadcrumbs as $breadcrumb}
+                {$is_current = $breadcrumb@last}
+
+                <div class="breadcrumbs__item  {if $is_current}breadcrumbs__item_current{/if}" {if $separator}data-separator="{$separator}"{/if}>
+                    {capture assign='breadcrumb_content'}
+                        {if $is_current && $current_item_mode === 'show'}
+                            {_wp($breadcrumb.name)|escape}
+                        {elseif !$is_current || $current_item_mode === 'show-link'}
+                            <a class="link link_style_hover" href="{$breadcrumb.url}">
+                                {_wp($breadcrumb.name)|escape}
+                            </a>
+                        {else}
+                            &darr;
+                        {/if}
+                    {/capture}
+
+                    {if isset($breadcrumb.brothers) && $breadcrumb.brothers}
+                        <span class="breadcrumbs__item-container">
+                            <span class="breadcrumbs__item-content-container">
+                                {$breadcrumb_content}
+                            </span>
+                            <span class="breadcrumbs__item-brothers-container">
+                                <span class="breadcrumbs__brothers-button">
+                                    <span class="image-box">
+                                        {call svg_icon icon='breadcrumbs-brothers' width=12 height=12 fill='#DADADA'}
+                                    </span>
+                                </span>
+                            </span>
+                        </span>
+                    {else}
+                        {$breadcrumb_content}
+                    {/if}
+                </div>
+            {/foreach}
+        </div>
+    </div>
+{/strip}

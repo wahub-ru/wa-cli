@@ -1,0 +1,1470 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE theme PUBLIC "wa-app-theme" "http://www.webasyst.com/wa-content/xml/wa-app-theme.dtd">
+<theme id="market" app="mailer" system="0" vendor="1036600" author="WAHUB" parent_theme_id="shop:market" version="0.3.1">
+  <name locale="en_US">Market</name>
+  <name locale="ru_RU">Стройка Маркет</name>
+  <instruction locale="en_US">https://wahub.ru/</instruction>
+  <instruction locale="ru_RU">https://wahub.ru/</instruction>
+  <support locale="en_US">https://t.me/wahub_ru</support>
+  <support locale="ru_RU">https://t.me/wahub_ru</support>
+  <files>
+    <file parent="1" path="css/market.css"/>
+    <file parent="1" path="js/market.js"/>
+    <file parent="1" path="user.css"/>
+    <file parent="1" path="user.js"/>
+    <file parent="1" path="index.html"/>
+    <file parent="1" path="error.html"/>
+    <file parent="1" path="signup.html"/>
+    <file parent="1" path="login.html"/>
+    <file parent="1" path="forgotpassword.html"/>
+    <file parent="1" path="page.html"/>
+    <file parent="1" path="my.profile.html"/>
+    <file path="header.html"/>
+    <file path="home.html"/>
+    <file path="my.nav.html"/>
+    <file path="my.subscriptions.html"/>
+  </files>
+  <about locale="ru_RU">
+        &lt;p&gt;
+            Market — это универсальное семейство адаптивных тем дизайна для базовых приложений фреймворка Вебасист: «Сайт», «Блог», «Фото», Shop-Script и других. Родительской (основной) темой семейства, включающей в себя базовый набор CSS-стилей и общий макет дизайна index.html, является тема «Дефолт» для приложения «Сайт». Все темы дизайна «Дефолт» для других приложений («Блог», «Фото», Shop-Script и других) используют базовый CSS-код и файл index.html из родительской (основной) темы.&lt;br&gt;&lt;br&gt;
+        &lt;/p&gt;
+        &lt;h2&gt;Дополнительные параметры, используемые в теме дизайна:&lt;/h2&gt;&lt;br&gt;
+    
+        &lt;h3&gt;1. Логотип категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            category_img=/wa-data/public/site/category-logo.svg  —  Логотип категории, например если нет плагина
+            &lt;br&gt;&lt;br&gt;
+            category_icon=/wa-data/public/site/category-icon.png  —  Иконка категории
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;2. Видимость категории и информационных страниц (Магазин, Блог, Фото, Сайт)&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;hidden=1 — Скрыть категорию или информационную страницу в навигации&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;3. Сайдбар в каталоге&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;shop_catalog_sidebar_enabled=1/0 — Включить/выключить сайдбар&lt;/p&gt;&lt;br&gt;
+        &lt;p&gt;shop_catalog_sidebar_side=left/right — Расположить сайдбар слева или справа от основного блока&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;4. Стикер для категорий в меню&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            badge=Хит — Текст стикера&lt;br&gt;&lt;br&gt;
+            badge_color=#FF3131 — Цвет фона стикера&lt;br&gt;&lt;br&gt;
+            badge_text_color=#FFFFFF — Цвет текста стикера
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;5. Вывод характеристик в списке товаров у категорий&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;feature_codes=code1,code2 — Выводит характеристики в списках товаров для определенной категории&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;6. Вывод плагина "Характеристики в списках товаров" в списке товаров у категорий&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;listfeatures=1 — Выводит указанный шаблон из настроек плагина&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;7. Количество выводимых характеристик в списке товаров у категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;catalog_features_limit=3 — Количество выводимых характеристик для всех вариантов отображения&lt;/p&gt;&lt;br&gt;
+        &lt;p&gt;catalog_thumbs_features_limit=3 —  Количество выводимых характеристик для вида плиткой&lt;/p&gt;&lt;br&gt;
+        &lt;p&gt;catalog_extends_features_limit=3 —  Количество выводимых характеристик для вида списком&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;8. Вариации товаров в списке товаров категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;products_variants=skus — список артикулов&lt;/p&gt;
+        &lt;p&gt;products_variants=productgroup — группы товаров&lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;9. Вариант показа подкатегорий для определенной категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            subcategories_variant=thumbs — Большие карточки подкатегорий.&lt;br&gt;&lt;br&gt;
+            subcategories_variant=compact — Средние карточки подкатегорий.&lt;br&gt;&lt;br&gt;
+            subcategories_variant=mini — Маленькие карточки подкатегорий.
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;10. Вариант показа списка товаров по умолчанию для определенной категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            default_view_type=thumbs — Вид по-умолчанию «Плиткой».&lt;br&gt;&lt;br&gt;
+            is_large_thumbs=1 — Большая «Плитка».&lt;br&gt;&lt;br&gt;
+            default_view_type=extend — Вид по-умолчанию «Расширенный».&lt;br&gt;&lt;br&gt;
+            default_view_type=compact — Вид по-умолчанию «Компактный».
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;11. Баннеры в списке товаров определенной категории&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            top_banner_img — Изображение баннера над товарами.&lt;br&gt;&lt;br&gt;
+            top_banner_link — Адрес ссылки баннера над товарами.&lt;br&gt;&lt;br&gt;
+            bottom_banner_img — Изображение баннера под товарами.&lt;br&gt;&lt;br&gt;
+            bottom_banner_link — Адрес ссылки баннера под товарами.
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h3&gt;12. Страница товара&lt;/h3&gt;&lt;br&gt;
+        &lt;p&gt;
+            top_banner_img — Изображение баннера над товарами.&lt;br&gt;&lt;br&gt;
+            top_banner_link — Адрес ссылки баннера над товарами.&lt;br&gt;&lt;br&gt;
+            bottom_banner_img — Изображение баннера под товарами.&lt;br&gt;&lt;br&gt;
+            bottom_banner_link — Адрес ссылки баннера под товарами.
+        &lt;/p&gt;&lt;br&gt;
+    
+        &lt;h2&gt;Блоки, используемые  теме дизайна&lt;/h2&gt;&lt;br&gt;
+    
+        &lt;p&gt;market.head.js —  Блок для вставки JS в Head&lt;/p&gt;
+        &lt;p&gt;market.head.css —  Блок для вставки CSS в Head.&lt;/p&gt;
+        &lt;p&gt;market.home.about —  Вывод описания на главной странице.&lt;/p&gt;
+        &lt;p&gt;market.home.about2 —  Произвольный блок на главной странице.&lt;/p&gt;
+        &lt;p&gt;market.footer.counters —  Блок для добавления счетчиков.&lt;/p&gt;
+        &lt;p&gt;market.product.under.price —  Блок для вывода произвольного текста под ценой;&lt;/p&gt;
+        &lt;p&gt;market.utp —  Блок с уникальным торговым предложением (иконки преимуществ). Может выводится на главной или в карточке товара.&lt;/p&gt;
+    
+        
+    </about>
+  <thumbs>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 36 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Квадратная обрезка:&lt;/span&gt; 48x48 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 60 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Квадратная обрезка:&lt;/span&gt; 60x60 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 70 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Квадратная обрезка:&lt;/span&gt; 96x96 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 100 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 200 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 215 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Ширина = авто, Высота =&lt;/span&gt; 320 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 430 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 440 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Ширина = авто, Высота =&lt;/span&gt; 600 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 750 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 970 px</thumb>
+    <thumb>&lt;span style="font-weight:400;"&gt;Макс. ( Ширина, Высота ) =&lt;/span&gt; 1024 px</thumb>
+  </thumbs>
+  <locales>
+    <locale>
+      <msgid>Все новости</msgid>
+      <msgstr locale="en_US">All news</msgstr>
+    </locale>
+    <locale>
+      <msgid>год</msgid>
+      <msgstr locale="en_US">year</msgstr>
+    </locale>
+    <locale>
+      <msgid>Весь год</msgid>
+      <msgstr locale="en_US">Whole year</msgstr>
+    </locale>
+    <locale>
+      <msgid>Название организации</msgid>
+      <msgstr locale="en_US">Company name</msgstr>
+    </locale>
+    <locale>
+      <msgid>комментарий</msgid>
+      <msgstr locale="en_US">comment</msgstr>
+    </locale>
+    <locale>
+      <msgid>комментария</msgid>
+      <msgstr locale="en_US">comments</msgstr>
+    </locale>
+    <locale>
+      <msgid>комментариев</msgid>
+      <msgstr locale="en_US">comments</msgstr>
+    </locale>
+    <locale>
+      <msgid>Подписаться на рассылку</msgid>
+      <msgstr locale="en_US">Subscribe to the newsletter</msgstr>
+    </locale>
+    <locale>
+      <msgid>Поделиться в соц.</msgid>
+      <msgstr locale="en_US">Share on social</msgstr>
+    </locale>
+    <locale>
+      <msgid>сетях</msgid>
+      <msgstr locale="en_US">media</msgstr>
+    </locale>
+    <locale>
+      <msgid>Блог</msgid>
+      <msgstr locale="en_US">Blog</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ответить</msgid>
+      <msgstr locale="en_US">Reply</msgstr>
+    </locale>
+    <locale>
+      <msgid>Показать ещё</msgid>
+      <msgstr locale="en_US">Show more</msgstr>
+    </locale>
+    <locale>
+      <msgid>Читать далее</msgid>
+      <msgstr locale="en_US">Read more</msgstr>
+    </locale>
+    <locale>
+      <msgid>Написать комментарий</msgid>
+      <msgstr locale="en_US">Add comment</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваше имя</msgid>
+      <msgstr locale="en_US">Your name</msgstr>
+    </locale>
+    <locale>
+      <msgid>Комментарий</msgid>
+      <msgstr locale="en_US">Comment</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отправить</msgid>
+      <msgstr locale="en_US">Submit</msgstr>
+    </locale>
+    <locale>
+      <msgid>Комментариев ещё нет</msgid>
+      <msgstr locale="en_US">No comments yet</msgstr>
+    </locale>
+    <locale>
+      <msgid>ваш может стать первым.</msgid>
+      <msgstr locale="en_US">your comment may be first.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Категория</msgid>
+      <msgstr locale="en_US">Category</msgstr>
+    </locale>
+    <locale>
+      <msgid>Год</msgid>
+      <msgstr locale="en_US">Year</msgstr>
+    </locale>
+    <locale>
+      <msgid>Записи не найдены</msgid>
+      <msgstr locale="en_US">No posts found</msgstr>
+    </locale>
+    <locale>
+      <msgid>Назад</msgid>
+      <msgstr locale="en_US">Back</msgstr>
+    </locale>
+    <locale>
+      <msgid>фотография</msgid>
+      <msgstr locale="en_US">photo</msgstr>
+    </locale>
+    <locale>
+      <msgid>фотографии</msgid>
+      <msgstr locale="en_US">photos</msgstr>
+    </locale>
+    <locale>
+      <msgid>фотографий</msgid>
+      <msgstr locale="en_US">photos</msgstr>
+    </locale>
+    <locale>
+      <msgid>Показать все</msgid>
+      <msgstr locale="en_US">Show more</msgstr>
+    </locale>
+    <locale>
+      <msgid>Скрыть</msgid>
+      <msgstr locale="en_US">Hide</msgstr>
+    </locale>
+    <locale>
+      <msgid>Альбомы</msgid>
+      <msgstr locale="en_US">Albums</msgstr>
+    </locale>
+    <locale>
+      <msgid>Фотографии</msgid>
+      <msgstr locale="en_US">Photos</msgstr>
+    </locale>
+    <locale>
+      <msgid>Фотопоток</msgid>
+      <msgstr locale="en_US">Photo stream</msgstr>
+    </locale>
+    <locale>
+      <msgid>Автор</msgid>
+      <msgstr locale="en_US">Author</msgstr>
+    </locale>
+    <locale>
+      <msgid>Теги</msgid>
+      <msgstr locale="en_US">Tags</msgstr>
+    </locale>
+    <locale>
+      <msgid>Избранное</msgid>
+      <msgstr locale="en_US">Favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Написать отзыв</msgid>
+      <msgstr locale="en_US">Write a review</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ужасный</msgid>
+      <msgstr locale="en_US">Very bad</msgstr>
+    </locale>
+    <locale>
+      <msgid>Плохой</msgid>
+      <msgstr locale="en_US">Bad</msgstr>
+    </locale>
+    <locale>
+      <msgid>Обычный</msgid>
+      <msgstr locale="en_US">Normal</msgstr>
+    </locale>
+    <locale>
+      <msgid>Хороший</msgid>
+      <msgstr locale="en_US">Good</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отличный</msgid>
+      <msgstr locale="en_US">Great</msgstr>
+    </locale>
+    <locale>
+      <msgid>Оцените бренд</msgid>
+      <msgstr locale="en_US">Rate the brand</msgstr>
+    </locale>
+    <locale>
+      <msgid>Достоинства</msgid>
+      <msgstr locale="en_US">Advantage</msgstr>
+    </locale>
+    <locale>
+      <msgid>Недостатки</msgid>
+      <msgstr locale="en_US">Disadvantage</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваш комментарий о бренде</msgid>
+      <msgstr locale="en_US">Your comment about the brand</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзыв о товаре</msgid>
+      <msgstr locale="en_US">Review about the product</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзыв о бренде</msgid>
+      <msgstr locale="en_US">Review about the brand</msgstr>
+    </locale>
+    <locale>
+      <msgid>Преимущества</msgid>
+      <msgstr locale="en_US">Advantage</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все отзывы</msgid>
+      <msgstr locale="en_US">All reviews</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзывов ещё нет</msgid>
+      <msgstr locale="en_US">No reviews yet</msgstr>
+    </locale>
+    <locale>
+      <msgid>Показать все бренды</msgid>
+      <msgstr locale="en_US">Show all brand</msgstr>
+    </locale>
+    <locale>
+      <msgid>Оформление заказа</msgid>
+      <msgstr locale="en_US">Order checkout</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вернуться в корзину</msgid>
+      <msgstr locale="en_US">Back to cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>Товар добавлен в корзину</msgid>
+      <msgstr locale="en_US">Item added to cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>В корзине</msgid>
+      <msgstr locale="en_US">In cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>товар</msgid>
+      <msgstr locale="en_US">item</msgstr>
+    </locale>
+    <locale>
+      <msgid>товара</msgid>
+      <msgstr locale="en_US">items</msgstr>
+    </locale>
+    <locale>
+      <msgid>товаров</msgid>
+      <msgstr locale="en_US">items</msgstr>
+    </locale>
+    <locale>
+      <msgid>на сумму</msgid>
+      <msgstr locale="en_US">in the total cost of</msgstr>
+    </locale>
+    <locale>
+      <msgid>Продолжить покупки</msgid>
+      <msgstr locale="en_US">Continue shopping</msgstr>
+    </locale>
+    <locale>
+      <msgid>Перейти в корзину</msgid>
+      <msgstr locale="en_US">Go to cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>Рекомендуем посмотреть</msgid>
+      <msgstr locale="en_US">We recommended to see</msgstr>
+    </locale>
+    <locale>
+      <msgid>Удалить</msgid>
+      <msgstr locale="en_US">Delete</msgstr>
+    </locale>
+    <locale>
+      <msgid>Дополнительные услуги</msgid>
+      <msgstr locale="en_US">Additional services</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваш заказ</msgid>
+      <msgstr locale="en_US">Your order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Количество</msgid>
+      <msgstr locale="en_US">Quantity</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сумма</msgid>
+      <msgstr locale="en_US">Total cost</msgstr>
+    </locale>
+    <locale>
+      <msgid>Корзина</msgid>
+      <msgstr locale="en_US">Cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>Корзина пуста.</msgid>
+      <msgstr locale="en_US">Cart is empty.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Для добавления товаров в корзину</msgid>
+      <msgstr locale="en_US">To add product in cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>перейдите на главную.</msgid>
+      <msgstr locale="en_US">go to homepage.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Очистить корзину</msgid>
+      <msgstr locale="en_US">Remove all</msgstr>
+    </locale>
+    <locale>
+      <msgid>Рекомендуем</msgid>
+      <msgstr locale="en_US">Recommend</msgstr>
+    </locale>
+    <locale>
+      <msgid>Подытог</msgid>
+      <msgstr locale="en_US">Subtotal</msgstr>
+    </locale>
+    <locale>
+      <msgid>Скидка</msgid>
+      <msgstr locale="en_US">Discount</msgstr>
+    </locale>
+    <locale>
+      <msgid>Бонусные баллы</msgid>
+      <msgstr locale="en_US">Bonus points</msgstr>
+    </locale>
+    <locale>
+      <msgid>Итоговая сумма</msgid>
+      <msgstr locale="en_US">Total</msgstr>
+    </locale>
+    <locale>
+      <msgid>Итого</msgid>
+      <msgstr locale="en_US">Full</msgstr>
+    </locale>
+    <locale>
+      <msgid>б.</msgid>
+      <msgstr locale="en_US">b.p.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Начислится на счет</msgid>
+      <msgstr locale="en_US">Will be added to the account</msgstr>
+    </locale>
+    <locale>
+      <msgid>Использовать бонусы для частичной оплаты заказа</msgid>
+      <msgstr locale="en_US">Use bonuses for part-payment of the order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Оформить заказ</msgid>
+      <msgstr locale="en_US">Proceed to checkout</msgstr>
+    </locale>
+    <locale>
+      <msgid>Смотреть все</msgid>
+      <msgstr locale="en_US">View all</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ещё</msgid>
+      <msgstr locale="en_US">More</msgstr>
+    </locale>
+    <locale>
+      <msgid>Авторизуйтесь на сайте</msgid>
+      <msgstr locale="en_US">Sign in website</msgstr>
+    </locale>
+    <locale>
+      <msgid>и мы сохраним всю информацию по заказу и автоматически заполним ваши контактные данные</msgid>
+      <msgstr locale="en_US">and we will save all details of the order and fill your contact information automatically.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Авторизация</msgid>
+      <msgstr locale="en_US">Login</msgstr>
+    </locale>
+    <locale>
+      <msgid>Приблизительное время доставки</msgid>
+      <msgstr locale="en_US">Approximate delivery time</msgstr>
+    </locale>
+    <locale>
+      <msgid>Доставка</msgid>
+      <msgstr locale="en_US">Delivery</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вы авторизованы как</msgid>
+      <msgstr locale="en_US">You sign in as</msgstr>
+    </locale>
+    <locale>
+      <msgid>Пожалуйста</msgid>
+      <msgstr locale="en_US">Please</msgstr>
+    </locale>
+    <locale>
+      <msgid>подтвердите или обновите вашу контактную информацию.</msgid>
+      <msgstr locale="en_US">check or update your contact details.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Изменения будут автоматически сохранены в вашем профиле.</msgid>
+      <msgstr locale="en_US">Changes will be saved in your account automatically.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Если вы хотите оформить заказ от имени другого пользователя</msgid>
+      <msgstr locale="en_US">If you want to place an order on behalf of another customer</msgstr>
+    </locale>
+    <locale>
+      <msgid>выйдите из сеанса</msgid>
+      <msgstr locale="en_US">log out</msgstr>
+    </locale>
+    <locale>
+      <msgid>и перейдите к оформлению заказа заново.</msgid>
+      <msgstr locale="en_US">from your current profile and proceed to checkout again.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все</msgid>
+      <msgstr locale="en_US">All</msgstr>
+    </locale>
+    <locale>
+      <msgid>Свой список</msgid>
+      <msgstr locale="en_US">Your list</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все параметры</msgid>
+      <msgstr locale="en_US">All feature</msgstr>
+    </locale>
+    <locale>
+      <msgid>Различающиеся</msgid>
+      <msgstr locale="en_US">Different</msgstr>
+    </locale>
+    <locale>
+      <msgid>Удалить список</msgid>
+      <msgstr locale="en_US">Delete list</msgstr>
+    </locale>
+    <locale>
+      <msgid>добавлен к сравнению</msgid>
+      <msgstr locale="en_US">added to compare</msgstr>
+    </locale>
+    <locale>
+      <msgid>Всего в списке</msgid>
+      <msgstr locale="en_US">In total on list</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сравнить</msgid>
+      <msgstr locale="en_US">Compare</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сравнение товаров</msgid>
+      <msgstr locale="en_US">Compare of goods</msgstr>
+    </locale>
+    <locale>
+      <msgid>Список сравнения пуст.</msgid>
+      <msgstr locale="en_US">Compare list is empty.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Для добавления товаров к сравнению</msgid>
+      <msgstr locale="en_US">For adding product to comparison</msgstr>
+    </locale>
+    <locale>
+      <msgid>Только различающиеся</msgid>
+      <msgstr locale="en_US">Different only</msgstr>
+    </locale>
+    <locale>
+      <msgid>У меня есть купон</msgid>
+      <msgstr locale="en_US">I have a coupon</msgstr>
+    </locale>
+    <locale>
+      <msgid>Введите код купона</msgid>
+      <msgstr locale="en_US">Enter code of coupon</msgstr>
+    </locale>
+    <locale>
+      <msgid>Неверный код купона</msgid>
+      <msgstr locale="en_US">Invalid code of coupon</msgstr>
+    </locale>
+    <locale>
+      <msgid>У меня есть сертификат</msgid>
+      <msgstr locale="en_US">I have a certificate</msgstr>
+    </locale>
+    <locale>
+      <msgid>добавлен в избранное</msgid>
+      <msgstr locale="en_US">added to favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Перейти в избранное</msgid>
+      <msgstr locale="en_US">Go to favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все категории</msgid>
+      <msgstr locale="en_US">All categories</msgstr>
+    </locale>
+    <locale>
+      <msgid>Список избранного пуст.</msgid>
+      <msgstr locale="en_US">Favorites list is empty.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Для добавления товаров в избранное</msgid>
+      <msgstr locale="en_US">For adding product to favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Цена</msgid>
+      <msgstr locale="en_US">Price</msgstr>
+    </locale>
+    <locale>
+      <msgid>Показать</msgid>
+      <msgstr locale="en_US">Show</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сбросить фильтр</msgid>
+      <msgstr locale="en_US">Reset filter</msgstr>
+    </locale>
+    <locale>
+      <msgid>Карта сайта</msgid>
+      <msgstr locale="en_US">Sitemap</msgstr>
+    </locale>
+    <locale>
+      <msgid>шт.</msgid>
+      <msgstr locale="en_US">qty</msgstr>
+    </locale>
+    <locale>
+      <msgid>Товар с выбранным набором характеристик недоступен для покупки</msgid>
+      <msgstr locale="en_US">Product with chosen parameter is disabled for buying</msgstr>
+    </locale>
+    <locale>
+      <msgid>В корзину</msgid>
+      <msgstr locale="en_US">In cart</msgstr>
+    </locale>
+    <locale>
+      <msgid>Уведомить</msgid>
+      <msgstr locale="en_US">Notify</msgstr>
+    </locale>
+    <locale>
+      <msgid>В наличии</msgid>
+      <msgstr locale="en_US">In stock</msgstr>
+    </locale>
+    <locale>
+      <msgid>Осталось несколько штук</msgid>
+      <msgstr locale="en_US">In stock a few item</msgstr>
+    </locale>
+    <locale>
+      <msgid>Осталась</msgid>
+      <msgstr locale="en_US">Still have</msgstr>
+    </locale>
+    <locale>
+      <msgid>штука</msgid>
+      <msgstr locale="en_US">item</msgstr>
+    </locale>
+    <locale>
+      <msgid>Осталось</msgid>
+      <msgstr locale="en_US">Still have</msgstr>
+    </locale>
+    <locale>
+      <msgid>штуки</msgid>
+      <msgstr locale="en_US">items</msgstr>
+    </locale>
+    <locale>
+      <msgid>штук</msgid>
+      <msgstr locale="en_US">items</msgstr>
+    </locale>
+    <locale>
+      <msgid>Предзаказ</msgid>
+      <msgstr locale="en_US">Ordered on demand</msgstr>
+    </locale>
+    <locale>
+      <msgid>Нет в наличии</msgid>
+      <msgstr locale="en_US">Out of stock</msgstr>
+    </locale>
+    <locale>
+      <msgid>Хит</msgid>
+      <msgstr locale="en_US">Bestseller</msgstr>
+    </locale>
+    <locale>
+      <msgid>Новинка</msgid>
+      <msgstr locale="en_US">New</msgstr>
+    </locale>
+    <locale>
+      <msgid>отзыв</msgid>
+      <msgstr locale="en_US">review</msgstr>
+    </locale>
+    <locale>
+      <msgid>отзыва</msgid>
+      <msgstr locale="en_US">review</msgstr>
+    </locale>
+    <locale>
+      <msgid>отзывов</msgid>
+      <msgstr locale="en_US">review</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзыв</msgid>
+      <msgstr locale="en_US">Review</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сайт</msgid>
+      <msgstr locale="en_US">Website</msgstr>
+    </locale>
+    <locale>
+      <msgid>Заголовок</msgid>
+      <msgstr locale="en_US">Title</msgstr>
+    </locale>
+    <locale>
+      <msgid>Оцените товар</msgid>
+      <msgstr locale="en_US">Rate the product</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваш отзыв о товаре</msgid>
+      <msgstr locale="en_US">Your review on the product</msgstr>
+    </locale>
+    <locale>
+      <msgid>Капча</msgid>
+      <msgstr locale="en_US">CAPTCHA</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отменить</msgid>
+      <msgstr locale="en_US">Cancel</msgstr>
+    </locale>
+    <locale>
+      <msgid>общий рейтинг</msgid>
+      <msgstr locale="en_US">general rating</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзывы с оценкой</msgid>
+      <msgstr locale="en_US">Reviews with rate</msgstr>
+    </locale>
+    <locale>
+      <msgid>Показать все отзывы</msgid>
+      <msgstr locale="en_US">Show all reviews</msgstr>
+    </locale>
+    <locale>
+      <msgid>нет</msgid>
+      <msgstr locale="en_US">no</msgstr>
+    </locale>
+    <locale>
+      <msgid>Что ищем</msgid>
+      <msgstr locale="en_US">Search for anything</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сбросить фильтры</msgid>
+      <msgstr locale="en_US">Reset filters</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сортировать</msgid>
+      <msgstr locale="en_US">Sort by</msgstr>
+    </locale>
+    <locale>
+      <msgid>Восстановить список</msgid>
+      <msgstr locale="en_US">Restore list</msgstr>
+    </locale>
+    <locale>
+      <msgid>К сожалению</msgid>
+      <msgstr locale="en_US">Sorry</msgstr>
+    </locale>
+    <locale>
+      <msgid>ничего не найдено.</msgid>
+      <msgstr locale="en_US">nothing found.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Попробуйте</msgid>
+      <msgstr locale="en_US">Try</msgstr>
+    </locale>
+    <locale>
+      <msgid>сбросить фильтр</msgid>
+      <msgstr locale="en_US">reset filter</msgstr>
+    </locale>
+    <locale>
+      <msgid>и начать сначала.</msgid>
+      <msgstr locale="en_US">and start again.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Фильтр подбора</msgid>
+      <msgstr locale="en_US">Product filter</msgstr>
+    </locale>
+    <locale>
+      <msgid>Поиск</msgid>
+      <msgstr locale="en_US">Search</msgstr>
+    </locale>
+    <locale>
+      <msgid>с</msgid>
+      <msgstr locale="en_US">with</msgstr>
+    </locale>
+    <locale>
+      <msgid>По вашему запросу ничего найдено</msgid>
+      <msgstr locale="en_US">Nothing was found by your query</msgstr>
+    </locale>
+    <locale>
+      <msgid>По запросу</msgid>
+      <msgstr locale="en_US">By query</msgstr>
+    </locale>
+    <locale>
+      <msgid>найден</msgid>
+      <msgstr locale="en_US">found</msgstr>
+    </locale>
+    <locale>
+      <msgid>найдено</msgid>
+      <msgstr locale="en_US">found</msgstr>
+    </locale>
+    <locale>
+      <msgid>Найден</msgid>
+      <msgstr locale="en_US">Found</msgstr>
+    </locale>
+    <locale>
+      <msgid>Найдено</msgid>
+      <msgstr locale="en_US">Found</msgstr>
+    </locale>
+    <locale>
+      <msgid>Попробуйте сократить запрос или задать его по-другому.</msgid>
+      <msgstr locale="en_US">Try reduce or change your term.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вернуться на главную.</msgid>
+      <msgstr locale="en_US">Back to homepage.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Просмотренные</msgid>
+      <msgstr locale="en_US">Reviewed</msgstr>
+    </locale>
+    <locale>
+      <msgid>В этой категории нет ни одного товара.</msgid>
+      <msgstr locale="en_US">There are no products in this category.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Просмотренные товары</msgid>
+      <msgstr locale="en_US">Reviewed products</msgstr>
+    </locale>
+    <locale>
+      <msgid>Адрес получателя</msgid>
+      <msgstr locale="en_US">Destination address</msgstr>
+    </locale>
+    <locale>
+      <msgid>Адрес плательщика</msgid>
+      <msgstr locale="en_US">Payer address</msgstr>
+    </locale>
+    <locale>
+      <msgid>Оплата</msgid>
+      <msgstr locale="en_US">Payment</msgstr>
+    </locale>
+    <locale>
+      <msgid>Артикул</msgid>
+      <msgstr locale="en_US">SKU</msgstr>
+    </locale>
+    <locale>
+      <msgid>Наименование товара</msgid>
+      <msgstr locale="en_US">Product name</msgstr>
+    </locale>
+    <locale>
+      <msgid>Комментарий к заказу</msgid>
+      <msgstr locale="en_US">Comment to the order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Я принимаю</msgid>
+      <msgstr locale="en_US">I agree</msgstr>
+    </locale>
+    <locale>
+      <msgid>Условия предоставления услуг</msgid>
+      <msgstr locale="en_US">Terms of Service</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вы должны прочитать и принять Условия предоставления услуг для того</msgid>
+      <msgstr locale="en_US">You must read and accept Terms of Service</msgstr>
+    </locale>
+    <locale>
+      <msgid>чтобы оформить заказ.</msgid>
+      <msgstr locale="en_US">to place order.</msgstr>
+    </locale>
+    <locale>
+      <msgid>совпадает с адресом доставки</msgid>
+      <msgstr locale="en_US">matches the shipping address</msgstr>
+    </locale>
+    <locale>
+      <msgid>Изменить адрес плательщика</msgid>
+      <msgstr locale="en_US">Change payer address</msgstr>
+    </locale>
+    <locale>
+      <msgid>Зарегистрироваться как постоянный покупатель</msgid>
+      <msgstr locale="en_US">Create a new customer account</msgstr>
+    </locale>
+    <locale>
+      <msgid>Зарегистрированные покупатели получают накопительные бонусные баллы и скидки на будущие заказы.</msgid>
+      <msgstr locale="en_US">Registered customers get cumulative bonus points and order discount in the future.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Этот заказ добавит</msgid>
+      <msgstr locale="en_US">This order will add</msgstr>
+    </locale>
+    <locale>
+      <msgid>баллов</msgid>
+      <msgstr locale="en_US">points</msgstr>
+    </locale>
+    <locale>
+      <msgid>к вашему партнерскому бонусу.</msgid>
+      <msgstr locale="en_US">to your affiliate bonus.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Пароль</msgid>
+      <msgstr locale="en_US">Password</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ошибка</msgid>
+      <msgstr locale="en_US">Error</msgstr>
+    </locale>
+    <locale>
+      <msgid>Далее</msgid>
+      <msgstr locale="en_US">Next</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваш заказ успешно оформлен</msgid>
+      <msgstr locale="en_US">Your order is successfully placed</msgstr>
+    </locale>
+    <locale>
+      <msgid>Номер вашего заказа</msgid>
+      <msgstr locale="en_US">Your order number is</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вернуться в магазин</msgid>
+      <msgstr locale="en_US">Back to store</msgstr>
+    </locale>
+    <locale>
+      <msgid>добавить условие</msgid>
+      <msgstr locale="en_US">add condition</msgstr>
+    </locale>
+    <locale>
+      <msgid>Партнёрская программа</msgid>
+      <msgstr locale="en_US">Affiliate program</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ваш текущий партнерский бонус</msgid>
+      <msgstr locale="en_US">Your current affiliate bonus</msgstr>
+    </locale>
+    <locale>
+      <msgid>Дата</msgid>
+      <msgstr locale="en_US">Date</msgstr>
+    </locale>
+    <locale>
+      <msgid>Описание</msgid>
+      <msgstr locale="en_US">Description</msgstr>
+    </locale>
+    <locale>
+      <msgid>Заказ</msgid>
+      <msgstr locale="en_US">Order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Введите четырехзначный</msgid>
+      <msgstr locale="en_US">Enter four-digit</msgstr>
+    </locale>
+    <locale>
+      <msgid>код</msgid>
+      <msgstr locale="en_US">code</msgstr>
+    </locale>
+    <locale>
+      <msgid>который был отправлен вам в уведомлении о заказе по электронной почте.</msgid>
+      <msgstr locale="en_US">that was sent to you in order message by Email.</msgstr>
+    </locale>
+    <locale>
+      <msgid>код введен неверно</msgid>
+      <msgstr locale="en_US">code entered invalid</msgstr>
+    </locale>
+    <locale>
+      <msgid>Посмотреть заказ</msgid>
+      <msgstr locale="en_US">View order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Статус</msgid>
+      <msgstr locale="en_US">Status</msgstr>
+    </locale>
+    <locale>
+      <msgid>Дата заказа</msgid>
+      <msgstr locale="en_US">Order date</msgstr>
+    </locale>
+    <locale>
+      <msgid>Номер отправления</msgid>
+      <msgstr locale="en_US">Number of departure</msgstr>
+    </locale>
+    <locale>
+      <msgid>Скачать</msgid>
+      <msgstr locale="en_US">Download</msgstr>
+    </locale>
+    <locale>
+      <msgid>Налог</msgid>
+      <msgstr locale="en_US">Tax</msgstr>
+    </locale>
+    <locale>
+      <msgid>Мои заказы</msgid>
+      <msgstr locale="en_US">My orders</msgstr>
+    </locale>
+    <locale>
+      <msgid>Номер заказа</msgid>
+      <msgstr locale="en_US">Order number</msgstr>
+    </locale>
+    <locale>
+      <msgid>Состав заказа</msgid>
+      <msgstr locale="en_US">Order include</msgstr>
+    </locale>
+    <locale>
+      <msgid>и</msgid>
+      <msgstr locale="en_US">and</msgstr>
+    </locale>
+    <locale>
+      <msgid>ещё</msgid>
+      <msgstr locale="en_US">more</msgstr>
+    </locale>
+    <locale>
+      <msgid>У вас еще нет ни одного заказа.</msgid>
+      <msgstr locale="en_US">You haven't any orders yet.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Уточните категорию</msgid>
+      <msgstr locale="en_US">Select a category</msgstr>
+    </locale>
+    <locale>
+      <msgid>Бренд</msgid>
+      <msgstr locale="en_US">Brand</msgstr>
+    </locale>
+    <locale>
+      <msgid>К сравнению</msgid>
+      <msgstr locale="en_US">To compare</msgstr>
+    </locale>
+    <locale>
+      <msgid>Удалить из сравнения</msgid>
+      <msgstr locale="en_US">Remove from comparison table</msgstr>
+    </locale>
+    <locale>
+      <msgid>В избранное</msgid>
+      <msgstr locale="en_US">To favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Удалить из избранного</msgid>
+      <msgstr locale="en_US">Remove from favorites</msgstr>
+    </locale>
+    <locale>
+      <msgid>Быстрый просмотр</msgid>
+      <msgstr locale="en_US">Quick view</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все характеристики</msgid>
+      <msgstr locale="en_US">All features</msgstr>
+    </locale>
+    <locale>
+      <msgid>Подробнее о товаре</msgid>
+      <msgstr locale="en_US">More about the product</msgstr>
+    </locale>
+    <locale>
+      <msgid>Характеристики</msgid>
+      <msgstr locale="en_US">Features</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отзывы</msgid>
+      <msgstr locale="en_US">Reviews</msgstr>
+    </locale>
+    <locale>
+      <msgid>Категории</msgid>
+      <msgstr locale="en_US">Categories</msgstr>
+    </locale>
+    <locale>
+      <msgid>Поделиться</msgid>
+      <msgstr locale="en_US">Share</msgstr>
+    </locale>
+    <locale>
+      <msgid>С этим товаром также покупают</msgid>
+      <msgstr locale="en_US">Customers also bought with this product</msgstr>
+    </locale>
+    <locale>
+      <msgid>ответить</msgid>
+      <msgstr locale="en_US">reply</msgstr>
+    </locale>
+    <locale>
+      <msgid>Перейти в карточку товара</msgid>
+      <msgstr locale="en_US">Go to product</msgstr>
+    </locale>
+    <locale>
+      <msgid>По вашему запросу ничего не найдено</msgid>
+      <msgstr locale="en_US">Nothing found for your term</msgstr>
+    </locale>
+    <locale>
+      <msgid>Возможно</msgid>
+      <msgstr locale="en_US">Probably</msgstr>
+    </locale>
+    <locale>
+      <msgid>вас заинтересует</msgid>
+      <msgstr locale="en_US">you will be interested</msgstr>
+    </locale>
+    <locale>
+      <msgid>Популярные запросы</msgid>
+      <msgstr locale="en_US">Popular searches</msgstr>
+    </locale>
+    <locale>
+      <msgid>в категории</msgid>
+      <msgstr locale="en_US">in category</msgstr>
+    </locale>
+    <locale>
+      <msgid>Если в этой категории нет нужного товара</msgid>
+      <msgstr locale="en_US">If this category doesn't have the right product</msgstr>
+    </locale>
+    <locale>
+      <msgid>посмотрите</msgid>
+      <msgstr locale="en_US">view</msgstr>
+    </locale>
+    <locale>
+      <msgid>все результаты поиска</msgid>
+      <msgstr locale="en_US">all search results</msgstr>
+    </locale>
+    <locale>
+      <msgid>в</msgid>
+      <msgstr locale="en_US">in</msgstr>
+    </locale>
+    <locale>
+      <msgid>категориях</msgid>
+      <msgstr locale="en_US">categories</msgstr>
+    </locale>
+    <locale>
+      <msgid>Есть видео</msgid>
+      <msgstr locale="en_US">There is a video</msgstr>
+    </locale>
+    <locale>
+      <msgid>до</msgid>
+      <msgstr locale="en_US">until</msgstr>
+    </locale>
+    <locale>
+      <msgid>Выберите файл</msgid>
+      <msgstr locale="en_US">Select a file</msgstr>
+    </locale>
+    <locale>
+      <msgid>Файл не выбран</msgid>
+      <msgstr locale="en_US">No file selected</msgstr>
+    </locale>
+    <locale>
+      <msgid>Выйти</msgid>
+      <msgstr locale="en_US">Logout</msgstr>
+    </locale>
+    <locale>
+      <msgid>Страница не найдена</msgid>
+      <msgstr locale="en_US">Page not found</msgstr>
+    </locale>
+    <locale>
+      <msgid>Перейти на главную</msgid>
+      <msgstr locale="en_US">Go to homepage</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вернуться назад</msgid>
+      <msgstr locale="en_US">Return back</msgstr>
+    </locale>
+    <locale>
+      <msgid>Восстановление пароля</msgid>
+      <msgstr locale="en_US">Recovery password</msgstr>
+    </locale>
+    <locale>
+      <msgid>Восстановление пароля для</msgid>
+      <msgstr locale="en_US">Password recovery for</msgstr>
+    </locale>
+    <locale>
+      <msgid>Инструкции по восстановлению пароля были отправлены на ваш электронный адрес.</msgid>
+      <msgstr locale="en_US">Instructions for password recovery has been sent to you Email.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вернуться на страницу входа</msgid>
+      <msgstr locale="en_US">Back to login page </msgstr>
+    </locale>
+    <locale>
+      <msgid>Вход в личный кабинет</msgid>
+      <msgstr locale="en_US">Login to personal account</msgstr>
+    </locale>
+    <locale>
+      <msgid>Мой профиль</msgid>
+      <msgstr locale="en_US">My profile</msgstr>
+    </locale>
+    <locale>
+      <msgid>Контактная информация успешно обновлена</msgid>
+      <msgstr locale="en_US">Contact details successfully updated</msgstr>
+    </locale>
+    <locale>
+      <msgid>Редактировать</msgid>
+      <msgstr locale="en_US">Edit</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сохранить</msgid>
+      <msgstr locale="en_US">Save</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отмена</msgid>
+      <msgstr locale="en_US">Cancel</msgstr>
+    </locale>
+    <locale>
+      <msgid>Связанные аккаунты</msgid>
+      <msgstr locale="en_US">Linked accounts</msgstr>
+    </locale>
+    <locale>
+      <msgid>Подключите этот аккаунт к вашим аккаунтам в соцсетях</msgid>
+      <msgstr locale="en_US">Link this account to your accounts in social media</msgstr>
+    </locale>
+    <locale>
+      <msgid>чтобы в следующий раз входить на сайт без ввода пароля</msgid>
+      <msgstr locale="en_US">to log in next time without entering password.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Главная</msgid>
+      <msgstr locale="en_US">Homepage</msgstr>
+    </locale>
+    <locale>
+      <msgid>Поделиться в соцсетях</msgid>
+      <msgstr locale="en_US">Share</msgstr>
+    </locale>
+    <locale>
+      <msgid>Личный кабинет</msgid>
+      <msgstr locale="en_US">Personal account</msgstr>
+    </locale>
+    <locale>
+      <msgid>Регистрация</msgid>
+      <msgstr locale="en_US">Register</msgstr>
+    </locale>
+    <locale>
+      <msgid>Спасибо</msgid>
+      <msgstr locale="en_US">Thank you</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вы успешно подтвердили ваш</msgid>
+      <msgstr locale="en_US">You successfully confirm your</msgstr>
+    </locale>
+    <locale>
+      <msgid>адрес.</msgid>
+      <msgstr locale="en_US">Email.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Регистрация завершена успешно.</msgid>
+      <msgstr locale="en_US">Register successfully finished.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ссылка на подтверждение регистрации была отправлена вам по электронной почте.</msgid>
+      <msgstr locale="en_US">The link to the registration confirmation has been sent to you by Email.</msgstr>
+    </locale>
+    <locale>
+      <msgid>щелкните по этой ссылке</msgid>
+      <msgstr locale="en_US">click on this link</msgstr>
+    </locale>
+    <locale>
+      <msgid>чтобы подтвердить регистрацию и авторизоваться на сайте.</msgid>
+      <msgstr locale="en_US">to confirm registration and login.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Хорошо</msgid>
+      <msgstr locale="en_US">OK</msgstr>
+    </locale>
+    <locale>
+      <msgid>Мы сохраняем файлы cookie: это помогает сайту работать лучше. Если Вы продолжите использовать сайт, мы будем считать, что Вас это устраивает.</msgid>
+      <msgstr locale="en_US">Our website may use cookies: this helps the website to work better. If you continue to use the website, we will think that you are agreed.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Контакты</msgid>
+      <msgstr locale="en_US">Contacts</msgstr>
+    </locale>
+    <locale>
+      <msgid>Заказать звонок</msgid>
+      <msgstr locale="en_US">Leave a call order</msgstr>
+    </locale>
+    <locale>
+      <msgid>Разработано в</msgid>
+      <msgstr locale="en_US">Developed by</msgstr>
+    </locale>
+    <locale>
+      <msgid>Политика персональных данных</msgid>
+      <msgstr locale="en_US">Privacy policy</msgstr>
+    </locale>
+    <locale>
+      <msgid>Написать в мессенджеры</msgid>
+      <msgstr locale="en_US">To contact us</msgstr>
+    </locale>
+    <locale>
+      <msgid>Написать в</msgid>
+      <msgstr locale="en_US">Send message to</msgstr>
+    </locale>
+    <locale>
+      <msgid>Соцсети</msgid>
+      <msgstr locale="en_US">Social media</msgstr>
+    </locale>
+    <locale>
+      <msgid>мессенджеры</msgid>
+      <msgstr locale="en_US">messengers</msgstr>
+    </locale>
+    <locale>
+      <msgid>Мы в социальных сетях</msgid>
+      <msgstr locale="en_US">We are in social media</msgstr>
+    </locale>
+    <locale>
+      <msgid>Проложить маршрут</msgid>
+      <msgstr locale="en_US">Get route</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вход на сайт</msgid>
+      <msgstr locale="en_US">Login</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сравнение</msgid>
+      <msgstr locale="en_US">Compare</msgstr>
+    </locale>
+    <locale>
+      <msgid>Логотип</msgid>
+      <msgstr locale="en_US">Logo</msgstr>
+    </locale>
+    <locale>
+      <msgid>Выход</msgid>
+      <msgstr locale="en_US">Logout</msgstr>
+    </locale>
+    <locale>
+      <msgid>Войти</msgid>
+      <msgstr locale="en_US">Sign in</msgstr>
+    </locale>
+    <locale>
+      <msgid>На сумму</msgid>
+      <msgstr locale="en_US">In the total cost of</msgstr>
+    </locale>
+    <locale>
+      <msgid>Каталог товаров</msgid>
+      <msgstr locale="en_US">Catalog</msgstr>
+    </locale>
+    <locale>
+      <msgid>один</msgid>
+      <msgstr locale="en_US">one</msgstr>
+    </locale>
+    <locale>
+      <msgid>два</msgid>
+      <msgstr locale="en_US">two</msgstr>
+    </locale>
+    <locale>
+      <msgid>пять</msgid>
+      <msgstr locale="en_US">five</msgstr>
+    </locale>
+    <locale>
+      <msgid>По возрастанию</msgid>
+      <msgstr locale="en_US">Ascending</msgstr>
+    </locale>
+    <locale>
+      <msgid>По убыванию</msgid>
+      <msgstr locale="en_US">Descending</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сменить пароль</msgid>
+      <msgstr locale="en_US">Change password</msgstr>
+    </locale>
+    <locale>
+      <msgid>Файл не выбран</msgid>
+      <msgstr locale="en_US">No file selected</msgstr>
+    </locale>
+    <locale>
+      <msgid>Вход на сайт</msgid>
+      <msgstr locale="en_US">Sign in</msgstr>
+    </locale>
+    <locale>
+      <msgid>Посмотреть все товары</msgid>
+      <msgstr locale="en_US">Show all</msgstr>
+    </locale>
+    <locale>
+      <msgid>Страница %page% из %pages_count%</msgid>
+      <msgstr locale="en_US">Page %page% of %pages_count%</msgstr>
+    </locale>
+    <locale>
+      <msgid>Извините, но в наличии только %sku_count% единиц товара %sku_name%. Вы можете добавить в корзину ещё %max_sku_quantity%.</msgid>
+      <msgstr locale="en_US">Only %sku_count% pcs of %sku_name% are available. You can add %max_sku_quantity% more.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Извините, но в наличии только %sku_count% единиц товара %sku_name%, и все они уже в вашей корзине покупок.</msgid>
+      <msgstr locale="en_US">Only %sku_count% pcs of %sku_name% are available, and you already have all of them in your shopping cart.</msgstr>
+    </locale>
+    <locale>
+      <msgid>Новинки</msgid>
+      <msgstr locale="en_US">New products</msgstr>
+    </locale>
+    <locale>
+      <msgid>Акции</msgid>
+      <msgstr locale="en_US">Promo</msgstr>
+    </locale>
+    <locale>
+      <msgid>день</msgid>
+      <msgstr locale="en_US">day</msgstr>
+    </locale>
+    <locale>
+      <msgid>дня</msgid>
+      <msgstr locale="en_US">days</msgstr>
+    </locale>
+    <locale>
+      <msgid>дней</msgid>
+      <msgstr locale="en_US">days</msgstr>
+    </locale>
+    <locale>
+      <msgid>час</msgid>
+      <msgstr locale="en_US">hour</msgstr>
+    </locale>
+    <locale>
+      <msgid>часа</msgid>
+      <msgstr locale="en_US">hours</msgstr>
+    </locale>
+    <locale>
+      <msgid>часов</msgid>
+      <msgstr locale="en_US">hours</msgstr>
+    </locale>
+    <locale>
+      <msgid>минута</msgid>
+      <msgstr locale="en_US">minute</msgstr>
+    </locale>
+    <locale>
+      <msgid>минуты</msgid>
+      <msgstr locale="en_US">minutes</msgstr>
+    </locale>
+    <locale>
+      <msgid>минут</msgid>
+      <msgstr locale="en_US">minutes</msgstr>
+    </locale>
+    <locale>
+      <msgid>секунда</msgid>
+      <msgstr locale="en_US">second</msgstr>
+    </locale>
+    <locale>
+      <msgid>секунды</msgid>
+      <msgstr locale="en_US">seconds</msgstr>
+    </locale>
+    <locale>
+      <msgid>секунд</msgid>
+      <msgstr locale="en_US">seconds</msgstr>
+    </locale>
+    <locale>
+      <msgid>Копировать ссылку</msgid>
+      <msgstr locale="en_US">Copy link</msgstr>
+    </locale>
+    <locale>
+      <msgid>Ссылка скопирована</msgid>
+      <msgstr locale="en_US">Link is copied</msgstr>
+    </locale>
+    <locale>
+      <msgid>Отправить по email</msgid>
+      <msgstr locale="en_US">Send in email</msgstr>
+    </locale>
+    <locale>
+      <msgid>Сопутствующие файлы</msgid>
+      <msgstr locale="en_US">Related files</msgstr>
+    </locale>
+    <locale>
+      <msgid>Режим работы</msgid>
+      <msgstr locale="en_US">Schedule</msgstr>
+    </locale>
+    <locale>
+      <msgid>Начислим</msgid>
+      <msgstr locale="en_US">We add</msgstr>
+    </locale>
+    <locale>
+      <msgid>бонусов</msgid>
+      <msgstr locale="en_US">bonuses</msgstr>
+    </locale>
+    <locale>
+      <msgid>или перетащите сюда</msgid>
+      <msgstr locale="en_US">or drag &amp; drop here</msgstr>
+    </locale>
+    <locale>
+      <msgid>до nn изображений в формате</msgid>
+      <msgstr locale="en_US">max. nn photos in format</msgstr>
+    </locale>
+    <locale>
+      <msgid>Выбрать</msgid>
+      <msgstr locale="en_US">Choose</msgstr>
+    </locale>
+    <locale>
+      <msgid>Бренды</msgid>
+      <msgstr locale="en_US">Brands</msgstr>
+    </locale>
+    <locale>
+      <msgid>Все бренды</msgid>
+      <msgstr locale="en_US">All brands</msgstr>
+    </locale>
+  </locales>
+  <requirements>
+    <requirement property="app.installer" value="&gt;=2.7.0" strict="true">
+      <name locale="ru_RU">Минимальная версия Webasyst</name>
+      <name locale="en_US">Minimum Webasyst version</name>
+    </requirement>
+  </requirements>
+</theme>

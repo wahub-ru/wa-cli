@@ -1,0 +1,235 @@
+<link rel="stylesheet" href="{$wa_url}wa-apps/shop/plugins/apiextension/css/backend.css?v=1.2.0" />
+
+<h1>Дополнительный функционал магазина</h1>
+
+{literal}
+    <p class="gray">
+        <b>{shopApiextensionPlugin::affiliateBonus($contactId)}</b> - количество бонусов авторизованного пользователя<br />
+        <b>{shopApiextensionPlugin::reviewsCount($productIds)}</b> - количество отзывов для товаров<br />
+        <b>{shopApiextensionPlugin::categoryProducts($category_id, $limit)}</b> - товары категории, в фильтрации товаров участвуют все гет параметры фильтра и пагинации<br />
+        <b>{shopApiextensionPlugin::productImages($productIds)}</b> - фото для товаров<br />
+        <b>{shopApiextensionPlugin::filtersForCategory($categoryId)}</b> - активный фильтр товаров для категории<br />
+        <b>Дополнительные поля для отзывов</b> - в форме добавления отзыва нужно добавить поля
+        input c name=apiextension_experience,apiextension_dignity,apiextension_limitations,apiextension_recommend.<br />
+        После этого в новых отзывах будут доступные переменные
+        $review.apiextension_experience, $review.apiextension_dignity, $review.apiextension_limitations, $review.apiextension_recommend<br />
+        <b>Голосвание в отзывах</b> - апи рест - apiextension/reviews/vote/ на добавление или удаление голосования<br />
+        принимает параметры _csrf, review_id, apiextension_reviews_vote = array('type'  => 'like' || 'dislike', 'value' => 1 || 0)<br />
+        <b>shopApiextensionPlugin::getReviewsVote($reviewIds, $contactId)</b> - получить текущее голосование для клиента<br />
+        <b>shopApiextensionPlugin::getProductsForReviewBonus()</b> - товары за которые можно получить бонус за отзыв<br />
+        Бонусы за отзыв о товара можно получить только когда заказ в статусе completed, при отмене заказа, баллы списываются у клиента. Если клиенту был начислен бонус за отзыв и потом удалить отзыв в административной панели, то будут навсегда списаны баллы за отзыв у клиента, заявка на получение бонусов снова будет активна, если не вышел срок.<br />
+        <b>shopApiextensionPlugin::getTagsByCategory($categoryId)</b> - теги товаров текущей категории, так же можно настроить кеширование тегов, <a href="https://developers.webasyst.ru/docs/features/cache/" target="_blank">инструкция от webasyst</a><br />
+        <b>shopApiextensionPlugin::pagination($params)</b> - пагинация без ссылок (аналог wa_pagination), $params=array("total" => $pages_count, "attrs" =>["class" => "pagin"])<br />
+        <b>shopApiextensionPlugin::getThemeSettings($theme_id, $app, $values_only)</b> - получить настройки темы приложения<br />
+        <b>shopApiextensionPlugin::getProductFromPromos($promo_id)</b> - получить товары из промо маркетинга<br />
+        <b>Модерация отзывов</b> - достаточно включить настройках плагина и будет модерация отзывов, редактирование полей и удаление отзыва полностью<br />
+				<b>Дополнительные ссылки в категориях</b> - включаемая опция, дает возможность добавлять дополнительные ссылки у категории и сохранять их в дополнительных параметрах категории (Только для UI2.0) - $category.params.apiextension_additional_links<br />
+        <b>Умный фильтр</b> - апи рест - apiextension/category/smartfilters/ получить фильтры для блокировки<br />
+        принимает параметры post category_id ,filters, request_data<br />
+    </p>
+{/literal}
+
+<div class="fields form plugins plugins_apiextension">
+    <form action="?plugin=apiextension&module=settings&action=save" method="post" id="plugins-settings-form">
+        {$wa->csrf()}
+        <ul class="tabs">
+            <li class="selected"><a href="#/apiextension/">[`Settings`]</a></li>
+            <li><a href="#/apiextension/">Бонусы за отзывы</a></li>
+        </ul>
+        <div class="tab-content">
+            <div class="block top-padded fields-group custom-mt-16">
+                <div class="field">
+                    <div class="name">Доп. поля для отзывов:</div>
+                    <div class="value">
+                        <div class="ibutton-checkbox">
+														<input class="switcher" type="checkbox" name="shop_plugins[additional_fields_review]"{if $settings.additional_fields_review} checked="checked"{/if} value="1" />
+                            <p></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Редактировать поля в отзывах:</div>
+                    <div class="value">
+                        <div class="ibutton-checkbox">
+														<input class="switcher" type="checkbox" name="shop_plugins[edit_fields_in_reviews]"{if $settings.edit_fields_in_reviews} checked="checked"{/if} value="1" />
+                            <p class="hint">возможность редактировать текст написанного отзыва</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Удалять отзывы:</div>
+                    <div class="value">
+                        <div class="ibutton-checkbox">
+														<input class="switcher" type="checkbox" name="shop_plugins[delete_reviews]"{if $settings.delete_reviews} checked="checked"{/if} value="1" />
+                            <p class="hint">возможность полностью удалить отзывы из админки</p>
+                        </div>
+                    </div>
+                </div>
+								<div class="field">
+										<div class="name">Дополнительные ссылки в категориях:</div>
+										<div class="value">
+												<div class="ibutton-checkbox">
+														<input class="switcher" type="checkbox" name="shop_plugins[additional_links]"{if $settings.additional_links} checked="checked"{/if} value="1" />
+														<p class="hint">возможность добавлять дополнительные ссылки для категорий</p>
+												</div>
+										</div>
+								</div>
+            </div>
+
+            <div class="block top-padded fields-group custom-mt-16">
+                <p class="hint">Бонус за отзыв работает только после того как заказ будет выполнен, если клиент раньше оставит отзыв, то начисления не будет</p>
+                <div class="field">
+                    <div class="name">Бонусы за отзывы</div>
+                    <div class="value">
+                        <div class="ibutton-checkbox">
+														<input class="switcher" type="checkbox" name="shop_plugins[bonus_for_review_status]"{if $settings.bonus_for_review_status} checked="checked"{/if} value="1" />
+                            <p></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">
+                        Бонус общий<br />
+                        (отзыв/отзыв с фото)
+                    </div>
+                    <div class="value">
+                        <input type="number" step="any" name="shop_plugins[bonus_for_review_all]" value="{$settings.bonus_for_review_all}" placeholder="за отзыв" />
+                        <input type="number" step="any" name="shop_plugins[bonus_for_review_all_photo]" value="{$settings.bonus_for_review_all_photo}" placeholder="с фото" />
+                        <select name="shop_plugins[bonus_for_review_all_type]" style="max-width:150px;">
+                            <option value="number" {if $settings.bonus_for_review_all_type == 'number'} selected="selected"{/if}>
+                                число
+                            </option>
+                            <option value="percent" {if $settings.bonus_for_review_all_type == 'percent'} selected="selected"{/if}>
+                                % от цена товара
+                            </option>
+                            <option value="percent_purchase" {if $settings.bonus_for_review_all_type == 'percent_purchase'} selected="selected"{/if}>
+                                % от (цена - цена закупки)
+                            </option>
+                        </select>
+
+                        <select name="shop_plugins[bonus_for_review_all_round]" style="max-width:150px;">
+                            <option value="round_no" {if $settings.bonus_for_review_all_round == 'round_no'} selected="selected"{/if}>
+                                Не округлять
+                            </option>
+                            <option value="round_up" {if $settings.bonus_for_review_all_round == 'round_up'} selected="selected"{/if}>
+                                Округлять вверх
+                            </option>
+                            <option value="round_down" {if $settings.bonus_for_review_all_round == 'round_down'} selected="selected"{/if}>
+                                Округлять вниз
+                            </option>
+                        </select>
+
+                        <p class="hint">укажите значение и будет начисляться бонус за любой отзыв на товар</p>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Сколько дней на отзыв</div>
+                    <div class="value">
+                        <input type="number" step="any" name="shop_plugins[bonus_for_review_days]" value="{$settings.bonus_for_review_days}" />
+                        <p class="hint">сколько дается клиенту времени на написание отзыва</p>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Бонус за отзыв</div>
+                    <div class="value">
+                        <input type="text" name="shop_plugins[bonus_text]" value="{$settings.bonus_text}" />
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">Отмена бонусов</div>
+                    <div class="value">
+                        <input type="text" name="shop_plugins[bonus_text_cancel]" value="{$settings.bonus_text_cancel}" />
+                        <p class="hint">данный текст пишется у клиента в партнерской программе</p>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="name">
+                        Максимальный бонус
+                        (отзыв/отзыв с фото)
+                    </div>
+                    <div class="value">
+                        <input type="number" step="any" name="shop_plugins[bonus_max]" value="{$settings.bonus_max}" placeholder="за отзыв" />
+                        <input type="number" step="any" name="shop_plugins[bonus_max_photo]" value="{$settings.bonus_max_photo}" placeholder="с фото" />
+                        <p class="hint">сколько максимально может начислиться бонусов за отзыв/за отзыв с фото, подойдет для % от цены товара</p>
+                    </div>
+                </div>
+
+                {if !empty($categories)}
+                    <p><br /></p>
+                    <h2>Бонусы по категориям</h2>
+                    <div class="apiextension-bonus">
+                        <select name="" class="apiextension-bonus-categ">
+                            <option value="choose">Выберите категорию</option>
+                            {if !empty($categories)}
+                                {foreach $categories as $c}
+                                    <option value="{$c.id}" data-name="{$c.name|escape}">{"-"|str_repeat:$c.depth} {$c.name|escape}</option>
+                                {/foreach}
+                            {/if}
+                        </select>
+                        <div  class="apiextension-bonus-categ-add">
+													<span class="icon middle"><i class="fas fa-plus-circle text-green"></i><i class="icon16 add"></i></span> Добавить
+                        </div>
+
+                        {if !empty($settings.bonus_by_category)}
+                            <div  class="apiextension-bonus-categ-del-all">
+																<i class="fas fa-trash text-red"></i><i class="icon16 delete"></i> Очистить все
+                            </div>
+                        {/if}
+                    </div>
+                    <table class="zebra zebra-input apiextension-bonus-categ-table">
+                        {foreach $settings.bonus_by_category as $id => $c}
+                            <tr>
+                                <td width="24%">{$categories[$id].name|escape}</td>
+                                <td>
+                                    <input type="number" step="any" name="shop_plugins[bonus_by_category][{$id}][bonus]" value="{if !empty($c.bonus)}{$c.bonus}{/if}" placeholder="за отзыв">
+                                    <input type="number" step="any" name="shop_plugins[bonus_by_category][{$id}][bonus_photo]" value="{if !empty($c.bonus_photo)}{$c.bonus_photo}{/if}" placeholder="с фото">
+
+                                    <select name="shop_plugins[bonus_by_category][{$id}][type]" style="max-width:150px;">
+                                        <option value="number"{if $c.type == 'number'} selected="selected"{/if}>
+                                            число
+                                        </option>
+                                        <option value="percent"{if $c.type== 'percent'} selected="selected"{/if}>
+                                            % от цена товара
+                                        </option>
+                                        <option value="percent_purchase" {if $c.type== 'percent_purchase'} selected="selected"{/if}>
+                                            % от (цена - цена закупки)
+                                        </option>
+                                    </select>
+
+                                    <select name="shop_plugins[bonus_by_category][{$id}][round]" style="max-width:150px;">
+                                        <option value="round_no"{if $c.round == 'round_no'} selected="selected"{/if}>
+                                            Не округлять
+                                        </option>
+                                        <option value="round_up"{if $c.round == 'round_up'} selected="selected"{/if}>
+                                            Округлять вверх
+                                        </option>
+                                        <option value="round_down"{if $c.round == 'round_down'} selected="selected"{/if}>
+                                            Округлять вниз
+                                        </option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <div class="apiextension-bonus-categ-del">
+																			<i class="fas fa-trash text-red"></i><i class="icon16 delete"></i>
+																		</div>
+                                </td>
+                            </tr>
+                        {/foreach}
+                    </table>
+                {/if}
+            </div>
+        </div>
+
+        <div class="field">
+            <div class="value submit">
+							<div class="custom-pl-16">
+								<input type="submit" class="button green" value="Сохранить">
+								<span id="plugins-settings-form-status" style="display:none"><!-- message placeholder --></span>
+							</div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+<script src="{$wa_url}wa-apps/shop/plugins/apiextension/js/backend.js?v=1.2.0"></script>

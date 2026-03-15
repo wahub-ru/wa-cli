@@ -1,0 +1,228 @@
+{strip}
+    {$plugins = $wa->globals('plugins')}
+    {if $plugins['shop_brand'] && is_callable(['shopBrandViewHelper', 'showGroupedBrands'], false) && ($theme_settings['shop_misc_brand_alphabet']|default:false && !$wa->globals('is_checkout'))}
+        {shopBrandViewHelper::showGroupedBrands()}
+    {/if}
+    {if !$wa->globals('market.main.only_content')}
+        {if $wa_app === 'shop' && $wa->param('plugin') === 'htmlmap'}
+            {$_content = $content}
+            {capture assign='content'}
+                {$wa->globals('is_show_breadcrumbs', true)}
+                {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Карта сайта")}"])}
+
+                <div class="content-decorator htmlmap-decorator">{$_content}</div>
+            {/capture}
+        {/if}
+
+        {if $wa_app === 'shop' && $wa->param('plugin') === 'buy1step'}
+            {$_content = $content}
+            {capture assign='content'}
+                {$is_success = !!$wa->globals('market_checkout_is_success')}
+                {$is_error = !!$wa->globals('market_checkout_is_error')}
+
+                <div class="buy1step-decorator">
+                    {$_content}
+                </div>
+                {capture assign='checkout_page_header_html'}
+                    <div class="checkout-page__header-container">
+                        <div class="checkout-page__header-text-container">
+                            <h1 class="title title_h1">[`Оформление заказа`]</h1>
+                        </div>
+                        {if !$is_error && !$is_success}
+                            <div class="checkout-page__cart-link-container">
+                                <a class="link-box link-box_style_gray" href="{$wa->getUrl('shop/frontend/cart')|escape}">
+                                    <span class="icon-box">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon="dict-arrow-left" classes="link-box__icon" width=12 height=12}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="link-box__link">
+                                                [`Вернуться в корзину`]
+                                            </span>
+                                        </span>
+                                    </span>
+                                </a>
+                            </div>
+                        {/if}
+                    </div>
+                {/capture}
+                <script>
+                    {if $wa->param('action') === 'checkout'}
+                    market.shop.buy1step_checkout_page_header_html = {$checkout_page_header_html|json_encode};
+                    {/if}
+                </script>
+            {/capture}
+        {/if}
+
+        {if $wa_app === 'shop' && $wa->param('plugin') === 'productbrands' && $wa->param('action') === 'brands'}
+            {$wa->globals('is_show_sidebar', false)}
+
+            {$_content = $content}
+            {capture assign='content'}
+                <div class="productbrands-decorator productbrands-decorator_brands-page">
+                    {$_content|regex_replace:'/<br clear="left"( ?\/?)>/':''|regex_replace:'/<br( ?\/?)>/':''}
+                </div>
+            {/capture}
+        {/if}
+
+        {if $wa_app === 'shop' && $wa->param('plugin') === 'catalogreviews'}
+            {$wa->globals('is_show_sidebar', true)}
+        {/if}
+
+        {$is_show_sidebar = $wa->globals('is_show_sidebar') || $wa->globals('is_show_sidebar_mobile')}
+        {$sidebar_side = $wa->globals('sidebar_side')}
+        {$is_show_breadcrumbs = $wa->globals('is_show_breadcrumbs')}
+        {$is_my = $wa->globals('is_my')}
+        {$is_htmlmap = $wa->param('plugin') === 'htmlmap'}
+
+        {capture assign='index_content'}
+            <div class="content">
+                {if $is_show_breadcrumbs}
+                    <div class="content__breadcrumbs">
+                        {$ignore_breadcrumbs_plugin = $wa->globals('ignore_breadcrumbs_plugin')}
+                        {$social_source = $theme_settings['shop_product_social_source']|default:'yastatic'}
+                        {$is_enabled_social = $social_source !== 'disabled'}
+                        {$is_show_responsive_social = $wa->globals('is_show_responsive_social') && $is_enabled_social}
+                        {$is_install_breadcrumbs = $plugins['shop_breadcrumbs']}
+
+                        {$plugin_breadcrumbs = null}
+                        {if $is_install_breadcrumbs && !$ignore_breadcrumbs_plugin}
+                            {$plugin_breadcrumbs = shopBreadcrumbsViewHelper::getBreadcrumbs()}
+                        {/if}
+
+                        {if !$plugin_breadcrumbs}
+                            {call get_breadcrumbs}
+                            {$breadcrumbs = $wa->globals('market.return')}
+
+                            {include './breadcrumbs.html'
+                                breadcrumbs=$breadcrumbs
+                                separator=null
+                                current_item_mode='show'
+                            }
+                        {else}
+                            {$plugin_breadcrumbs}
+                        {/if}
+
+                        {if !$wa->globals('is_mobile') && $wa->globals('breadrumbs_block_add_content')}
+                            <div class="breadcrumbs-add">
+                                {$wa->globals('breadrumbs_block_add_content')}
+                            </div>
+                        {elseif $is_show_responsive_social && $wa->globals('is_mobile')}
+                            {$social_services = $theme_settings['shop_product_social_services']|default:'vkontakte,odnoklassniki,telegram,whatsapp'}
+
+                            {$is_cdn = $wa->getCdn()->count() > 0}
+                            {$product_image_url = $wa->shop->productImgUrl($product, '970')}
+
+                            {if !$is_cdn}
+                                {$product_image_url = $wa->domainUrl()|cat:$product_image_url}
+                            {/if}
+
+                            {if !$product_image_url}
+                                {$social_services = $social_services|replace:'pinterest':''}
+                            {/if}
+
+                            {capture assign='modal'}
+                                <div class="modal__title">
+                                    [`Поделиться в соцсетях`]:
+                                </div>
+                                {call share_block pinterest_image=$product_image_url source=$social_source services=$social_services}
+                            {/capture}
+
+                            <div class="responsive-social-button image-box image-box_fill" data-modal="{$modal|escape}">
+                                {call svg_icon icon='social' width=16 height=16 fill='currentColor'}
+                            </div>
+                        {/if}
+                    </div>
+                {/if}
+
+                <div class="content__content">
+                    {if $is_my}
+                        {call get_my_nav}
+                        {$my_nav = $wa->globals('market.return')}
+
+                        <div class="content-wrapper__block">
+                            <div class="my-page block">
+                                <div class="block__header my-page__header">
+                                    <h1 class="title title_h1">
+                                        [`Личный кабинет`]
+                                    </h1>
+
+                                    <a class="link-box link-box_style_alt-gray" href="?logout">
+                                        <span class="icon-box {if $size}icon-box_size_{$size}{/if}">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon='logout' classes="link-box__icon" width=14 height=14 fill="currentColor"}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                <span class="link-box__link">
+                                                    {_wp("Выход")}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </div>
+
+                                <div class="block__content">
+                                    {if !$wa->globals('is_mobile')}
+                                        <div class="tabs tabs_links my-nav">
+                                            {foreach $my_nav as $my_nav_item}
+                                                {$is_selected = $my_nav_item['is_selected']}
+
+                                                <div class="tabs__tab my-nav__tab {if $is_selected}tabs__tab_selected{/if}">
+                                                    {$my_nav_item.html}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {else}
+                                        <div class="list-rows list-rows_separated_full list-rows_weight_medium r-clear-offsets my-page__tabs">
+                                            {foreach $my_nav as $my_nav_item}
+                                                {$is_selected = $my_nav_item['is_selected']}
+                                                {call list_rows_item text=$my_nav_item.name
+                                                    args=[
+                                                        link => $my_nav_item.url,
+                                                        has_arrow => true,
+                                                        is_selected => $is_selected,
+                                                        is_hidden => false
+                                                    ]
+                                                }
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+
+                                    {$content}
+                                </div>
+                            </div>
+                        </div>
+                    {else}
+                        {$content}
+                    {/if}
+                </div>
+            </div>
+        {/capture}
+
+        {if $is_show_sidebar && (!$wa->globals('is_mobile') || ($wa->globals('is_mobile') && $wa->globals('is_show_sidebar_mobile')) || ($wa->globals('is_mobile') && ($wa->param(plugin) === 'searchpro' || $wa->param(plugin) === 'catalogreviews')) )}
+            {$wa->globals('sidebar_side', $sidebar_side)}
+            {$sidebar = "{include "./sidebar.html"}"}
+        {else}
+            {$sidebar = null}
+        {/if}
+
+        <div class="container container_content">
+            <div class="content-container {if !empty($sidebar)}content-container_sidebar{/if}">
+                {if !empty($sidebar)}
+                    <div class="content-columns content-columns_sidebar-{$sidebar_side}">
+                        <section class="content-columns__content">
+                            {$index_content}
+                        </section>
+                        <aside class="content-columns__sidebar">
+                            {$sidebar}
+                        </aside>
+                    </div>
+                {else}
+                    {$index_content}
+                {/if}
+            </div>
+        </div>
+    {else}
+        {$content}
+    {/if}
+{/strip}

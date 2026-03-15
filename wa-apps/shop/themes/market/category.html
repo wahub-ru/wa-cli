@@ -1,0 +1,255 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Theme Settings *}
+    {$theme_subcategories_variant = $theme_settings['shop_catalog_subcategories_variant']}
+    {$theme_subcategories_variant_mobile = $theme_settings['shop_catalog_subcategories_variant_adaptive']}
+    {$subcategories_show_logo = $theme_settings['shop_catalog_subcategories_logo_enabled']}
+    {$subcategories_show_count = $theme_settings['shop_catalog_subcategories_count_enabled']}
+    {$hide_subcategories_on_filtration = $theme_settings['shop_catalog_subcategories_hiding_on_filtration_enabled']}
+    {$description_position = $theme_settings['shop_catalog_description_position']}
+    {$force_sorting = $theme_settings['shop_catalog_force_sorting']|default:false}
+    {$is_enabled_recently = !!$theme_settings['shop_catalog_last_viewed_enabled']}
+    {$description_rows = $theme_settings['shop_catalog_description_rows']|default:0}
+    {$additional_description_rows = $theme_settings['shop_catalog_add_description_rows']|default:0}
+    {$hide_subcategories_desktop = $theme_settings['shop_catalog_subcategories_hide']|default:false}
+    {$hide_subcategories_responsive = $theme_settings['shop_catalog_subcategories_hide_adaptive']|default:false}
+    {$slider_view_adaptive = $theme_settings["shop_home_products_variant_adaptive"]}
+
+    {if $wa->globals('is_mobile')}
+        {$description_rows = $theme_settings['shop_catalog_description_rows_mobile']|default:0}
+        {$additional_description_rows = $theme_settings['shop_catalog_add_description_rows_mobile']|default:0}
+    {/if}
+
+    {* Variables *}
+    {$subcategories_variant = $category.params['subcategories_variant']|default:$theme_subcategories_variant}
+    {$feature_codes = $category.params['feature_codes']|default:null}
+
+    {if $wa->globals('is_mobile')}
+        {$subcategories_variant = $category.params['subcategories_variant_mobile']|default:$theme_subcategories_variant_mobile}
+    {/if}
+
+    {if !empty($feature_codes)}
+        {$feature_codes = explode(',', $feature_codes)}
+    {/if}
+
+    {$default_view_type = $category.params['default_view_type']|default:null}
+    {$is_show_sidebar = $category.params['shop_catalog_sidebar_enabled']|default:null}
+    {$sidebar_side = $category.params['shop_catalog_sidebar_side']|default:null}
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_seo = $plugins['shop_seo']}
+    {$is_enabled_catalogreviews = $plugins['shop_catalogreviews']}
+
+    {if $is_show_sidebar === null}
+        {$is_show_sidebar = !!$theme_settings['shop_catalog_sidebar_enabled']}
+    {/if}
+
+    {if $sidebar_side === null}
+        {$sidebar_side = $theme_settings['shop_catalog_sidebar_side']}
+    {/if}
+
+    {$wa->globals('is_show_sidebar', $is_show_sidebar)}
+    {$wa->globals('sidebar_side', $sidebar_side)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $category.name])}
+    {$is_enabled_filters = !empty($filters) && count($filters) > 0}
+    {$page = $wa->get('page', 1)}
+    {$is_enabled_sorting = $force_sorting || !!($category.params.enable_sorting|default:false)}
+
+    {if $is_enabled_filters && $wa->globals('is_mobile')}
+        {$wa->globals('is_show_sidebar_mobile', true)}
+        {$is_show_sidebar = true}
+    {/if}
+
+    {call is_filtration_page filters=$filters|default:[] is_seofilter_page=$is_seofilter|default:false}
+    {$is_filtration_page = $wa->globals('market.return')}
+
+    {if $is_filtration_page && $hide_subcategories_on_filtration}
+        {$is_subcategories_block_shown = false}
+    {else}
+        {$is_subcategories_block_shown = count($category.subcategories) > 0 && $subcategories_variant != 'disabled'}
+    {/if}
+
+    {$is_mobile_view_slider = false}
+    {if $slider_view_adaptive === 'cols' && $wa->globals('is_mobile')}
+        {$is_mobile_view_slider = true}
+    {/if}
+
+    {$category_listfeatures_set_id = $category.params.listfeatures|default:null}
+
+    {* Templates *}
+    <div class="blocks">
+        <div class="blocks__item">
+
+            <div class="category-page block">
+                <h1 class="block__header block__header_text category-name">
+                    {$category.name|escape}
+                </h1>
+                <div class="block__content">
+                    <div class="category-page__subcategories-wrapper">
+                        {if $is_subcategories_block_shown}
+                            {if !$hide_subcategories_desktop && !$wa->globals('is_mobile')}
+                                {$limit = max(-1, intval($theme_settings['shop_catalog_subcategories_limit']|default:-1))}
+                                <div class="category-page__subcategories r-hidden-md">
+                                    {if $subcategories_variant === 'thumbs'}
+                                        {call categories_thumbs
+                                            categories=$category.subcategories
+                                            show_logo=$subcategories_show_logo
+                                            show_products_count=$subcategories_show_count
+                                            is_sidebar=$is_show_sidebar
+                                            limit=$limit
+                                        }
+                                    {elseif $subcategories_variant === 'compact'}
+                                        {call categories_compact
+                                            categories=$category.subcategories
+                                            show_logo=$subcategories_show_logo
+                                            show_count=$subcategories_show_count
+                                            limit=$limit
+                                        }
+                                    {elseif $subcategories_variant === 'mini' || $subcategories_variant === 'links'}
+                                        {call categories_mini
+                                            categories=$category.subcategories
+                                            show_count=$subcategories_show_count
+                                            is_links=$subcategories_variant === 'links'
+                                            limit=$limit
+                                        }
+                                    {/if}
+                                </div>
+                            {/if}
+
+                            {$limit = max(-1, intval($theme_settings['shop_catalog_categories_subcategories_limit_adaptive']|default:10))}
+                            {if $wa->globals('is_mobile') && !$hide_subcategories_responsive}
+                                {if $subcategories_variant === 'list'}
+                                    {call categories_r
+                                        categories=$category.subcategories
+                                        limit=$limit
+                                        classes="r-subcategories"
+                                        show_logo=$theme_settings['category_logo_enabled_adaptive']
+                                        show_count=$theme_settings['menu_catalog_count_enabled_adaptive']
+                                    }
+                                {else}
+                                    {call categories_mini
+                                        categories=$category.subcategories
+                                        show_count=$subcategories_show_count
+                                        limit=$limit
+                                        is_slider=$subcategories_variant === 'slider'
+                                        is_links=$subcategories_variant === 'links'
+                                    }
+                                {/if}
+                            {/if}
+                        {/if}
+                    </div>
+
+                    {capture assign='category_description'}
+                        {$show_description = $wa->get('page', 1) == 1 && (!waRequest::get() || (isset($is_seofilter) && $is_seofilter))}
+                        {if !$theme_settings['shop_catalog_description_get_params_hide']}
+                            {$show_description = true}
+                        {/if}
+
+                        <div class="category-page__description{if $description_position === 'after_products'} category-page__description_after-products{/if} description-block">
+                            {if $category.description && $show_description}
+                                <div class="content-decorator category-desc description-block__content-wrapper"{if $description_rows != 0} style="max-height: {$description_rows}px; overflow: hidden"{/if}>
+                                    {call wrap_tables content=$category.description}
+                                </div>
+                                {if $description_rows != 0}
+                                    <div class="description-block__more description-block__more_{$theme_settings['shop_catalog_description_more_align']|default:'right'}">
+                                        <button class="description-block__more-btn link link_style_hover">
+                                            <span>Читать далее</span>
+                                            <span style="display: none">Скрыть</span>
+                                        </button>
+                                    </div>
+                                {/if}
+                            {/if}
+                        </div>
+                    {/capture}
+
+                    {if $description_position === 'before_products'}
+                        {$category_description}
+                    {/if}
+
+                    <!-- plugin hook: 'frontend_category' -->
+                    {* @event frontend_category.%plugin_id% *}
+
+                    {foreach $frontend_category as $plugin => $_}
+                        <!-- frontend_category.{$plugin} -->
+                        {$_}
+                    {/foreach}
+
+                    {if count($products) > 0 || $is_enabled_filters}
+                        <div class="category-page__products">
+                            {include './products.html'
+                                products=$products
+                                is_enabled_sorting=$is_enabled_sorting
+                                is_enabled_banners=true
+                                is_show_sidebar=$is_show_sidebar
+                                category_listfeatures_set_id=$category_listfeatures_set_id
+                            }
+                        </div>
+                    {elseif count($category.subcategories) == 0}
+                        <div class="not-found-block">
+                            <div class="not-found-block__header">
+                                [`В этой категории нет ни одного товара.`]
+                            </div>
+                        </div>
+                    {/if}
+
+                    {if $is_enabled_catalogreviews && !empty(shopCatalogreviewsViewHelper::getLastReviews($category, 1))}
+                        <div class="category-page__catalogreviews-last">
+                            {$limit = 4}
+                            {if !$wa->globals('is_show_sidebar')}
+                                {$limit = 5}
+                            {/if}
+                            {shopCatalogreviewsViewHelper::getLastReviewsBlock($category, 4)}
+                        </div>
+                    {/if}
+
+                    {if $description_position === 'after_products'}
+                        {$category_description}
+                    {/if}
+
+                    {if $is_enabled_seo}
+                        <div class="category-page__additional-description">
+                            {if $category.additional_description|default:'' && $wa->get('page', 1) == 1 && (!waRequest::get() || isset($is_seofilter) && $is_seofilter)}
+                                <div class="content-decorator filter-additional-desc description-block__content-wrapper"{if $additional_description_rows != 0} style="max-height: {$additional_description_rows}px; overflow: hidden"{/if}>
+                                    {call wrap_tables content=$category.additional_description}
+                                </div>
+                                {if $additional_description_rows != 0}
+                                    <div class="description-block__more description-block__more_{$theme_settings['shop_catalog_description_more_align']|default:'right'}">
+                                        <button class="description-block__more-btn link link_style_hover">
+                                            <span>Читать далее</span>
+                                            <span style="display: none">Скрыть</span>
+                                        </button>
+                                    </div>
+                                {/if}
+                            {/if}
+                        </div>
+                    {/if}
+
+
+                    {if $wa->cookie('shop_recently') && $is_enabled_recently}
+                        {$viewed_products = explode(',', $wa->cookie('shop_recently'))}
+                        {$viewed_products = array_slice($viewed_products, 0, 10)}
+                        {$products = $wa->shop->products($viewed_products, ['fields' => '*,skus'])}
+                        <article class="category-page__recently-products block slider-block">
+                            <div class="block__header">
+                                <div class="slider-block__header-container">
+                                    <div class="slider-block__header-text-container">
+                                        [`Просмотренные товары`]
+                                    </div>
+                                    <div class="slider-block__buttons-container">
+                                        {call slider_arrows}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="block__content">
+                                {call products_thumbs products=$products is_mobile=$is_mobile_view_slider is_slider=true}
+                            </div>
+                        </article>
+                    {/if}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {$wa->globals('market.og.image', "{call shop_category_image category=$category size=125}")}
+{/strip}

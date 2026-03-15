@@ -1,0 +1,44 @@
+<div class="wa-page-container">
+  <h1>Диалоги</h1>
+
+  <form class="wa-flex gap8" method="get">
+    <input type="hidden" name="plugin" value="tgconsult">
+    <input type="hidden" name="module" value="backend">
+    <input type="hidden" name="action" value="chats">
+    <input class="wa-text" type="search" name="q" value="{$q|escape}" placeholder="Поиск по сообщениям…">
+    <input class="wa-text" type="date" name="date_from" value="{$df|escape}">
+    <input class="wa-text" type="date" name="date_to" value="{$dt|escape}">
+    <button class="wa-button">Найти</button>
+  </form>
+
+  <div class="wa-table mt16">
+    <div class="wa-table-head">
+      <div class="wa-table-row">
+        <div class="wa-table-cell">ID</div>
+        <div class="wa-table-cell">Название</div>
+        <div class="wa-table-cell">Дата</div>
+        <div class="wa-table-cell"></div>
+      </div>
+    </div>
+    <div class="wa-table-body">
+      {foreach $rows as $r}
+  <tr>
+    <td>{$r.id}</td>
+    <td>{$r.created|escape}</td>
+    <td>
+      {if $r.customer_id}
+        <a href="{$r.customer_link|escape}" target="_blank">
+          {$r.customer_name|escape}
+        </a>
+      {else}
+        Гость
+      {/if}
+    </td>
+    <td><a class="button" href="{$app_url}?plugin=tgconsult&action=chatView&id={$r.id}">Посмотреть</a></td>
+    <td><a class="button red" href="{$app_url}?plugin=tgconsult&action=chatDelete&id={$r.id}">Удалить</a></td>
+  </tr>
+{/foreach}
+
+    </div>
+  </div>
+</div>

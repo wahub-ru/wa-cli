@@ -1,0 +1,1263 @@
+{strip}
+    {function theme_app_exists app='site'}
+        {if $wa->__get($app) && waTheme::exists(waRequest::getTheme(), $app)}
+            1
+        {/if}
+    {/function}
+    {function get_my_nav}
+        {if !$wa->globals('market.get_my_nav.active')}
+            {if $wa->user()->isAuth()}
+                {$is_auth = "auth"}
+            {else}
+                {$is_auth = "notAuth"}
+            {/if}
+
+            {$cache_key = "myNav-{$is_auth}"}
+
+            {call get_cache key=$cache_key}
+            {$my_nav = $wa->globals('market.return')}
+
+            {if is_null($my_nav)}
+                {$wa->globals('market.get_my_nav.active', true)}
+                {$my_nav = []}
+                {$my_nav_items = []}
+                {$_ = preg_match_all('/(?:<li(?:[^\/]+\/.+\/li>))/sU', $wa->myNav(), $my_nav_items)}
+                {if count($my_nav_items[0]) > 0}
+                    {foreach $my_nav_items[0] as $my_nav_item}
+                        {$my_nav_item_params = []}
+                        {$_ = preg_match_all('/<a.+href="(.+)"(?:.+)?>(.+)<\/a>/sU', $my_nav_item, $my_nav_item_params)}
+                        {if count($my_nav_item_params[0]) > 0}
+                            {$my_nav[] = [
+                            'html' => $my_nav_item_params[0][0],
+                            'url' => $my_nav_item_params[1][0],
+                            'name' => $my_nav_item_params[2][0],
+                            'is_selected' => strpos($my_nav_item, 'selected') !== false
+                            ]}
+                        {/if}
+                    {/foreach}
+                {/if}
+                {$wa->globals('market.get_my_nav.active', false)}
+
+                {call set_cache key=$cache_key value=$my_nav}
+            {/if}
+
+            {$wa->globals('market.return', $my_nav)}
+        {/if}
+    {/function}
+
+    {function add_title title='' value=''}
+        {if is_callable(['waController', 'getResponse'], false)}
+            {$response = waController::getResponse()}
+
+            {if method_exists($response, 'addHeader')}
+                {$_ = $response->addHeader($header, $value)}
+            {/if}
+        {/if}
+    {/function}
+    {function send_headers}
+        {if is_callable(['waController', 'getResponse'], false)}
+            {$response = waController::getResponse()}
+
+            {if method_exists($response, 'sendHeaders')}
+                {$_ = $response->sendHeaders()}
+            {/if}
+        {/if}
+    {/function}
+    {function get_browser}
+        {$user_agent = $wa->userAgent()}
+
+        {if !!preg_match('/(?:msie|trident)/i', $user_agent)}
+            ie
+        {elseif !!preg_match('/(?:firefox)/i', $user_agent)}
+            firefox
+        {elseif !!preg_match('/(?:chrome)/i', $user_agent)}
+            chrome
+        {elseif !!preg_match('/(?:safari)/i', $user_agent)}
+            safari
+        {else}
+            unknown
+        {/if}
+    {/function}
+    {function get_ios_version}
+        {if "{call get_browser}" === 'safari'}
+            {$matches = []}
+            {$os_info = preg_match('/(iPad|iPhone|iphone|iPod).*?(OS |os |OS\_)(\d+((_|\.)\d)?((_|\.)\d)?)/', $wa->userAgent(), $matches)}
+            {$ios_version = $matches[3]}
+            {$ios_version}
+        {/if}
+    {/function}
+    {function plural n=0 forms=["один", "два", "пять"]}
+        {if intval($n / 10) % 10 != 1 && 1 <= $n % 10 && $n % 10 <= 4}
+            {if $n % 10 == 1}
+                {$forms[0]}
+            {else}
+                {$forms[1]}
+            {/if}
+        {else}
+            {$forms[2]}
+        {/if}
+    {/function}
+    {function equal_arrays array1=[] array2=[]}
+        {if count($array1) == count($array2)}
+            {count(array_diff($array1, $array2)) === 0}
+        {else}
+        0
+        {/if}
+    {/function}
+    {function rating_stars rating=0}
+        {$rating = round($rating * 2)}
+        {$rating_stars = []}
+
+        {for $i = 2; $i <= 10; $i = $i + 2}
+            {if $i <= $rating}
+                {$ratings_stars[] = 'full'}
+            {elseif $i - 1 <= $rating}
+                {$ratings_stars[] = 'half'}
+            {else}
+                {$ratings_stars[] = 'empty'}
+            {/if}
+        {/for}
+
+        {implode(',', $ratings_stars)}
+    {/function}
+    {function in_favorite product_id=0}
+        {$list = $wa->cookie('shop_favorite')}
+
+        {if $list}
+            {$list = explode(',', $list)}
+
+            {if in_array($product_id, $list)}
+                1
+            {/if}
+        {/if}
+    {/function}
+
+    {function favorite_ids}
+        {$list = $wa->cookie('shop_favorite')}
+
+        {$list}
+    {/function}
+    {function favorite_count}
+        {$list = $wa->cookie('shop_favorite')}
+
+        {if $list}
+            {$list = explode(',', $list)}
+
+            {count($list)}
+        {else}
+        0
+        {/if}
+    {/function}
+    {function recently_viewed_ids}
+        {$list = $wa->cookie('shop_recently')}
+
+        {$list}
+    {/function}
+    {function recently_viewed_count}
+        {$list = $wa->cookie('shop_recently')}
+
+        {if $list}
+            {$list = explode(',', $list)}
+
+            {count($list)}
+        {else}
+        0
+        {/if}
+    {/function}
+    {function products_count category=null}
+        {if !is_null($category)}
+            {$hash = "category/{$category.id}"}
+
+            {if is_callable(['shopHelperPlugin', 'productsCount'], false)}
+                {$count = shopHelperPlugin::productsCount($hash, 86400)|intval}
+
+                {$count}
+            {else}
+                {$cache_key = "products_count_{$category.id}"}
+                {call get_cache key=$cache_key strict=true}
+                {$count = $wa->globals('market.return')}
+
+                {if $count === null}
+                    {$count = $wa->shop->productsCount($hash)}
+                    {call set_cache key=$cache_key value=$count strict=true}
+                {/if}
+
+                {$count}
+            {/if}
+        {else}
+        0
+        {/if}
+    {/function}
+    {function products_count_all}
+        {if is_callable(['shopHelperPlugin', 'productsCount'], false)}
+            {$count = shopHelperPlugin::productsCount('', 86400)|intval}
+        {else}
+            {$cache_key = "products_count_all"}
+            {call get_cache key=$cache_key strict=true}
+            {$count = $wa->globals('market.return')}
+
+            {if $count === null}
+                {$count = $wa->shop->productsCount()}
+                {call set_cache key=$cache_key value=$count strict=true}
+            {/if}
+        {/if}
+
+        {$count}
+    {/function}
+    {function shop_sort_order sort='' category=null}
+        {if isset($category) && $category['sort_products']|default:false}
+            {$default_sort = explode(' ', $category['sort_products'])}
+
+            {if strtolower($default_sort[0]) === 'count'}
+                {$default_sort[0] = 'stock'}
+            {/if}
+        {else}
+            {$default_sort = ['name', 'asc']}
+        {/if}
+
+        {if $active_sort === null}
+            {$active_sort = $wa->get('sort')}
+            {if !$active_sort}
+                {$active_sort = $default_sort[0]}
+            {/if}
+        {/if}
+
+        {$sort = strtolower($sort)}
+        {$is_inverted = in_array($sort, ['rating', 'create_datetime', 'total_sales', 'count', 'stock'])}
+
+        {if $sort === $active_sort}
+            {if ($wa->get('order', $default_sort[1])|lower|default:'asc') === 'asc'}
+                desc
+            {else}
+                asc
+            {/if}
+        {else}
+            {if $is_inverted}
+                desc
+            {else}
+                asc
+            {/if}
+        {/if}
+    {/function}
+
+    {function shop_sort_url sort='' category=null value=''}
+        {$data = []}
+        {$data['_'] = null}
+        {if $sort === 'sort_unit'}
+            {$_base_units_ids = []}
+            {$cache = $wa->globals('market.base_units_ids.cache')}
+
+            {if !is_null($cache)}
+                {$_base_units_ids = $cache}
+            {else}
+                {if !empty($filter_base_units)}
+                    {foreach $filter_base_units as $_unit}
+                        {$_base_units_ids[] = $_unit.id}
+                    {/foreach}
+                {/if}
+                {$wa->globals('market.base_units_ids.cache', $_base_units_ids)}
+            {/if}
+
+            {if $value === ""}
+                {$data["sort"] = "price"}
+                {$data[$sort] = null}
+            {else}
+                {$data[$sort] = $value}
+                {if !empty($_base_units_ids) && in_array($value, $_base_units_ids)}
+                    {$data["sort"] = "base_price"}
+                {else}
+                    {$data["sort"] = "price"}
+                {/if}
+            {/if}
+        {else}
+            {$data['sort'] = $sort}
+            {$data['order'] = "{call shop_sort_order sort=$sort category=$category}"}
+            {if $sort == 'custom'}
+                {$data['sort'] = null}
+                {$data['order'] = '_'}
+            {/if}
+
+            {if !waRequest::param('seofilter_filter_url')}
+                {$data = array_merge(waRequest::get(), $data)}
+            {/if}
+        {/if}
+
+        ?{http_build_query($data)}
+    {/function}
+
+    {function shop_category_icon category=null size='20'}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_ewshopcimg = $plugins['shop_ewshopcimg']}
+        {$category_icon_url = ''}
+
+        {if $is_enabled_ewshopcimg}
+            {$category_icon_url = shopEwshopcimgHelper::getImage($category.id, 'icon', "{$size}x0")}
+        {/if}
+        {if empty($category_icon_url) && !empty($category.params['category_icon'])}
+            {$category_icon_url = $category.params['category_icon']}
+        {/if}
+
+        {$category_icon_url}
+    {/function}
+
+    {function shop_category_image size='' category=null height=0}
+        {$cache_key = "category_image"}
+        {call get_cache key=$cache_key}
+        {$category_images = $wa->globals('market.return')}
+
+        {if $category_images === null}
+            {$category_images = []}
+        {/if}
+
+        {$image_key = "{$category.id}.{$size}"}
+
+        {if array_key_exists($image_key, $category_images)}
+            {$category_image_url = $category_images[$image_key]}
+        {else}
+            {$plugins = $wa->globals('plugins')}
+            {$is_enabled_categoryimages = $plugins['shop_categoryimages']}
+            {$is_enabled_ewshopcimg = $plugins['shop_ewshopcimg']}
+            {$is_enabled_skcatimage = $plugins['shop_skcatimage']}
+            {$category_image_url = ''}
+
+            {if !empty($category.params['category_img'])}
+                {$category_image_url = $category.params['category_img']}
+            {elseif $is_enabled_ewshopcimg}
+                {$category_image_url = shopEwshopcimgHelper::getImage($category.id, 'default', "{$size}x{$height}")}
+            {elseif $is_enabled_categoryimages}
+                {if $size == 125}
+                    {$category_image_url = shopCategoryimagesPlugin::getCategoryBigThumbUrl($category.id)}
+                {elseif $size === 73 || $size === 60 || $size === 63}
+                    {$category_image_url = shopCategoryimagesPlugin::getCategoryMiddleThumbUrl($category.id)}
+                {elseif $size === 44 || $size === 34}
+                    {$category_image_url = shopCategoryimagesPlugin::getCategoryLittleThumbUrl($category.id)}
+                {/if}
+
+                {if !$category_image_url}
+                    {$category_image_url = shopCategoryimagesPlugin::getCategoryImageUrl($category.id)}
+                {/if}
+            {elseif $is_enabled_skcatimage}
+                {if $size <= 50}
+                    {$category_image_url = shopSkcatimageHelper::getImages($category.id, 'icon')}
+                {else}
+                    {$category_image_url = shopSkcatimageHelper::getImages($category.id, 'image')}
+                {/if}
+                {if $category_image_url|is_array}
+                    {$category_image_url = ''}
+                {/if}
+            {/if}
+
+            {if empty($category_image_url) && !empty($theme_settings['category_dummy_image'])}
+                {$category_image_url = $theme_settings['category_dummy_image']}
+            {/if}
+            {$category_images[$image_key] = $category_image_url}
+            {call set_cache key=$cache_key value=$category_images}
+        {/if}
+
+        {$category_image_url}
+    {/function}
+
+    {function get_url args=[]}
+        {$route = $args[0]|default:''}
+        {$params = $args[1]|default:[]}
+        {$absolute = $args[2]|default:false}
+
+        {$cache = $wa->globals('market.get_url.cache')}
+
+        {if is_null($cache)}
+            {$cache = []}
+        {/if}
+
+        {$key = json_encode(['route' => $route, 'params' => $params, 'absolute' => $absolute])}
+
+        {if !array_key_exists($key, $cache)}
+            {$cache[$key] = $wa->getUrl($route, $params, $absolute)}
+            {$wa->globals('market.get_url.cache', $cache)}
+        {/if}
+
+        {$cache[$key]}
+    {/function}
+    {function page_url url=null}
+        {if !isset($url)}
+            {$url = $wa->currentUrl(false, true)}
+        {/if}
+
+        {$_get_params = waRequest::get()}
+        {$get_params = []}
+
+        {foreach $_get_params as $k => $v}
+            {if $k === 'page' || $k == '_'}
+                {continue}
+            {/if}
+
+
+            {if $k === 'sort' || $k === 'order' || !waRequest::param('seofilter_filter_url')}
+                {$get_params[$k] = $v}
+            {/if}
+        {/foreach}
+
+        {$url_params = http_build_query($get_params)}
+
+        {if $page == 1}
+            {if $url_params}
+                {$url}?{$url_params}
+            {else}
+                {$url}
+            {/if}
+        {else}
+            {if $url_params}
+                {$url}?page={$page}&{$url_params}
+            {else}
+                {$url}?page={$page}
+            {/if}
+        {/if}
+    {/function}
+    {function hex_add_brightness hex="#000000" brightness=0 opacity=1}
+        {call hex2rgb rgb=$hex}
+        {$rgb = $wa->globals('market.return')}
+        {call rgb2hsl r=$rgb[0] g=$rgb[1] b=$rgb[2]}
+        {$hsl = $wa->globals('market.return')}
+        {$new_brightness = $hsl[2]+$brightness}
+        {$hsl[2] = "{call min_max value=$new_brightness min=0 max=100}"}
+        {call hsl2rgb h=$hsl[0] s=$hsl[1] l=$hsl[2] opacity=$opacity}
+    {/function}
+    {function hsl2rgb h=0 s=0 l=0 opacity=1}
+
+        {$s = $s / 100}
+        {$l = $l / 100}
+
+        {$c = ( 1 - abs( 2 * $l - 1 ) ) * $s}
+        {$x = $c * ( 1 - abs( fmod( ( $h / 60 ), 2 ) - 1 ) )}
+        {$m = $l - ( $c / 2 )}
+
+        {if $h < 60}
+            {$r = $c}
+            {$g = $x}
+            {$b = 0}
+        {elseif $h < 120}
+            {$r = $x}
+            {$g = $c}
+            {$b = 0}
+        {elseif $h < 180}
+            {$r = 0}
+            {$g = $c}
+            {$b = $x}
+        {elseif $h < 240}
+            {$r = 0}
+            {$g = $x}
+            {$b = $c}
+        {elseif $h < 300}
+            {$r = $x}
+            {$g = 0}
+            {$b = $c}
+        {else}
+            {$r = $c}
+            {$g = 0}
+            {$b = $x}
+        {/if}
+
+        {$r = ( $r + $m ) * 255}
+        {$g = ( $g + $m ) * 255}
+        {$b = ( $b + $m  ) * 255}
+
+        {if $opacity === 1}
+            rgb({round($r)},{round($g)},{round($b)})
+        {else}
+            rgb({round($r)},{round($g)},{round($b)}, {call min_max value=floatval($opacity) min=0 max=1})
+        {/if}
+    {/function}
+    {function min_max min=0 max=1 value=0}
+        {if $value > $max}
+            {$value = $max}
+        {/if}
+        {if $value < $min}
+            {$value = $min}
+        {/if}
+        {$value}
+    {/function}
+    {* TODO (wahub.ru) Fix - Ошибка в PHP 8 Implicit conversion from float ... (|floor) *}
+    {function hex2rgb}
+        {$hex = str_replace('#', '', $hex)}
+        {$dec = hexdec($hex)}
+        {$r = ($dec / 256 / 256)|floor % 256}
+        {$g = ($dec / 256)|floor % 256}
+        {$b = $dec|floor % 256}
+        {$wa->globals('market.return', array($r,$g,$b))}
+    {/function}
+    {function hex_to_rgba opacity=1}
+        {$hex = str_replace('#', '', $hex)}
+        {$dec = hexdec($hex)}
+        {$r = $dec / 256 / 256 % 256}
+        {$g = $dec / 256 % 256}
+        {$b = $dec % 256}
+        rgba({$r}, {$g}, {$b}, {$opacity})
+    {/function}
+
+    {function rgb2hsl}
+        {$r = $r|default:0}
+        {$g = $g|default:0}
+        {$b = $b|default:0}
+
+        {if !($r && $g && $b)}
+            {$hex = str_replace('#', '', $hex)}
+            {$rgb = hexdec($hex)}
+            {$r = $rgb / 256 / 256 % 256}
+            {$g = $rgb / 256 % 256}
+            {$b = $rgb % 256}
+        {/if}
+
+        {$r = $r / 255}
+        {$g = $g / 255}
+        {$b = $b / 255}
+
+        {$max_c = max($r, $g, $b)}
+        {$min_c = min($r, $g, $b)}
+
+        {$l = ($max_c + $min_c) / 2}
+
+        {if $max_c == $min_c}
+            {$s = 0}
+            {$h = 0}
+        {else}
+            {$d = $max_c - $min_c}
+
+            {$s = $d / ( 1 - abs( 2 * $l - 1 ) )}
+
+            {if $r == $max_c}
+                {$h = 60 * fmod( ( ( $g - $b ) / $d ), 6 )}
+
+                {if $g < $b}
+                    {$h = $h + 360}
+                {/if}
+            {elseif $g == $max_c}
+                {$h = 60 * ( ( $b - $r ) / $d + 2 )}
+            {elseif $b == $max_c}
+                {$h = 60 * ( ( $r - $g ) / $d + 4 )}
+            {/if}
+        {/if}
+
+
+
+        {$h = round($h)}
+        {$s = round($s * 100)}
+        {$l = round($l * 100)}
+
+        {$wa->globals('market.return', array($h,$s,$l))}
+
+    {/function}
+
+    {function is_dark}
+        {call rgb2hsl hex=$hex}
+        {$matches = []}
+        {$_ = preg_match('/^(\d+),(\d+),(\d+)$/', implode(",", $wa->globals('market.return')), $matches)}
+        {$h = $matches[1]}
+        {$s = $matches[2]}
+        {$l = $matches[3]}
+        {($l < 75) && !(25 <= $h && $h <= 140)}
+    {/function}
+    {function to_tree item=null list=[] children_key='childs' parent_key='parent_id'}
+        {$item[$children_key] = []}
+
+        {foreach $list as $_item}
+            {if $_item[$parent_key] == $item.id}
+                {$item[$children_key][$_item.id] = json_decode("{call to_tree item=$_item}", true)}
+            {/if}
+        {/foreach}
+
+        {json_encode($item)}
+    {/function}
+
+    {function is_hidden_list_item list_iteration=null list_limit=null}
+        {if $list_iteration && $list_limit}
+            {$list_iteration > $list_limit}
+        {/if}
+    {/function}
+
+    {function wrap_tables content=''}
+        {$content|replace:'<table':'<div class="table-scroller"><table'|replace:'</table>':'</table></div>'}
+    {/function}
+
+    {function get_theme_path app='shop'}
+        {$cache = $wa->globals('market.get_theme_path.cache')|default:[]}
+
+        {if !isset($cache[$app])}
+            {$app_view_helper = $wa->__get($app)}
+            {$exists = waTheme::exists(waRequest::getTheme(), $app)}
+            {if $app_view_helper && $exists}
+                {if method_exists($app_view_helper, 'themePath')}
+                    {$path = $app_view_helper->themePath(waRequest::getTheme())}
+                {else}
+                    {* Костыль для mailer *}
+                    {$path = "{$wa_active_theme_path}/"}
+                {/if}
+
+                {$cache[$app] = $path}
+                {$wa->globals('market.get_theme_path.cache', $cache)}
+            {/if}
+        {/if}
+
+        {if isset($cache[$app])}
+            {$cache[$app]}
+        {/if}
+    {/function}
+
+    {function clean_phone phone=''}
+        {$phone|regex_replace:'/[^0-9\+]/':''}
+    {/function}
+
+    {function correct_lang}
+        {$bad_lang = explode("_", $wa->locale())}
+        {$bad_lang[0]}
+    {/function}
+    {function bool2str value=true}
+        {if $value}
+            true
+        {else}
+            false
+        {/if}
+    {/function}
+
+    {function order2label order="asc"}
+        {if $order === 'asc'}
+            [`По возрастанию`]
+        {elseif $order === 'desc'}
+            [`По убыванию`]
+        {/if}
+    {/function}
+
+    {function is_mobile_checking_by_cookie}
+        {$disable_adaptive = $theme_settings['disable_adaptive']|default:false}
+        {if $wa->cookie('is_mobile') && !$disable_adaptive}
+            1
+        {elseif $wa->isMobile()}
+        0
+        {/if}
+    {/function}
+
+    {function is_mobile}
+        {$disable_adaptive = $theme_settings['disable_adaptive']|default:false}
+        {if !$disable_adaptive}
+            {$cookie = $wa->cookie('is_mobile')}
+            {if $cookie}
+                {if $cookie === 'true'}
+                    1
+                {/if}
+            {else}
+                {if $wa->isMobile()}
+                    1
+                {/if}
+            {/if}
+        {/if}
+    {/function}
+
+    {function root_dir}
+        {if !$wa->globals('market.root_dir')}
+            {$dir = basename("{call root_path}")}
+            {$wa->globals('market.root_dir', $dir)}
+            {$dir}
+        {else}
+            {$wa->globals('market.root_dir')}
+        {/if}
+    {/function}
+
+    {function get_cache_adapter}
+        {$wa->globals('market.return', null)}
+
+        {if $wa->globals('market.cache') === null}
+            {$cache_adapter = false}
+            {$wa->globals('market.cache', false)}
+
+            {if class_exists('shopHelperPlugin')}
+                {if is_callable(['shopHelperPlugin', 'buildCache'], false)}
+                    {$cache_adapter = shopHelperPlugin::buildCache('default')}
+                {/if}
+
+                {if !$cache_adapter || !is_a($cache_adapter, 'waCache')}
+                    {if is_callable(['shopHelperPlugin', 'buildFileCache'], false)}
+                        {$cache_adapter = shopHelperPlugin::buildFileCache()}
+                    {/if}
+                {/if}
+            {elseif is_callable(['waController', 'getConfig'], false)}
+                {$config = waController::getConfig()}
+
+                {if method_exists($config, 'getCache')}
+                    {$cache_adapter = $config->getCache('default')}
+                {/if}
+            {/if}
+
+            {if $cache_adapter && is_a($cache_adapter, 'waCache')}
+                {$wa->globals('market.cache', $cache_adapter)}
+            {/if}
+        {/if}
+
+        {if $wa->globals('market.cache')}
+            {$wa->globals('market.return', $wa->globals('market.cache'))}
+        {/if}
+    {/function}
+
+    {function get_cache key='' strict=false}
+        {$wa->globals('market.return', null)}
+        {$data = $wa->globals("market.cache_data.{$key}")}
+
+        {if !isset($data)}
+            {if $key && ($theme_settings['theme_cache_enable'] || $strict)}
+                {call get_cache_adapter}
+                {$cache_adapter = $wa->globals('market.return')}
+
+                {if $cache_adapter}
+                    {$data = $cache_adapter->get("{waRequest::getTheme()}_{$key}")}
+                    {$wa->globals("market.cache_data.{$key}", $data)}
+                {/if}
+            {/if}
+        {/if}
+
+        {$wa->globals('market.return', $data)}
+    {/function}
+
+    {function set_cache key='' value='' strict=false}
+        {if $key && ($theme_settings['theme_cache_enable'] || $strict)}
+            {call get_cache_adapter}
+            {$cache_adapter = $wa->globals('market.return')}
+
+            {if $cache_adapter}
+                {$_ = $cache_adapter->set("{waRequest::getTheme()}_{$key}", $value)}
+            {/if}
+            {$wa->globals("market.cache_data.{$key}", $value)}
+        {/if}
+    {/function}
+
+    {function get_extend_settings}
+        {* Расширенные настройки темы дизайна, регулируются через блок "market.extend_settings" приложения "Сайт" *}
+
+        {$wa->globals('market.return', null)}
+
+        {if $wa->globals('market.extend_settings') === null}
+            {$wa->globals('market.return', null)}
+            {$_ = $wa->block('market.extend_settings')}
+            {$extend_settings = $wa->globals('market.return')}
+
+            {if is_array($extend_settings)}
+                {$wa->globals('market.extend_settings', $extend_settings)}
+            {/if}
+        {/if}
+
+        {if $wa->globals('market.extend_settings')}
+            {$wa->globals('market.return', $wa->globals('market.extend_settings'))}
+        {/if}
+    {/function}
+
+    {function get_extend_setting setting=''}
+        {call get_extend_settings}
+        {$extend_settings = $wa->globals('market.return')|default:[]}
+        {if !is_array($extend_settings)}
+            {$extend_settings = []}
+        {/if}
+
+        {$wa->globals('market.return', null)}
+        {if array_key_exists($setting, $extend_settings)}
+            {$wa->globals('market.return', $extend_settings[$setting])}
+        {/if}
+    {/function}
+
+    {function get_breadcrumbs}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_brands = $plugins['shop_brand'] || $plugins['shop_productbrands']}
+        {$is_brand_page = $is_enabled_brands && $plugins['shop_brand'] && $wa->param('plugin') === 'brand'}
+
+        {$_breadcrumbs = $wa->globals('breadcrumbs')|default:$breadcrumbs|default:[]}
+        {$breadcrumbs = []}
+        {$breadcrumbs[] = ['url' => $wa_app_url, 'name' => "{_wp("Главная")}"]}
+
+        {if $is_brand_page}
+            {$brands_url = $wa->getUrl('shop/frontend/brand', ['plugin' => 'brand'])|escape}
+            {$breadcrumbs[] = [
+            'url' => $brands_url,
+            'name' => _wp("Бренды")
+            ]}
+            {if isset($brand)}
+                {$brand_url = $brands_url|cat:$brand.url|cat:'/'}
+                {$breadcrumbs[] = ['url' => $brand_url, 'name' => $brand.name]}
+                {if $page && is_array($page) && !$category}
+                    {$brand_page_url = $brand_url|cat:$page.url|cat:'/'}
+                    {$breadcrumbs[] = ['url' => $brand_page_url, 'name' => $page.name]}
+                {/if}
+            {/if}
+        {else}
+            {$breadcrumbs = array_merge($breadcrumbs, $_breadcrumbs)}
+
+            {$last_breadcrumb = $wa->globals('last_breadcrumb')}
+
+            {$cur_last_breadcrumb = $breadcrumbs[count($breadcrumbs) - 1]}
+
+            {if $last_breadcrumb && $last_breadcrumb.url !== $cur_last_breadcrumb.url}
+                {$breadcrumbs[] = ['url' => $last_breadcrumb.url, 'name' => $last_breadcrumb.name]}
+            {/if}
+        {/if}
+
+        {$wa->globals('market.return', $breadcrumbs)}
+    {/function}
+
+    {function get_shop_pages}
+        {$pages = $wa->globals('market.shop.get_shop_pages.cache')}
+
+        {if is_null($pages)}
+            {$pages = $wa->shop->pages()}
+            {call filter_hidden_pages pages=$pages}
+
+            {$pages = $wa->globals('market.return')}
+
+            {$wa->globals('market.shop.get_shop_pages.cache', $pages)}
+        {/if}
+
+        {$wa->globals('market.return', $pages)}
+    {/function}
+
+    {function filter_hidden_pages pages=[]}
+        {$_pages = $pages}
+        {$pages = []}
+
+        {foreach $_pages as $i => $page}
+            {if $page.hidden|default:false}
+                {continue}
+            {/if}
+
+            {call filter_hidden_pages pages=$page.childs|default:[]}
+
+            {$page.childs = $wa->globals('market.return')}
+
+            {$pages[$i] = $page}
+        {/foreach}
+
+        {$wa->globals('market.return', $pages)}
+    {/function}
+
+    {function get_catalog_categories args=[]}
+        {$id = $args['id']|default:0}
+        {$tree = $args['tree']|default:true}
+        {$params = $args['params']|default:true}
+        {$depth = $args['depth']|default:3}
+        {$filter_hidden = $args['filter_hidden']|default:true}
+
+        {$categories_key = "market.categories_{json_encode($args)}"}
+
+        {$categories = $wa->globals($categories_key)}
+
+        {if is_null($categories)}
+            {$categories = $wa->shop->categories($id, $depth, $tree, $params)}
+
+            {if $filter_hidden}
+                {call filter_hidden_categories categories=$categories}
+                {$categories = $wa->globals('market.return')}
+            {/if}
+
+            {$wa->globals($categories_key, $categories)}
+        {/if}
+
+        {$wa->globals('market.return', $categories)}
+    {/function}
+
+    {function is_current_category_branch _category=[] checked_category_id=null}
+        {$has_current = $_category.id == $checked_category_id}
+        {if !$has_current && (isset($_category.childs) && count($_category.childs) > 0)}
+            {$has_current = in_array($checked_category_id, array_column($_category.childs, 'id'))}
+            {if $has_current}
+                {$wa->globals('market.return', $has_current)}
+            {else}
+                {foreach $_category.childs as $_category_child}
+                    {call is_current_category_branch _category=$_category_child checked_category_id=$checked_category_id}
+                    {$has_current = $wa->globals('market.return')}
+                    {if $has_current}
+                        {break}
+                    {/if}
+                {/foreach}
+            {/if}
+        {else}
+            {$wa->globals('market.return', $has_current)}
+        {/if}
+    {/function}
+
+    {function filter_hidden_categories categories=[]}
+        {$_categories = $categories}
+        {$categories = []}
+
+        {foreach $_categories as $i => $category}
+            {if $category.params.hidden|default:false}
+                {continue}
+            {/if}
+
+            {call filter_hidden_categories categories=$category.childs}
+
+            {$category.childs = $wa->globals('market.return')}
+
+            {$categories[$i] = $category}
+        {/foreach}
+
+        {$wa->globals('market.return', $categories)}
+    {/function}
+
+    {function get_currency_info}
+        {$currency_infos = []}
+        {$currencies = $wa->shop->currencies()}
+
+        {foreach $currencies as $code => $currency}
+            {$locale = waLocale::getInfo($wa->locale())}
+
+            {$currency_info = [
+            'code'          => $currency['code'],
+            'sign'          => $currency['sign'],
+            'sign_html'     => $currency['sign'],
+            'sign_position' => 1,
+            'sign_delim'    => ' ',
+            'decimal_point' => $locale['decimal_point'],
+            'frac_digits'   => $locale['frac_digits'],
+            'thousands_sep' => $locale['thousands_sep']
+            ]}
+
+            {if !empty($currency['sign_html'])}
+                {$currency_info['sign_html'] = $currency['sign_html']}
+            {/if}
+
+            {if isset($currency['sign_position'])}
+                {$currency_info['sign_position'] = $currency['sign_position']}
+            {/if}
+
+            {if isset($currency['sign_delim'])}
+                {$currency_info['sign_delim'] = $currency['sign_delim']}
+            {/if}
+
+            {$currency_infos[$code] = $currency_info}
+        {/foreach}
+
+        {$wa->globals('market.return', $currency_infos)}
+    {/function}
+
+    {function get_product_url}
+        {* Arguments *}
+        {$product = $product|default:[]}
+
+        {* Return *}
+        {if isset($product['frontend_url'])}
+            {$product['frontend_url']}
+        {else}
+            {$cache = $wa->globals('market.get_product_url.cache')|default:[]}
+
+            {if !isset($cache[$product['id']])}
+                {$cache[$product['id']] = $wa->shop->productUrl($product)}
+                {$wa->globals('market.get_product_url.cache', $cache)}
+            {/if}
+
+            {$cache[$product['id']]}
+        {/if}
+    {/function}
+
+    {function get_productgroups_products product=[] ids=[] limit=0}
+        {$groups = []}
+        {if $market['plugins']['shop_productgroup'] && method_exists('shopProductgroupViewHelper', 'getGroups')}
+            {foreach shopProductgroupViewHelper::getGroups($product.id) as $group}
+                {if !empty($ids) && !in_array($group.group.id, $ids)}{continue}{/if}
+                {if count($group.products) > 0}
+                    {$_group = []}
+                    {foreach $group.products as $element}
+                        {$_group[] = [
+                        'name' => $element.label|default:$element.product.name,
+                        'url' => $element.product.frontend_url
+                        ]}
+                    {/foreach}
+                    {$groups[$group.group.name] = $_group}
+                {/if}
+
+                {if $limit > 0 && count($groups) == $limit}{break}{/if}
+            {/foreach}
+        {/if}
+        {$wa->globals('market.return', $groups)}
+    {/function}
+
+    {function get_product_stocks_count product_skus=[]}
+        {if !$stocks}
+            {$stocks = shopHelper::getStocks(true)|default:null}
+        {/if}
+
+        {$product_stocks = []}
+
+        {$has_stocks = false}
+
+        {foreach $product_skus as $sku}
+            {if $sku.stock}
+                {$has_stocks = true}
+                {break}
+            {/if}
+        {/foreach}
+
+        {if $has_stocks}
+            {foreach $stocks as $stock_id => $stock}
+                {$product_stocks[$stock_id] = ['name' => $stock.name, 'count' => NULL ]}
+            {/foreach}
+
+            {foreach $product_skus as $sku}
+                {if $sku.stock}
+                    {foreach $product_stocks as $stock_id => $stock}
+                        {if isset($sku.stock[$stock_id])}
+                            {$product_stock_count = $stock['count']}
+                            {$sku_stock_count = $sku.stock[$stock_id]}
+
+                            {if !isset($stock['isNull'])}
+                                {if $sku_stock_count !== NULL}
+                                    {$product_stocks[$stock_id]['count'] = $product_stock_count + $sku_stock_count}
+                                {else}
+                                    {$product_stocks[$stock_id]['count'] = NULL}
+                                    {$product_stocks[$stock_id]['isNull'] = true}
+                                {/if}
+                            {/if}
+                        {else}
+                            {$product_stocks[$stock_id]['count'] = NULL}
+                            {$product_stocks[$stock_id]['isNull'] = true}
+                        {/if}
+                    {/foreach}
+                {else}
+                    {foreach $product_stocks as $stock_id => $stock}
+                        {$product_stock_count = $stock['count']}
+                        {if !isset($stock['isNull'])}
+                            {if $sku.count !== NULL}
+                                {$product_stocks[$stock_id]['count'] = $product_stock_count + $sku.count}
+                            {else}
+                                {$product_stocks[$stock_id]['count'] = NULL}
+                                {$product_stocks[$stock_id]['isNull'] = true}
+                            {/if}
+                        {/if}
+                    {/foreach}
+                {/if}
+            {/foreach}
+        {/if}
+        {$wa->globals('market.return', $product_stocks)}
+    {/function}
+
+    {function get_stocks_condition_text text='' product_stocks=[]}
+        {$stocks_matches = null}
+        {if preg_match_all('/\$stocks(\[.{1,5}\])/sU', $text, $stocks_matches)}
+            {foreach $stocks_matches[0] as $i => $stock_substr}
+                {$stock_id = $stocks_matches[1][$i]}
+                {$stock_var_string = '$product_stocks'|cat:$stock_id}
+
+                {$stock_condition_text = "isset($stock_var_string) && $stock_var_string"|cat:"['count']"}
+                {$text = $text|replace:$stock_substr:$stock_condition_text}
+            {/foreach}
+        {/if}
+        {$text}
+    {/function}
+
+    {function get_delivery_text text='' product_stocks=[]}
+        {if preg_match('/\$stocks(\[.{1,5}\])/sU', $text)}
+            {$text = "{call get_stocks_condition_text text=$text product_stocks=$product_stocks}"}
+        {/if}
+
+        {$delivery_text_val = "{eval var=$text}"}
+        {call set_date_to_text text=$delivery_text_val}
+    {/function}
+
+    {function get_available_status_depends_on_stocks product_stocks=[]}
+        {$status = ''}
+        {$text = ''}
+
+        {$stocks_available_statuses = $wa->globals('market.stocks_available_statuses')}
+        {if $stocks_available_statuses}
+            {$condition_string = $stocks_available_statuses['stocks_condition']|default:''}
+            {if preg_match('/\$stocks(\[.{1,5}\])/sU', $condition_string)}
+                {$condition_string = "{call get_stocks_condition_text text=$condition_string}"}
+                {$return_string = '{$wa->globals("market.return.status", $status)}{$wa->globals("market.return.text", $text)}'}
+                {eval var=$condition_string|cat:$return_string}
+
+                {$status = $wa->globals("market.return.status")}
+                {$text = $wa->globals("market.return.text")}
+            {/if}
+        {/if}
+
+        {$wa->globals('market.return', ['status' => $status, 'text' => $text])}
+    {/function}
+
+    {function generate_work_schedule}
+        {$workhours = $wa->shop->settings('workhours')}
+        {if !empty($theme_settings['custom_schedule_disabled']) && $workhours} {* Unused *}
+            {strip}
+                {$workhours.days_from_to},
+                {if $workhours.hours_from && $workhours.hours_to}
+                    &nbsp;[`с`] {$workhours.hours_from} [`до`] {$workhours.hours_to}
+                {/if}
+            {/strip}
+        {else}
+            {"{eval var=$theme_settings['schedule']}"|escape}
+        {/if}
+
+    {/function}
+
+    {function get_category_path category_id=0}
+        {$path = [$category_id]}
+        {$current_category_id = $category_id}
+        {while $current_category_id}
+            {$cat = $wa->shop->category($current_category_id)}
+            {if !empty($cat) && $cat.parent_id}
+                {$path[] = $cat.parent_id}
+                {$current_category_id = $cat.parent_id}
+            {else}
+                {$current_category_id = false}
+            {/if}
+        {/while}
+        {$wa->globals('market.return', $path)}
+    {/function}
+
+    {function get_compare_url}
+        {$compare_url_variant = $theme_settings['shop_misc_compare_url_variant']|default:'default'}
+        {$comparison_ids = $wa->shop->inComparison()}
+
+        {if $compare_url_variant === 'default' || empty($comparison_ids)}
+            {$wa->getUrl('shop/frontend/compare')}
+        {else}
+            {$wa->getUrl('shop/frontend/compare', ['id' => implode(',', $comparison_ids)])}
+        {/if}
+    {/function}
+
+    {function is_filtration_page filters=[] is_seofilter_page=false}
+        {$is_filtration = $wa->globals('market.shop.is_filtration_page.cache')}
+        {if $is_filtration === null}
+            {$is_filtration = false}
+            {if !empty($filters)}
+                {call __is_filtration_page filters=$filters is_seofilter_page=$is_seofilter_page}
+                {$is_filtration = $wa->globals('market.return')}
+            {/if}
+            {$wa->globals('market.shop.is_filtration_page.cache', $is_filtration)}
+        {/if}
+
+        {$wa->globals('market.return', $is_filtration)}
+    {/function}
+
+    {function __is_filtration_page filters=[] is_seofilter_page=false}
+        {$is_filtration = false}
+
+        {if $is_seofilter_page}
+            {$is_filtration = true}
+        {/if}
+
+        {if !$is_filtration}
+            {$_get = waRequest::get()}
+            {if !empty($_get['price_min']) || !empty($_get['price_max'])}
+                {$is_filtration = true}
+            {/if}
+
+            {if !$is_filtration && is_array($filters)}
+                {foreach $filters as $_filter}
+                    {if !isset($_filter.code) || empty($_get[$_filter.code])}
+                        {continue}
+                    {/if}
+
+                    {if (is_array($_get[$_filter.code]) && count($_get[$_filter.code])) || !is_array($_get[$_filter.code])}
+                        {$is_filtration = true}
+                        {break}
+                    {/if}
+                {/foreach}
+            {/if}
+        {/if}
+
+        {$wa->globals('market.return', $is_filtration)}
+    {/function}
+
+    {function get_cart_items}
+        {$_cart_items = $wa->globals('market.get_cart_items.cache')}
+        {if !is_array($_cart_items)}
+            {$_cart_items = $wa->shop->cart->items()}
+            {$wa->globals('market.get_cart_items.cache', $_cart_items)}
+        {/if}
+
+        {$wa->globals('market.return', $_cart_items)}
+    {/function}
+
+    {function in_cart_quantity sku_id=0}
+        {call get_cart_items}
+        {$cart_items = $wa->globals('market.return')}
+        {$quantity = 0}
+
+        {foreach $cart_items as $cart_item}
+            {if $cart_item.sku_id == $sku_id}
+                {$quantity = $cart_item.quantity}
+                {break}
+            {/if}
+        {/foreach}
+        {$wa->globals('market.return', $quantity)}
+    {/function}
+
+    {function in_cart sku_id=0}
+        {call get_cart_items}
+        {$cart_items = $wa->globals('market.return')}
+
+        {foreach $cart_items as $cart_item}
+            {if $cart_item.sku_id == $sku_id}
+                1
+                {break}
+            {/if}
+        {/foreach}
+    {/function}
+
+    {function get_fixed_bar_btns}
+        {if !$wa->globals('market.fixed_bar_btns')}
+            {$fixed_bar_btns = []}
+            {for $i = 1 to 5}
+                {$btn_setting = $theme_settings["fixed_bar_btn_{$i}"]|default:'off'}
+                {if $btn_setting !== 'off'}
+                    {$fixed_bar_btns[] = $btn_setting}
+                {/if}
+            {/for}
+            {$wa->globals('market.fixed_bar_btns', $fixed_bar_btns)}
+        {/if}
+    {/function}
+
+    {function blog_post_image post=null size='s'}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_mainpic = $plugins['blog_mainpic']}
+        {$is_enabled_ewblogpimg = $plugins['blog_ewblogpimg']}
+        {$is_post_image_param = isset($post.post_image)}
+
+        {$post_image_url = null}
+        {if $is_post_image_param}
+            {$post_image_url = $post.post_image}
+        {elseif $is_enabled_ewblogpimg}
+            {$_size = '315x0'}
+            {if $size == 'l'}
+                {$_size = '970x0'}
+            {/if}
+
+            {$post_image_url = blogEwblogpimgHelper::getImage($post.id, 'default', $_size)}
+        {elseif $is_enabled_mainpic}
+            {$_size = 'image'}
+            {if $size == 'l'}
+                {$_size = 'original'}
+            {/if}
+            {$post_image_url = blogMainpicPluginViewHelper::getPostMainpicUrlById($post.id, $_size)}
+        {/if}
+
+        {if empty($post_image_url)}
+            {$imgs = []}
+            {$_ = preg_match_all('/<img[^>]+src="([^"]+)"?[^>]*>/', $post.text, $imgs)}
+            {if !empty($imgs)}
+                {$post_image_url = $imgs[1][0]}
+            {/if}
+        {/if}
+
+        {$post_image_url}
+    {/function}
+
+    {function set_date_to_text text=''}
+        {$delivery_text_val = $text}
+        {$delivery_text_regexp = '/\@(today).?(\+).?(\d{1,4})\@/sU'}
+        {$matches = null}
+        {if preg_match_all($delivery_text_regexp, $text, $matches)}
+            {foreach $matches[0] as $i => $substr}
+                {$today_substr = $matches[1][$i]}
+                {$sign = $matches[2][$i]|default:'+'}
+                {$num = $matches[3][$i]|default:0}
+
+                {$delivery_date = "{$sign}{$num} days"|wa_datetime:"j f"}
+                {$delivery_text_val = $delivery_text_val|replace:$substr:$delivery_date}
+            {/foreach}
+        {/if}
+        {$delivery_text_val}
+    {/function}
+
+{/strip}

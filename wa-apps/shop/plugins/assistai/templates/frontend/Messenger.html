@@ -1,0 +1,71 @@
+<style>
+    .tri-right.right-in:after {
+        content: ' ';
+        position: absolute;
+        width: 0;
+        height: 0;
+        left: auto;
+        right: -20px;
+        top: 50%;
+        align-self: center;
+        bottom: auto;
+        border: 12px solid;
+        border-color: {$settings.finalGradientColor} transparent transparent {$settings.finalGradientColor};
+    }
+
+    #help {
+    background: {$settings.initialGradientColor};
+    background: linear-gradient(234deg, {$settings.finalGradientColor} 10%, {$settings.initialGradientColor} 140%);
+    }
+</style>
+
+<div id="aiChatBlockUpsale" {if $settings.enableGreetings === 'on'} isenable="true" {else} isenable="false" {/if}>
+<div id="blockChatUpsale">
+    <img id="iconChatUpsaleClose" src="{$wa_url}wa-apps/shop/plugins/assistai/img/iconChatClose.png" alt="Chat close">
+    <div id="iframe">
+        <iframe src="https://ai.upsale.site/getChat?token={$settings.tokenMessenger}" width="300" height="500" frameborder="0" allowfullscreen></iframe>
+    </div>
+</div>
+
+<div id="chat-icons-upsale">
+    <div id="center-text"></div>
+    <div id="body">
+        <div id="bubble">
+            <div id="help" class="talk-bubble tri-right round right-in">
+                <div id="talktext" class="talktext" style="display: none;">{$settings.firstGreeting}</div>
+                <div id="talktext-1" class="talktext" style="display: none;">{$settings.secondGreeting}</div>
+                <span id="loader" class="loader"></span>
+            </div>
+            <div id="chat-circle">
+                <div id="chat-online-background">
+                    <div id="chat-online">
+                        <div style="display: none" id='chat-message'>1</div>
+                    </div>
+                </div>
+                <div id="chat-overlay"></div>
+                <img width="80px" src="{if !empty($settings.iconImage)}{$wa_url}wa-data/public/shop/plugins/assistai/icons/{$settings.iconImage}{else}{$wa_url}wa-apps/shop/plugins/assistai/img/defaultIcon/iconChatBrown.png{/if}" id="chat-image">
+                <img width="80px" src="{if !empty($settings.hoverIconImage)}{$wa_url}wa-data/public/shop/plugins/assistai/icons/{$settings.hoverIconImage}{else}{$wa_url}wa-apps/shop/plugins/assistai/img/defaultIcon/iconChatYellow.png{/if}" id="chat-image2">
+            </div>
+        </div>
+
+        <div class="chat-box">
+            <div class="chat-box-header">
+                Virtual Agent
+                <span class="chat-box-toggle"><i class="material-icons">close</i></span>
+            </div>
+            <div class="chat-box-body">
+                <div class="chat-box-overlay"></div>
+                <div class="chat-logs">
+
+                </div>
+            </div>
+            <div class="chat-input">
+                <form>
+                    <input type="text" id="chat-input" placeholder="Ask me your question..."/>
+                    <button type="submit" class="chat-submit" id="chat-submit"><i class="material-icons">send</i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

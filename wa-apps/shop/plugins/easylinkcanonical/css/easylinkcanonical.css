@@ -1,0 +1,13 @@
+tr.js_table_row:nth-child(2) {
+  display: none;
+}
+
+.js_table input:read-only {
+border-color: transparent;
+color: var(--gray);
+pointer-events: none;
+}
+
+.mt-1{
+  margin-top: 1em;
+}

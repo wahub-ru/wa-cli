@@ -1,0 +1,52 @@
+<form class="cr-form">
+  <!-- Шаг 1 -->
+  <div class="cr-step" id="step-1" data-next="2">
+    <h3>Выберите тип пакета</h3>
+    <label><input type="radio" name="fields[Тип пакета]" value="Майка"> Пакет “Майка”</label>
+    <label><input type="radio" name="fields[Тип пакета]" value="С вырубной ручкой"> Пакет с вырубной ручкой</label>
+  </div>
+
+  <!-- Шаг 2 -->
+  <div class="cr-step" id="step-2" data-next="3">
+    <h3>Выберите размер пакета</h3>
+    <!-- Радио варианты подгружаются через JS или вставлены вручную -->
+    <div class="sizes"></div>
+    <button type="button" class="cr-back">Назад</button>
+  </div>
+
+  <!-- Шаг 3 -->
+  <div class="cr-step" id="step-3" data-next="4">
+    <h3>Выберите толщину пакета</h3>
+    <div class="thickness"></div>
+    <button type="button" class="cr-back">Назад</button>
+  </div>
+
+  <!-- Шаг 4 -->
+  <div class="cr-step" id="step-4" data-next="5">
+    <h3>Выберите тип печати</h3>
+    <div class="print"></div>
+    <button type="button" class="cr-back">Назад</button>
+  </div>
+
+  <!-- Шаг 5 -->
+  <div class="cr-step" id="step-5" data-next="6">
+    <h3>Выберите тираж</h3>
+    <div class="tirazh"></div>
+    <button type="button" class="cr-back">Назад</button>
+  </div>
+
+  <!-- Шаг 6 — Результат -->
+  <div class="cr-step" id="step-6">
+    <h3>Результат расчёта</h3>
+    <p id="result-price"></p>
+
+    <input type="text" name="name" placeholder="ФИО" required>
+    <input type="text" name="phone" placeholder="Телефон" required>
+
+    <label><input type="checkbox" name="policy" required> Согласие с ПД</label>
+
+    <button type="submit">Оставить заявку</button>
+    <button type="button" id="recalc">Посчитать ещё раз</button>
+    <button type="button" class="cr-back">Назад</button>
+  </div>
+</form>

@@ -1,0 +1,34 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+
+    <div class="brand-page">
+        <div class="block">
+            <h1 class="block__header block__header_text">
+                {if !empty($h1)}
+                    {$h1|escape}
+                {else}
+                    {$brand.name|escape}
+                {/if}
+            </h1>
+            <div class="block__content">
+                <div class="brand-page__tabs-container">
+                    {$pages_tabs}
+                </div>
+
+                <div class="brand-page__content-container">
+                    <div class="block block_secondary">
+                        <div class="block__header block__header_text r-hidden-md">
+                            {$h1}
+                        </div>
+                        <div class="block__content content-decorator">
+                            {$content}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/strip}

@@ -1,0 +1,228 @@
+<style>
+.field .name { width: 250px; }
+.field .value { margin-left: 250px; }
+</style>
+<form action="?plugin=parsing&module=settings&action=save" method="post" id="s-plugin-parsing" class="form">
+    <h2><i class="icon16 settings"></i> [`Settings`]</h2>
+    {$wa->csrf()}
+    {foreach $settings as $s}
+        <input type="hidden" name="profile[id]" value="{$profile.id|default:'-1'}">
+        <div class="field">{$s}</div>
+    {/foreach}
+    <div class="field">
+        <div class="value submit">
+            <input type="submit" class="button green" value="Сохранить">
+            <span id="plugins-settings-form-status" style="display:none"><!-- message placeholder --></span>
+        </div>
+    </div>
+</form>
+<div class="mode blog_hh">
+    <br><br>
+    <h3 style="width: 100%; margin-top: 20px">Импорт Вакансий</h3>
+    
+    <div style="width: 100%">
+        <div class="field">
+            <input id="import-hh" type="button" class="button green" value="Импорт вакансий">
+            <span id="import-status-hh"></span>
+        </div>
+        <p>Запуск по расписанию (CRON)</p>
+        <ul>
+            <li>Для вызова скрипта в облаке Webasyst нужно использовать команду: <b>php cli.php shop parsingImporthh {$profile.id}</b></li>
+            <li>Для вызова скрипта на своем хостинге нужно использовать команду: <b>* */1 * * * /usr/bin/php {$root_path}/cli.php shop parsingImporthh {$profile.id}</b><br>Где * */1 * * * это минута час день_месяца месяц день_недели, в данном примере указано расписание - каждый час</li>
+        </ul>
+    </div>
+</div>
+<div class="mode shop">
+    <br><br>
+    <h3 style="width: 100%">Сбор данных</h3>
+    
+    <div style="width: 100%">
+        <div class="field">
+            <div class="name">
+                Собрать все URLs<br />
+                Всего собрано: <span id="count_urls">{$count_urls}</span> urls
+            </div>
+            <div class="value submit">
+                <input id="collect-button" type="button" class="button green" value="Собрать URLs"> 
+                <input id="clear-button" type="button" class="button red" value="Очистить URLs"> 
+				<input id="keep-button" type="button" class="button blue" value="Оставить только спарсенные URLs"> 
+                <span id="collect-status"></span>
+            </div>
+        </div>
+    </div>
+    
+    <br><br>
+    <h3 style="width: 100%; margin-top: 20px">Импорт товаров из собранных URLs</h3>
+    
+    <div style="width: 100%">
+        <div class="field">
+            <div class="name">
+                Парсинг: {$count_parsing} из {$count_urls}<br>
+                Импортировано: {$count_status}
+            </div>
+            <div class="value submit">
+                <input id="import-button" type="button" class="button green" value="Импорт товара">
+                <span id="import-status"></span>
+            </div>
+        </div>
+        <p>Запуск по расписанию (CRON)</p>
+        <ul>
+            <li>Для вызова скрипта в облаке Webasyst нужно использовать команду: <b>php cli.php shop parsingImport {$profile.id}</b></li>
+            <li>Для вызова скрипта на своем хостинге нужно использовать команду: <b>* */1 * * * /usr/bin/php {$root_path}/cli.php shop parsingImport {$profile.id}</b><br>Где * */1 * * * это минута час день_месяца месяц день_недели, в данном примере указано расписание - каждый час</li>
+        </ul>
+    </div>
+    <br><br>
+    <h3 style="width: 100%">Обновление цен</h3>
+    
+    <div style="width: 100%">
+        <div class="field">
+            <div class="name">
+                Обновить цены для {$count_product} товаров
+            </div>
+            <div class="value submit">
+                <input id="price-button" type="button" class="button green" value="Обновить цены">
+                <span id="price-status"></span>
+            </div>
+        </div>
+        <p>Запуск по расписанию (CRON)</p>
+        <ul>
+            <li>Для вызова скрипта в облаке Webasyst нужно использовать команду: <b>php cli.php shop parsingPrice {$profile.id}</b></li>
+            <li>Для вызова скрипта на своем хостинге нужно использовать команду: <b>* */1 * * * /usr/bin/php {$root_path}/cli.php shop parsingPrice {$profile.id}</b><br>Где * */1 * * * это минута час день_месяца месяц день_недели, в данном примере указано расписание - каждый час</li>
+        </ul>
+    </div>
+</div>
+<script>
+
+if ($.importexport.plugins.parsing) {
+    $.importexport.plugins.parsing.init({$params|json_encode});
+} else {
+
+}
+{* generic code for plugins with profiles support *}
+$.importexport.profiles.set('parsing',{$profiles|json_encode});
+
+
+$('#s-plugin-parsing').submit(function() {
+    $('#s-plugin-parsing input[type=submit]').prop('disabled', true);
+    $.post($(this).attr('action'), $(this).serialize(), function(data) {
+        if (data.status == 'ok') {
+            location.reload();
+        } else {
+            alert('В процессе экспорта произошла ошибка. Обратитесь к разработчику плагина!');
+        }
+    },'json');
+    return false;
+});
+
+
+$("#collect-button").click(function () {
+    $("#collect-button").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=collect&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val() , function (r) {
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+$("#clear-button").click(function () {
+    $("#clear-button").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=clear&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val(), function (r) {
+
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+$("#keep-button").click(function () {
+    $("#keep-button").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=keep&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val(), function (r) {
+
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+$("#import-button").click(function () {
+    $("#import-button").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=import&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val(), function (r) {
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+$("#import-hh").click(function () {
+    $("#import-hh").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=importhh&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val(), function (r) {
+        
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+$("#price-button").click(function () {
+    $("#price-button").prop('disabled', true);
+    
+    $.get('?plugin=parsing&action=price&profile_id='+$('#s-plugin-parsing input[name="profile[id]"]').val(), function (r) {
+        if( $.isEmptyObject(r.data) ){
+            location.reload();
+        }else{
+            alert(r.data);
+            location.reload();
+        }
+    }, "json")
+})
+
+function show_hide(current){
+    $("#s-plugin-parsing input[type=text]").parent().parent().hide();
+    $("#s-plugin-parsing input[type=text]."+current).parent().parent().show();
+    
+    $("#s-plugin-parsing textarea").parent().parent().hide();
+    $("#s-plugin-parsing textarea."+current).parent().parent().show();
+    
+    $("#s-plugin-parsing input[type=checkbox]").parent().parent().hide();
+    $("#s-plugin-parsing input[type=checkbox]."+current).parent().parent().show();
+    
+    $("#s-plugin-parsing select").parent().parent().hide();
+    $("#s-plugin-parsing select."+current).parent().parent().show();
+    
+    $(".mode").hide();
+    $(".mode."+current).show();
+}
+
+$("#s-plugin-parsing #parsing_profile_mode option:selected").each(function() {
+    var current = $(this).val();
+    
+    show_hide(current);
+});
+
+$("#parsing_profile_mode").change(function(){
+    var current = $(this).val();
+    
+    show_hide(current);
+});
+
+</script>

@@ -1,0 +1,45 @@
+<style>
+    #remove-comments{ display: inline-block; margin-right: 20px;}
+</style>
+<div class="stekblg1">
+    <div class="alert">Внимание! Эта операция необратимо удалит из базы все комментарии, отмеченные как "удаленные". Никаких повторных вопросов типа "да/нет/не знаю" задаваться не будет. Нажали кнопку - они удалились.</div>
+    <br>
+    <form action="?plugin=stekblg1&action=remove" method="POST" id="remove-comments">
+        <input type="hidden" name="remove" value="1" />
+        <input type="submit" class="green button" name="remove" value="Окончательно удалить 'удаленные' комментарии" />
+        {$wa->csrf()}
+</form>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('form#remove-comments').submit(function () {
+            $('form#remove-comments').after("<i class='icon16 loading'></i>");
+            var formElement = document.querySelector("form");
+            var formdata = new FormData(formElement);
+            $.ajax({
+                    url: '?plugin=stekblg1&action=remove',
+                    type: 'POST',
+                    dataType: 'json',
+                    processData: false,
+                    contentType: false,
+                    data: formdata,
+                    success: function (response) {
+                        $('.stekblg1').find('i').remove();
+                        $('.stekblg1').find('.error').remove();
+                        if (typeof(response.errors) !== "undefined"){
+                            $('form#remove-comments').after("<i class='icon16 no'></i>");
+                            $('.stekblg1').find('i.no').fadeOut(5000);
+                            $('form#remove-comments').append("<span class='error'><br>"+response.errors[0]+"</span>");
+                            return;
+                        }
+                        if (response.data.status === "ok"){
+                            $('form#remove-comments').after("<i class='icon16 yes'></i>");
+                            $('.stekblg1').find('i.yes').fadeOut(5000);
+                        }
+                    }
+            });
+            return false;
+        });
+    });
+</script>

@@ -1,0 +1,727 @@
+{strip}
+    {* Arguments *}
+    {$is_enabled_delete_buttons = $is_enabled_delete_buttons|default:false}
+    {$default_view_type = $default_view_type|default:null}
+    {$feature_codes = $feature_codes|default:null}
+    {$is_enabled_sorting = $is_enabled_sorting|default:true}
+    {$is_enabled_banners = $is_enabled_banners|default:false}
+    {$is_show_sidebar = $is_show_sidebar|default:$wa->globals('is_show_sidebar')|default:true}
+    {$category_listfeatures_set_id = $category_listfeatures_set_id|default:null}
+    {* TODO (wahub.ru) Fix - Массив $plugins не был инициализирован в некоторых случах. Например в списке избранного *}
+    {$plugins = $wa->globals('plugins')}
+
+    {* Theme Settings *}
+    {$top_banner_enabled = !!$theme_settings['promo_before_products_image']}
+    {$top_banner_image = $theme_settings['promo_before_products_image']}
+    {$top_banner_link = $theme_settings['promo_before_products_link']}
+    {$bottom_banner_enabled = !!$theme_settings['promo_after_products_image']}
+    {$bottom_banner_image = $theme_settings['promo_after_products_image']}
+    {$bottom_banner_link = $theme_settings['promo_after_products_link']}
+    {$is_horizontal_filter = $theme_settings['shop_catalog_filter_variant'] === 'horizontal'}
+    {$is_enabled_filters_before_products = $theme_settings['shop_catalog_filter_before_products_enabled']}
+    {$is_enabled_view_thumbs = $theme_settings['shop_catalog_products_view_thumbs_enabled']}
+    {$is_enabled_view_extend = $theme_settings['shop_catalog_products_view_extend_enabled']}
+    {$is_enabled_view_compact = $theme_settings['shop_catalog_products_view_compact_enabled']}
+    {$default_view = $theme_settings['shop_catalog_products_default_view']}
+    {$custom_sorting_name = $theme_settings['shop_catalog_custom_sorting_name']}
+    {$sorting_fields_ids = $theme_settings['shop_catalog_sorting_fields']|default:''}
+    {$category_is_enabled_filter = $theme_settings['shop_catalog_filter_variant'] !== 'disabled'}
+
+    {* Theme Settings Adaptive *}
+    {$is_enabled_view_thumbs_adaptive = !!$theme_settings['shop_catalog_products_view_thumbs_enabled_adaptive']}
+    {$is_enabled_view_mobile_thumbs = !!$theme_settings['shop_catalog_products_view_mobile_thumbs_enabled_adaptive']}
+    {$is_enabled_view_extend_adaptive = !!$theme_settings['shop_catalog_products_view_extend_enabled_adaptive']}
+    {$default_view_adaptive = $theme_settings['shop_catalog_products_default_view_adaptive']}
+
+    {* Variables *}
+    {$pages_count = $pages_count|default:1}
+    {$has_top_banner_image = !empty($top_banner_image)}
+
+    {if $has_top_banner_image}
+        {$top_banner_image_url = "{$wa->shop->themeUrl(waRequest::getTheme())}{$top_banner_image}"}
+    {/if}
+
+    {$has_bottom_banner_image = !empty($bottom_banner_image)}
+
+    {if $has_bottom_banner_image}
+        {$bottom_banner_image_url = "{$wa->shop->themeUrl(waRequest::getTheme())}{$bottom_banner_image}"}
+    {/if}
+
+    {if !empty($category.params.top_banner_img)}
+        {$top_banner_enabled = true}
+        {$has_top_banner_image = true}
+        {$top_banner_image_url = $category.params.top_banner_img}
+    {/if}
+
+    {if !empty($category.params.top_banner_link)}
+        {$top_banner_link = $category.params.top_banner_link}
+    {/if}
+
+    {if !empty($category.params.bottom_banner_img)}
+        {$bottom_banner_enabled = true}
+        {$has_bottom_banner_image = true}
+        {$bottom_banner_image_url = $category.params.bottom_banner_img}
+    {/if}
+
+    {if !empty($category.params.bottom_banner_link)}
+        {$bottom_banner_link = $category.params.bottom_banner_link}
+    {/if}
+
+    {$is_enabled_filters = !empty($filters) && count($filters) > 0 && $category_is_enabled_filter}
+
+    {$is_horizontal_filter = $is_horizontal_filter && !empty($filters) && count($filters) && !$wa->globals('is_mobile')}
+    {$is_enabled_filters_before_products = $is_enabled_filters_before_products && !$is_horizontal_filter}
+
+    {$sorting_fields = []}
+    {if !empty($sorting_fields_ids)}
+        {$sorting_fields = explode(',', $sorting_fields_ids)}
+    {/if}
+
+    {$sorting_fields_names = [
+        'custom' => null,
+        'name' => '[`Name`]',
+        'price' => '[`Price`]',
+        'total_sales' => '[`Bestsellers`]',
+        'rating' => '[`Customer rating`]',
+        'create_datetime'=>'[`Date added`]',
+        'stock' => '[`In stock`]'
+    ]}
+
+    {$sort_fields = []}
+    {if !empty($sorting_fields)}
+        {foreach $sorting_fields as $field}
+            {$sort_fields[$field] = $sorting_fields_names[$field]}
+        {/foreach}
+    {/if}
+
+    {$is_custom_sort = in_array('custom', $sorting_fields)}
+
+    {$view_types = []}
+
+    {if $wa->globals('is_mobile')}
+        {$default_view = $default_view_adaptive}
+    {/if}
+
+    {if $is_enabled_view_thumbs || ($wa->globals('is_mobile') && $is_enabled_view_thumbs_adaptive)}
+        {$view_types[] = 'thumbs'}
+    {/if}
+
+    {if $is_enabled_view_mobile_thumbs}
+        {$view_types[] = 'mobile-thumbs'}
+    {/if}
+
+    {if $is_enabled_view_extend || ($wa->globals('is_mobile') && $is_enabled_view_extend_adaptive)}
+        {$view_types[] = 'extend'}
+    {/if}
+
+    {if $is_enabled_view_compact}
+        {$view_types[] = 'compact'}
+    {/if}
+
+    {if $is_enabled_delete_buttons}
+        {$view_type = 'thumbs'}
+    {else}
+        {$view_type = $wa->cookie('shop_products-view-type')}
+        {if $view_type == 'mobile-thumbs' && !$wa->globals('is_mobile')}
+            {$view_type = 'thumbs'}
+        {/if}
+    {/if}
+
+    {if in_array($default_view_type, $view_types)}
+        {$default_view = $default_view_type|default:$default_view}
+    {/if}
+
+    {if !in_array($view_type, $view_types)}
+        {$view_type = $default_view}
+    {/if}
+
+    {if $view_type === 'list' || ($view_type === 'compact' && $wa->globals('is_mobile'))}
+        {$view_type = 'extend'}
+    {elseif $view_type === 'compact-list'}
+        {$view_type = 'compact'}
+    {/if}
+
+    {$products_images = $wa->shop->images(array_keys($products))}
+
+    {* TODO: (wahub.ru) Добавлена возможность показать/скрыть блок сортировки по ключу *}
+    {$show_bar = $show_bar|default:true}
+    {if !$is_enabled_sorting && !$is_enabled_view_thumbs && !$is_enabled_view_extend && !$is_enabled_view_compact}
+        {$show_bar = false}
+        {if $wa->globals('is_mobile') && $is_enabled_filters && $is_show_sidebar}
+            {$show_bar = true}
+        {/if}
+    {/if}
+
+    {$stocks = shopHelper::getStocks(true)|default:null}
+
+    {$get_name = $wa->get('name')}
+
+    {if is_array($get_name)}
+        {$get_name = $get_name[0]}
+    {/if}
+
+    {* Templates *}
+
+    <div class="products" data-page="{$wa->get('page', 1)|escape}" data-pages_count="{$pages_count|escape}" data-products_count="{$products_count|escape}">
+        {if $is_enabled_banners && $top_banner_enabled && $has_top_banner_image}
+            <div class="products__top-banner-container">
+                <a class="image-box image-box_contain" href="{$top_banner_link|escape}">
+                    <img src="{$top_banner_image_url|escape}" alt="" />
+                </a>
+            </div>
+        {/if}
+
+        <div class="products__main">
+            {if $is_enabled_filters && $is_enabled_filters_before_products}
+                {$filter_blocks = []}
+
+                {foreach $filters as $feature_id => $filter}
+                    {if $feature_id === 'price'}
+                        {$filter_type = 'price'}
+                    {elseif $filter.type === 'boolean'}
+                        {$filter_type = 'boolean'}
+                    {elseif isset($filter.min)}
+                        {$filter_type = 'range'}
+                    {else}
+                        {$filter_type = 'checkbox'}
+                    {/if}
+
+                    {if $filter_type === 'price'}
+                        {if $wa->get('price_min') || $wa->get('price_max')}
+                            {$price_min = intval($wa->get('price_min')|default:floor($filter.min))}
+                            {$price_max = intval($wa->get('price_max')|default:ceil($filter.max))}
+
+                            {capture append='filter_blocks'}
+                                <div class="products__filters-button" data-type="price">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__content">
+                                            <span class="products__filters-button-text">
+                                                {shop_currency_html($price_min)}-{shop_currency_html($price_max)}
+                                            </span>
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </div>
+                            {/capture}
+                        {/if}
+                    {elseif $filter_type === 'boolean'}
+                        {if $wa->get($filter.code)}
+                            {capture append='filter_blocks'}
+                                <div class="products__filters-button" data-type="radio" data-code="{$filter.code|escape}">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__content">
+                                            <span class="products__filters-button-text">
+                                                {$filter.name|escape}
+                                            </span>
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </div>
+                            {/capture}
+                        {elseif $wa->get($filter.code) === '0'}
+                            {capture append='filter_blocks'}
+                                <div class="products__filters-button" data-type="radio" data-code="{$filter.code|escape}">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__content">
+                                            <span class="products__filters-button-text">
+                                                {$filter.name|escape} - [`нет`]
+                                            </span>
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </div>
+                            {/capture}
+                        {/if}
+                    {elseif $filter_type === 'range'}
+                        {$_v = $wa->get($filter.code)}
+                        {if !is_array($_v)}
+                            {$_v = []}
+                        {/if}
+
+                        {$_v.min = $_v.min|default:''}
+                        {$_v.max = $_v.max|default:''}
+
+                        {if $_v.min || $_v.max}
+                            {$min = intval($_v.min|default:floor($filter.min))}
+                            {$max = intval($_v.max|default:ceil($filter.max))}
+
+                            {capture append='filter_blocks'}
+                                <div class="products__filters-button" data-type="range" data-code="{$filter.code|escape}">
+                                    <span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__content">
+                                            <span class="products__filters-button-text">
+                                                {if $filter.unit}
+                                                    {$min} {$filter.unit.title}-{$max} {$filter.unit.title}
+                                                {else}
+                                                    {$min}-{$max}
+                                                {/if}
+                                            </span>
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                        </span>
+                                    </span>
+                                </div>
+                            {/capture}
+                        {/if}
+                    {elseif $filter_type === 'checkbox'}
+                        {$selected_values = $wa->get($filter.code, [])}
+                        {if !is_array($selected_values)}
+                            {$selected_values = [$selected_values]}
+                        {/if}
+
+                        {foreach $filter.values as $v_id => $v}
+                            {$is_selected = in_array($v_id, $selected_values)}
+
+                            {if $is_selected}
+                                {if $filter.type === 'color'}
+                                    {capture append='filter_blocks'}
+                                        <div class="products__filters-button" data-type="checkbox" data-code="{$filter.code|escape}" data-value="{$v_id|escape}">
+                                            <span class="icon-box icon-box_size_l">
+                                                <span class="icon-box__content">
+                                                    <span class="products__filters-button-text">
+                                                        {$v.value|escape}
+                                                    </span>
+                                                </span>
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    {/capture}
+                                {else}
+                                    {capture append='filter_blocks'}
+                                        <div class="products__filters-button" data-type="checkbox" data-code="{$filter.code|escape}" data-value="{$v_id|escape}">
+                                            <span class="icon-box icon-box_size_l">
+                                                <span class="icon-box__content">
+                                                    <span class="products__filters-button-text">
+                                                        {$v|escape}
+                                                    </span>
+                                                </span>
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                                </span>
+                                            </span>
+                                        </div>
+                                    {/capture}
+                                {/if}
+                            {/if}
+                        {/foreach}
+                    {/if}
+                {/foreach}
+
+                {if count($filter_blocks) > 0}
+                    <div class="products__filters">
+                        <div class="products__filters-label">
+                            [`Что ищем`]:
+                        </div>
+                        {implode('', $filter_blocks)}
+                        <div class="products__filters-reset products__reset-filters">
+                            <span class="icon-box icon-box_size_l">
+                                <span class="icon-box__content">
+                                    [`Сбросить фильтры`]
+                                </span>
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+
+            {if $plugins['shop_filterext'] && $wa->globals('is_mobile')}
+                <div class="products__search">
+                    <div class="products-search">
+                        <div class="products-search__input">
+                            <label class="products-search__label">Поиск по названию</label>
+                            <input class="input-text" form="market_shop_filters" type="text" placeholder="Введите название товара" name="name" value="{$get_name|escape}">
+                            <div class="products-search__input-hint" data-id="name"></div>
+                            <div class="products-search__header-input-close">
+                                {call svg_icon icon='cross' width=10 height=10 fill='currentColor'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+
+            {if $show_bar}
+                <div class="products__bar">
+                    <div class="products-bar">
+                        {$default_sort = []}
+                        {if isset($category) && isset($category['sort_products'])}
+                            {$default_sort = explode(" ", $category['sort_products'])}
+                        {/if}
+                        {$active_sort = $wa->get('sort', $default_sort[0]|default:'', 'create_datetime')}
+                        {if $active_sort === 'count'}
+                            {$active_sort = 'stock'}
+                        {/if}
+
+                        {* TODO: (wahub.ru) Fix $active_sort не инициализировался на страницах поиска *}
+                        {if !empty($active_sort) && $wa->get('sort') === "base_price" || empty($active_sort)}
+                            {$active_sort = "price"}
+                        {/if}
+
+                        {if isset($category) && !isset($category['sort_products']) && !empty($custom_sorting_name) && $is_custom_sort}
+                            {$sort_fields['custom'] = $custom_sorting_name}
+                            {if empty($active_sort)}
+                                {$active_sort = 'custom'}
+                            {/if}
+                        {/if}
+
+                        <div class="products-bar__content">
+                            {capture assign="sorting_block"}
+                                <div class="products-bar__sorting{if $is_horizontal_filter} products-bar__sorting_shrink{/if}">
+                                    {if $is_enabled_sorting && !empty($sort_fields)}
+                                        <div class="inline-field inline-field_fill inline-field_valign-middle">
+                                            <div class="inline-field__label">[`Сортировать`]:</div>
+                                            <div class="inline-field__content">
+                                                {$options = []}
+                                                {foreach $sort_fields as $sort => $name}
+                                                    {if empty($name)}{continue}{/if}
+                                                    {* TODO: (wahub.ru) Fix $order не инициализировался на страницах поиска *}
+                                                    {$order = "desc"}
+                                                    {if !empty($category|default:null)}
+                                                        {$order = "{call shop_sort_order sort=$sort category=$category}"}
+                                                    {/if}
+                                                    {$classes = 'sorting-select__item'}
+                                                    {$is_active = $active_sort === $sort}
+
+                                                    {if $is_active}
+                                                        {if $order === 'asc'}
+                                                            {$current_order = 'desc'}
+                                                        {else}
+                                                            {$current_order = 'asc'}
+                                                        {/if}
+
+                                                        {capture assign='label_html'}
+                                                            {if $sort == 'rating'}
+                                                                <span class="sorting-select__name">{$name|replace:' покупателей':'<span class="sorting-select__hidden"> покупателей</span>'}</span>
+                                                            {else}
+                                                                <span class="sorting-select__name">{$name}</span>
+                                                            {/if}
+                                                            <span class="sorting-select__sorting sorting-select__sorting_order_{$current_order}"></span>
+                                                        {/capture}
+                                                        {$classes = "{$classes} sorting-select__item_active"}
+
+                                                        {if $sort !== 'custom'}
+                                                            {$options[] = [
+                                                            'label' => "{$name} ({call order2label order=$current_order})",
+                                                            'label_html' => $label_html,
+                                                            'classes' => "{$classes} sorting-select__item_hidden",
+                                                            'selected' => true,
+                                                            'value' => ''
+                                                            ]}
+                                                        {else}
+                                                            {$options[] = [
+                                                            'label' => "{$name}",
+                                                            'label_html' => $name,
+                                                            'classes' => "{$classes} sorting-select__item_hidden",
+                                                            'selected' => true,
+                                                            'value' => ''
+                                                            ]}
+                                                        {/if}
+                                                    {/if}
+
+                                                    {capture assign='label_html'}
+                                                        {if $sort == 'rating'}
+                                                            <span class="sorting-select__name">{$name|replace:' покупателей':'<span class="sorting-select__hidden"> покупателей</span>'}</span>
+                                                        {else}
+                                                            <span class="sorting-select__name">{$name}</span>
+                                                        {/if}
+                                                        <span class="sorting-select__sorting sorting-select__sorting_order_{$order}"></span>
+                                                    {/capture}
+
+                                                    {if $sort !== 'custom'}
+                                                        {$options[] = [
+                                                        'label' => "{$name} ({{call order2label order=$order}})",
+                                                        'label_html' => $label_html,
+                                                        'classes' => $classes,
+                                                        'selected' => false,
+                                                        'value' => "{call shop_sort_url sort=$sort category=$category|default:null}"
+                                                        ]}
+                                                    {else}
+                                                        {$options[] = [
+                                                        'label' => "{$name}",
+                                                        'label_html' => $name,
+                                                        'classes' => $classes,
+                                                        'selected' => false,
+                                                        'value' => "{call shop_sort_url sort=$sort category=$category|default:null}"
+                                                        ]}
+                                                    {/if}
+                                                {/foreach}
+
+                                                {$select_size = 's'}
+                                                {if $is_horizontal_filter}
+                                                    {$select_size = null}
+                                                {/if}
+                                                {call select classes='sorting-select products__sorting-select' size=$select_size options=$options}
+
+                                                {if $wa->get('sort')}
+                                                    <input type="hidden" name="sort" value="{$wa->get('sort')}" form="market_shop_filters" />
+                                                {/if}
+
+                                                {if $wa->get('order')}
+                                                    <input type="hidden" name="order" value="{$wa->get('order')}" form="market_shop_filters" />
+                                                {/if}
+                                                {if $wa->get('sort_unit')}
+                                                    <input type="hidden" name="sort_unit" value="{$wa->get('sort_unit')}" form="market_shop_filters" />
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/capture}
+
+                            {if $plugins['shop_filterext'] && !$wa->globals('is_mobile')}
+                                <div class="products__search products__search_bar">
+                                    <div class="products-search">
+                                        <div class="products-search__input">
+                                            <input class="input-text" form="market_shop_filters" type="text" placeholder="Введите название товара" name="name" value="{$get_name|escape}">
+                                            <div class="products-search__input-hint" data-id="name"></div>
+                                            <div class="products-search__header-input-close">
+                                                {call svg_icon icon='cross' width=10 height=10 fill='currentColor'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {$sorting_block}
+                            {if $is_horizontal_filter}
+                                <div class="products-bar__filters" data-exclude-ajax="filters">
+                                    <div class="horizontal-filters dropdown dropdown_click">
+                                        <span class="horizontal-filters__button button button_style_light">
+                                            <span class="icon-box">
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon icon='tune' width=18 height=18 fill='currentColor'}
+                                                </span>
+                                                <span class="icon-box__content">
+                                                    [`Фильтр подбора`]
+                                                </span>
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon classes='dropdown__icon' icon='arrow-bottom' width=10 height=6 fill='currentColor'}
+                                                </span>
+                                            </span>
+                                        </span>
+                                        <div class="horizontal-filters__filters dropdown__dropdown">
+                                            {include './filters.html' is_horizontal=true}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                            {if $is_enabled_delete_buttons}
+                                <div class="products-bar__controls">
+                                    <span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link products__delete-list-button">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon="trash" classes="pseudo-link-box__icon" width=16 height=16}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                <span class="pseudo-link-box__link">
+                                                    {_wp("Удалить список")}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                    <span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link products__recovery-list-button">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon="recovery" classes="pseudo-link-box__icon" width=20 height=20}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                <span class="pseudo-link-box__link">
+                                                    {_wp("Восстановить список")}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                </div>
+                            {else}
+                                <div class="products-bar__controls">
+                                    <div class="products-view-types">
+                                        {function r_list_view}
+                                            <div class="products-view-types__item r-hidden-desktop {if $is_view_hidden|default:0}products-view-types__item_hidden{/if}">
+                                                <span class="products-view-type image-box" data-view_type="extend">
+                                                    {call svg_icon classes='products-view-type__icon' icon='products-list' width=18 height=18 fill='#BDBDBD'}
+                                                </span>
+                                            </div>
+                                        {/function}
+                                        {function r_thumbs_view}
+                                            <div class="products-view-types__item r-hidden-desktop {if $is_view_hidden|default:0}products-view-types__item_hidden{/if}">
+                                                <span class="products-view-type image-box" data-view_type="thumbs">
+                                                    {call svg_icon classes='products-view-type__icon' icon='products-thumbs-one' width=18 height=18 fill='#BDBDBD'}
+                                                </span>
+                                            </div>
+                                        {/function}
+                                        {function r_mobile_thumbs_view}
+                                            <div class="products-view-types__item r-hidden-desktop {if $is_view_hidden|default:0}products-view-types__item_hidden{/if}">
+                                                <span class="products-view-type image-box" data-view_type="mobile-thumbs">
+                                                    {call svg_icon classes='products-view-type__icon' icon='products-thumbs' width=18 height=18 fill='#BDBDBD'}
+                                                </span>
+                                            </div>
+                                        {/function}
+                                        {if $is_enabled_view_thumbs}
+                                            <div class="products-view-types__item r-hidden-md">
+                                                <span class="products-view-type {if $view_type === 'thumbs'}products-view-type_active{/if} image-box" data-view_type="thumbs">
+                                                    {call svg_icon classes='products-view-type__icon' icon='products-thumbs' width=18 height=18 fill='#BDBDBD'}
+                                                </span>
+                                            </div>
+            							{/if}
+
+										{if $is_enabled_view_extend}
+											<div class="products-view-types__item r-hidden-md">
+												<span class="products-view-type {if $view_type === 'extend'}products-view-type_active{/if} image-box" data-view_type="extend">
+													{call svg_icon classes='products-view-type__icon' icon='products-list' width=18 height=18 fill='#BDBDBD'}
+												</span>
+											</div>
+										{/if}
+										{if $is_enabled_view_compact}
+											<div class="products-view-types__item r-hidden-md">
+												<span class="products-view-type {if $view_type === 'compact'}products-view-type_active{/if} image-box" data-view_type="compact">
+													{call svg_icon classes='products-view-type__icon' icon='products-compact-list' width=18 height=18 fill='#BDBDBD'}
+												</span>
+											</div>
+										{/if}
+
+                                        {if $wa->globals('is_mobile')}
+											{if $view_type === 'extend'}
+												{if $is_enabled_view_thumbs_adaptive}
+													{call r_thumbs_view}
+												{elseif $is_enabled_view_mobile_thumbs}
+													{call r_mobile_thumbs_view}
+												{/if}
+											{elseif $view_type === 'thumbs'}
+												{if $is_enabled_view_mobile_thumbs}
+													{call r_mobile_thumbs_view}
+												{elseif $is_enabled_view_extend_adaptive}
+													{call r_list_view}
+												{/if}
+											{elseif $view_type === 'mobile-thumbs'}
+												{if $is_enabled_view_extend_adaptive}
+													{call r_list_view}
+												{elseif $is_enabled_view_thumbs_adaptive}
+													{call r_thumbs_view}
+												{/if}
+											{/if}
+										{/if}
+									</div>
+								</div>
+							{/if}
+
+							{if $wa->globals('is_mobile') && (($is_enabled_filters && $is_show_sidebar) || $wa->param(plugin) === 'searchpro')}
+								<div class="products-bar__filters{if $wa->param(plugin) === 'searchpro'} searchpro-page__filters{/if}">
+									{* Responsive Filters Start *}
+									{capture assign='filters_selected_item_tpl'}
+										<div class="r-filters__selected-list-item"></div>
+									{/capture}
+									{capture assign='filters_selected_list_tpl'}
+										<div class="r-filters__selected-list" data-filters-selected-item-tpl="{$filters_selected_item_tpl|escape}"></div>
+									{/capture}
+									<div class="r-filters js-r-filters r-hidden-desktop" data-filters-selected-list-tpl="{$filters_selected_list_tpl|escape}">
+										<a href="javascript://" class="button button_size_l button_style_light button_fill r-filters__toggle js-r-filters__toggle">
+											<span class="icon-box">
+												<span class="r-filters__icon icon-box__icon">
+													{call svg_icon icon='tune' width=16 height=16 fill='currentColor'}
+												</span>
+												<span class="r-filters__name icon-box__content">[`Фильтры`]</span>
+											</span>
+										</a>
+									</div>
+								</div>
+								{* Responsive Filters End *}
+							{/if}
+						</div>
+					</div>
+				</div>
+			{/if}
+
+			<div class="products__spinner">
+				<span class="spinner">
+				    <span class="image-box">
+				        {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+				    </span>
+				</span>
+
+			</div>
+
+			<div class="products__content">
+				{if count($products) > 0}
+					<div class="products__list">
+						{if $view_type === 'thumbs'}
+                            {$thumbs_size = ''}
+                            {$theme_setting_thumbs_size = $theme_settings['shop_catalog_products_thumbs_large']|default:false}
+                            {$param_thumbs_size = null}
+                            {if isset($category) && is_array($category)}
+                                {$param_thumbs_size = $category.params['is_large_thumbs']|default:null}
+                            {/if}
+
+                            {if ($theme_settings['shop_catalog_products_thumbs_large'] && $param_thumbs_size === null) || $param_thumbs_size == '1'}
+                                {$thumbs_size = 'l'}
+                            {/if}
+							{call products_thumbs
+                                products=$products
+                                features_variant=$theme_settings['shop_catalog_products_thumbs_features_variant']
+								is_sidebar=$is_show_sidebar
+                                is_enabled_delete_buttons=$is_enabled_delete_buttons
+                                feature_codes=$feature_codes
+                                size=$thumbs_size
+                                category_listfeatures_set_id=$category_listfeatures_set_id
+                            }
+						{elseif $view_type === 'mobile-thumbs'}
+							{call products_thumbs products=$products features_variant=$theme_settings['shop_catalog_products_mobile_thumbs_features_variant'] feature_codes=$feature_codes category_listfeatures_set_id=$category_listfeatures_set_id is_mobile=true}
+						{elseif $view_type === 'extend' || ($view_type === 'compact' && $wa->globals('is_mobile'))}
+							{call products_extend products=$products feature_codes=$feature_codes category_listfeatures_set_id=$category_listfeatures_set_id}
+						{elseif $view_type === 'compact'}
+							{call products_compact products=$products feature_codes=$feature_codes}
+						{/if}
+					</div>
+				{else}
+					<div class="not-found-block">
+						<div class="not-found-block__header">
+							[`К сожалению`], [`ничего не найдено.`]
+						</div>
+						<div class="not-found-block__content">
+							[`Попробуйте`] <span class="pseudo-link pseudo-link_link products__reset-filters">[`сбросить фильтр`]</span> [`и начать сначала.`]
+						</div>
+					</div>
+				{/if}
+			</div>
+
+			{if $pages_count > 1}
+				{if $wa->get('page', 1) == 1}
+					<div class="products__lazy-load viewport-control">
+						<button class="products__lazy-load-button button button_style_inverse button_size_l" type="button">
+							[`Показать все`]
+						</button>
+						<span class="products__lazy-load-loading">
+							<span class="spinner">
+							    <span class="image-box">
+							        {call svg_icon classes="spinner svg-icon_stroke_primary-color" icon='spinner' width=16 height=16 fill='currentColor'}
+							    </span>
+							</span>
+
+						</span>
+					</div>
+				{/if}
+				<div class="products__pagination">
+                    {call pagination total=$pages_count}
+				</div>
+			{/if}
+
+			{if $is_enabled_banners && $bottom_banner_enabled && $has_bottom_banner_image}
+				<div class="products__bottom-banner-container">
+					<a class="image-box image-box_contain" href="{$bottom_banner_link|escape}">
+						<img src="{$bottom_banner_image_url|escape}" alt="" />
+					</a>
+				</div>
+			{/if}
+		</div>
+	</div>
+{/strip}

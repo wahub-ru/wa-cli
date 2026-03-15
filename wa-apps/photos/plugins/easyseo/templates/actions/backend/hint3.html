@@ -1,0 +1,18 @@
+{literal}
+<pre style="position: relative">
+  <h3>шаблоны для интеграции в smarty</h3>
+  h1 для альбома
+  <span class="select-all">
+  {$h1 = {(isset($h1) && $h1_forced) ? $h1 : $album.name}}
+  &lt;h1 class=&quot;album-name&quot; itemprop=&quot;name&quot;&gt;{$h1|escape}&lt;/h1&gt;
+  </span>
+
+  h1 для фото
+  <span class="select-all">
+  {$h1 = {(isset($h1) && $h1_forced) ? $h1 : $photo.name}}
+  &lt;h1 class=&quot;photo-name&quot; itemprop=&quot;name&quot;&gt;{$h1|escape}&lt;/h1&gt;
+  </span>
+
+
+</pre>
+{/literal}

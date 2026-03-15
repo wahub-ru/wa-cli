@@ -1,0 +1,660 @@
+{literal}
+<style>
+/* ─── без изменений ─── */
+.tgc-wrap{display:flex; gap:0; height:calc(100vh - 140px); min-height:520px; border:1px solid #e6e6e6; border-radius:8px; overflow:hidden;}
+.tgc-left{width:320px; border-right:1px solid #e6e6e6; background:#fafafa; display:flex; flex-direction:column;}
+.tgc-left .tgc-search{padding:10px; border-bottom:1px solid #eee;}
+.tgc-left .tgc-search input{width:100%; padding:8px 10px; border:1px solid #ddd; border-radius:6px;}
+.tgc-list{list-style:none; margin:0; padding:0; overflow:auto;}
+.tgc-item{padding:10px 12px; border-bottom:1px solid #f0f0f0; cursor:pointer; display:grid; grid-template-columns:1fr auto; grid-template-areas:"name date" "last last"; gap:2px 8px;}
+.tgc-item:hover{background:#f2f6ff;}
+.tgc-item.active{background:#e8f0ff;}
+.tgc-name{grid-area:name; font-weight:600; display:flex; align-items:center; gap:8px;}
+.tgc-name-text{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.tgc-unread-dot{width:8px; height:8px; border-radius:50%; background:#ff3b30; flex:0 0 auto;}
+.tgc-unread-dot.is-hidden{display:none;}
+.tgc-item.is-unread .tgc-unread-dot{animation:tgc-blink 1.1s linear infinite;}
+.tgc-last{grid-area:last; font-size:12px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;}
+.tgc-date{grid-area:date; font-size:12px; color:#999; margin-left:8px;}
+.tgc-right{flex:1; display:flex; flex-direction:column; background:#eef3f9;}
+.tgc-chat-head{padding:10px 12px; border-bottom:1px solid #e6e6e6; display:flex; align-items:center; gap:10px; background:#fff;}
+.tgc-chat-head .tgc-head-btn{height:30px; line-height:28px; padding:0 10px; font-size:12px}
+
+/* ─── правки тут ─── */
+/* делаем контейнер сообщений флекс-колонкой, чтобы align-self работал */
+.tgc-chat-body{flex:1; padding:14px; overflow:auto; display:flex; flex-direction:column;}
+/* фикс. ширина облачка = 45% */
+.tgc-bubble{width:45%; padding:8px 12px; border-radius:16px; margin:8px 0; position:relative; word-wrap:break-word; white-space:pre-wrap; background:#fff; color:#222;}
+/* левое облако — к левому краю */
+.tgc-leftmsg{align-self:flex-start; border-top-left-radius:4px; margin-right:auto;}
+/* правое облако — к правому краю */
+.tgc-rightmsg{align-self:flex-end; border-top-right-radius:4px; background:#d1f5d3; color:#0b3d0b; margin-left:auto;}
+/* подписи/время */
+.tgc-meta{font-size:12px; color:#666; margin-bottom:4px;}
+.tgc-rightmsg .tgc-meta{ text-align:right; color:#276b27; }
+.tgc-meta a{ color:inherit; text-decoration:none; border-bottom:1px dotted currentColor; }
+.tgc-time{display:inline-block; font-size:11px; opacity:.8; margin-left:8px;}
+.tgc-empty{display:flex; align-items:center; justify-content:center; flex:1; color:#777;}
+.tgc-reply{border-top:1px solid #e6e6e6;padding:10px;background:#fff;display:flex;gap:8px;align-items:flex-end}
+.tgc-reply textarea{flex:1;min-height:42px;max-height:140px;resize:vertical}
+.tgc-reply .tgc-send-btn{height:36px;padding:0 14px;line-height:34px;font-size:13px}
+.tgc-toast-wrap{position:fixed;top:20px;right:20px;z-index:2147483647;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 40px);overflow:auto;pointer-events:none}
+.tgc-toast{min-width:280px;max-width:360px;padding:12px 14px;border-radius:10px;background:#c3ffa0;border:1px solid #d7e2f2;box-shadow:0 12px 30px rgba(0,0,0,.14);cursor:pointer;pointer-events:auto}
+.tgc-toast:hover{background:#f7fbff}
+.tgc-toast-title{font-size:13px;font-weight:700;color:#1f2d3d;margin-bottom:4px}
+.tgc-toast-text{font-size:12px;color:#516173;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes tgc-blink{
+  0%,100%{opacity:1}
+  50%{opacity:.2}
+}
+</style>
+{/literal}
+
+
+<div class="tgc-wrap" id="tgc-root">
+  <div class="tgc-left">
+    <div class="tgc-search">
+      <input type="text" id="tgc-q" placeholder="Поиск по имени или сообщению…">
+    </div>
+    <ul class="tgc-list" id="tgc-list">
+      {foreach $chats as $c}
+        <li class="tgc-item{if !empty($c.unread)} is-unread{/if}" data-id="{$c.id|escape}" data-unread="{if !empty($c.unread)}1{else}0{/if}" data-ts="{$c.last_created_ts|default:0|escape}" data-notify-ts="{$c.notify_created_ts|default:$c.last_created_ts|escape}" data-notify-id="{$c.notify_message_id|default:$c.last_visitor_id|default:0|escape}">
+          <div class="tgc-name">
+            <span class="tgc-unread-dot{if empty($c.unread)} is-hidden{/if}"></span>
+            <span class="tgc-name-text">{if $c.display_name}{$c.display_name|escape}{else}Гость{/if}</span>
+          </div>
+          <div class="tgc-last">{$c.last_text|default:"(без сообщений)"|escape}</div>
+          <div class="tgc-date">{$c.last_created_fmt|default:''|escape}</div>
+        </li>
+      {/foreach}
+    </ul>
+  </div>
+
+  <div class="tgc-right">
+    <div class="tgc-chat-head">
+      <strong id="tgc-chat-title">Выберите диалог</strong>
+      <button id="tgc-mark-read" class="button small tgc-head-btn" style="margin-left:auto; display:none;">Отметить прочитанным</button>
+      <button id="tgc-del" class="button red small tgc-head-btn" style="display:none;">Удалить</button>
+    </div>
+    <div id="tgc-chat-body" class="tgc-chat-body">
+      <div class="tgc-empty">Справа будет выбранный диалог</div>
+    </div>
+    <form id="tgc-reply-form" class="tgc-reply" style="display:none;">
+      {$wa->csrf()}
+      <input type="hidden" name="chat_id" id="tgc-reply-chat-id" value="">
+      <textarea name="text" id="tgc-reply-text" rows="2" placeholder="Написать ответ посетителю…" required></textarea>
+      <button type="submit" class="button green tgc-send-btn" id="tgc-reply-send">Отправить</button>
+    </form>
+  </div>
+</div>
+
+<div class="tgc-toast-wrap" id="tgc-toast-wrap"></div>
+
+<!-- CSRF токен для AJAX -->
+<form id="tgc-csrf" style="display:none;">{$wa->csrf()}</form>
+
+{literal}
+<script>
+(function(){
+  function ready(handler){
+    if (window.jQuery) { jQuery(handler); }
+    else { document.addEventListener('DOMContentLoaded', function(){ if (window.jQuery) jQuery(handler); }); }
+  }
+
+  ready(function($){
+    var $list   = $('#tgc-list');
+    var $title  = $('#tgc-chat-title');
+    var $body   = $('#tgc-chat-body');
+    var $btnMarkRead = $('#tgc-mark-read');
+    var $btnDel = $('#tgc-del');
+    var $toastWrap = $('#tgc-toast-wrap');
+    var $csrf   = $('#tgc-csrf input[name="_csrf"]');
+    var $replyForm = $('#tgc-reply-form');
+    var $replyText = $('#tgc-reply-text');
+    var $replyChat = $('#tgc-reply-chat-id');
+    var $replySend = $('#tgc-reply-send');
+    var currentId = null;
+    var currentChatMeta = null;
+    var lastRenderedMessageId = 0;
+
+    function esc(s){ return $('<div>').text(String(s==null?'':s)).html(); }
+
+    // URL на основе текущего (сохраняет module=backend), меняем только action
+    function buildUrl(action, extra){
+      var u = new URL(window.location.href);
+      u.searchParams.set('action', action);
+      if (extra) { for (var k in extra) if (extra.hasOwnProperty(k)) u.searchParams.set(k, extra[k]); }
+      return u.pathname + '?' + u.searchParams.toString();
+    }
+    var URL_CHAT   = buildUrl('chat');    // ?json=1 добавим в запросе
+    var URL_DELETE = buildUrl('delete');  // POST
+    var URL_MARK_READ = buildUrl('markread'); // POST
+    var URL_MARK_READ_ALT = buildUrl('markRead'); // POST fallback
+    var URL_REPLY  = buildUrl('reply');   // POST
+    var URL_CHATS  = buildUrl('chats');   // GET ?json=1
+
+    var knownChats = {};
+    var toastSerial = 0;
+    var bootTs = Math.floor(Date.now() / 1000);
+    var freshWindow = 15;
+
+    function currentListItem() {
+      if (!currentId) return $();
+      return $list.find('.tgc-item[data-id="'+currentId+'"]');
+    }
+
+    function rememberChatState(chat) {
+      var id = parseInt(chat && chat.id, 10) || 0;
+      if (!id) return;
+      knownChats[id] = {
+        ts: parseTs(chat.notify_created_ts || chat.last_created_ts),
+        notifyId: parseInt(chat.notify_message_id, 10) || 0,
+        unread: !!chat.unread,
+        lastText: chat.last_text || '',
+        displayName: chat.display_name || 'Гость'
+      };
+    }
+
+    function removeToast(toastId) {
+      var key = String(toastId || '');
+      if (!key) return;
+      $toastWrap.find('.tgc-toast[data-toast-id="'+key+'"]')
+        .stop(true, true)
+        .fadeOut(180, function(){ $(this).remove(); });
+    }
+
+    function showIncomingToast(chat) {
+      var chatId = parseInt(chat && chat.id, 10) || 0;
+      if (!chatId) return;
+
+      toastSerial += 1;
+      var toastId = 'toast-' + toastSerial;
+      var title = chat.display_name || 'Гость';
+      var text = chat.notify_text || chat.last_text || 'Новое сообщение';
+      var $toast = $('<div class="tgc-toast" data-toast-id="'+toastId+'">' +
+        '<div class="tgc-toast-title">Новое сообщение: ' + esc(title) + '</div>' +
+        '<div class="tgc-toast-text">' + esc(text) + '</div>' +
+      '</div>');
+
+      $toast.on('click', function(){
+        removeToast(toastId);
+        loadChat(chatId);
+      });
+
+      $toastWrap.append($toast);
+    }
+
+    function checkIncomingChats(chats) {
+      if (!Array.isArray(chats)) return;
+      for (var i = 0; i < chats.length; i++) {
+        var chat = chats[i] || {};
+        var id = parseInt(chat.id, 10) || 0;
+        if (!id) continue;
+
+        var nextTs = parseTs(chat.notify_created_ts || chat.last_created_ts);
+        var nextNotifyId = parseInt(chat.notify_message_id, 10) || 0;
+        var prev = knownChats[id] || null;
+        var isFreshInitialMessage = !!chat.unread && !prev && nextTs >= (bootTs - freshWindow);
+        var hasNewVisitorMessage = !!chat.unread && nextNotifyId > (prev ? (prev.notifyId || 0) : 0);
+        if (hasNewVisitorMessage || isFreshInitialMessage) {
+          showIncomingToast(chat);
+        }
+        rememberChatState(chat);
+      }
+    }
+
+    function isItemUnread($item) {
+      return (parseInt($item.attr('data-unread'), 10) || 0) === 1;
+    }
+
+    function refreshMarkReadButton() {
+      if (!currentId) {
+        $btnMarkRead.hide();
+        return;
+      }
+      var $item = currentListItem();
+      if (!$item.length || !isItemUnread($item)) {
+        $btnMarkRead.hide();
+        return;
+      }
+      $btnMarkRead.show();
+    }
+
+    function parseTs(input) {
+      var ts = parseInt(input, 10);
+      if (!isNaN(ts) && ts > 0) return ts;
+      return 0;
+    }
+
+    function sortChatList() {
+      var items = $list.children('.tgc-item').get();
+      items.sort(function(a, b){
+        var $a = $(a);
+        var $b = $(b);
+        var unreadA = parseInt($a.attr('data-unread'), 10) || 0;
+        var unreadB = parseInt($b.attr('data-unread'), 10) || 0;
+        if (unreadA !== unreadB) {
+          return unreadB - unreadA;
+        }
+
+        var tsA = parseInt($a.attr('data-ts'), 10) || 0;
+        var tsB = parseInt($b.attr('data-ts'), 10) || 0;
+        if (tsA !== tsB) {
+          return tsB - tsA;
+        }
+
+        var idA = parseInt($a.attr('data-id'), 10) || 0;
+        var idB = parseInt($b.attr('data-id'), 10) || 0;
+        return idB - idA;
+      });
+
+      for (var i = 0; i < items.length; i++) {
+        $list.append(items[i]);
+      }
+    }
+
+    function setUnread($item, unread) {
+      $item.attr('data-unread', unread ? '1' : '0');
+      $item.toggleClass('is-unread', !!unread);
+      $item.find('.tgc-unread-dot').toggleClass('is-hidden', !unread);
+      if (currentId && parseInt($item.attr('data-id'), 10) === parseInt(currentId, 10)) {
+        refreshMarkReadButton();
+      }
+    }
+
+    function upsertListItem(chat) {
+      var id = parseInt(chat.id, 10) || 0;
+      if (!id) return $();
+
+      var $item = $list.find('.tgc-item[data-id="'+id+'"]');
+      if (!$item.length) {
+        $item = $('<li class="tgc-item" data-id="'+id+'" data-unread="0" data-ts="0">' +
+          '<div class="tgc-name"><span class="tgc-unread-dot is-hidden"></span><span class="tgc-name-text"></span></div>' +
+          '<div class="tgc-last"></div>' +
+          '<div class="tgc-date"></div>' +
+        '</li>');
+      }
+
+      var ts = parseTs(chat.last_created_ts);
+      var notifyTs = parseTs(chat.notify_created_ts || chat.last_created_ts);
+      var notifyId = parseInt(chat.notify_message_id, 10) || 0;
+      $item.attr('data-ts', ts > 0 ? String(ts) : '0');
+      $item.attr('data-notify-ts', notifyTs > 0 ? String(notifyTs) : '0');
+      $item.attr('data-notify-id', notifyId > 0 ? String(notifyId) : '0');
+      $item.find('.tgc-name-text').text(chat.display_name || 'Гость');
+      $item.find('.tgc-last').text(chat.last_text || '(без сообщений)');
+      $item.find('.tgc-date').text(chat.last_created || '');
+      setUnread($item, !!chat.unread);
+
+      return $item;
+    }
+
+    function syncChatList(chats) {
+      if (!Array.isArray(chats)) return;
+
+      checkIncomingChats(chats);
+
+      var used = {};
+      for (var i = 0; i < chats.length; i++) {
+        var chat = chats[i] || {};
+        var id = parseInt(chat.id, 10) || 0;
+        if (!id) continue;
+        used[id] = true;
+
+        var $item = upsertListItem(chat);
+        if (!$item.length) continue;
+        $list.append($item);
+
+        if (currentId && id === parseInt(currentId, 10)) {
+          $item.addClass('active');
+        }
+      }
+
+      $list.find('.tgc-item').each(function(){
+        var id = parseInt($(this).data('id'), 10) || 0;
+        if (id && !used[id]) {
+          $(this).remove();
+        }
+      });
+
+      sortChatList();
+      refreshMarkReadButton();
+      $('#tgc-q').triggerHandler('input');
+    }
+
+    function appendMsg(m, chatMeta){
+      var visitorName = chatMeta.customer_name || 'Гость';
+      var visitorUrl  = chatMeta.customer_url || '';
+      var managerName = chatMeta.manager_name || 'Менеджер';
+      var isManager = (m.sender === 'manager');
+
+      var side = isManager ? 'tgc-rightmsg' : 'tgc-leftmsg';
+      var $b = $('<div class="tgc-bubble '+side+'">');
+
+      var label = m.author_name || (isManager ? managerName : visitorName);
+      var $meta = $('<div class="tgc-meta">');
+      if (!isManager && visitorUrl) {
+        $meta.append('<a href="'+esc(visitorUrl)+'" target="_blank">'+esc(label)+'</a>');
+      } else {
+        $meta.append(esc(label));
+      }
+      $meta.append('<span class="tgc-time">'+esc(m.created || '')+'</span>');
+      $b.append($meta);
+
+      $b.append(document.createTextNode(m.text || ''));
+      $body.append($b);
+      var msgId = parseInt(m.id, 10) || 0;
+      if (msgId > lastRenderedMessageId) {
+        lastRenderedMessageId = msgId;
+      }
+    }
+
+    function isNearBottom() {
+      return ($body.prop('scrollHeight') - $body.innerHeight() - $body.scrollTop()) < 64;
+    }
+
+    function renderMsgs(msgs, chatMeta){
+      $body.empty();
+      lastRenderedMessageId = 0;
+      if (!msgs || !msgs.length) {
+        $body.append('<div class="tgc-empty">Пока нет сообщений</div>');
+        return;
+      }
+
+      for (var i = 0; i < msgs.length; i++){
+        appendMsg(msgs[i], chatMeta);
+      }
+      $body.scrollTop($body.prop('scrollHeight'));
+    }
+
+    function appendNewMsgs(msgs, chatMeta){
+      if (!msgs || !msgs.length) {
+        return;
+      }
+
+      var stickToBottom = isNearBottom();
+      if ($body.find('.tgc-empty').length) {
+        $body.empty();
+        stickToBottom = true;
+      }
+
+      var appended = 0;
+      for (var i = 0; i < msgs.length; i++) {
+        var message = msgs[i] || {};
+        var msgId = parseInt(message.id, 10) || 0;
+        if (msgId && msgId <= lastRenderedMessageId) {
+          continue;
+        }
+        appendMsg(message, chatMeta);
+        appended++;
+      }
+
+      if (appended && stickToBottom) {
+        $body.scrollTop($body.prop('scrollHeight'));
+      }
+    }
+
+    function loadChat(id){
+      if (!id) return;
+      lastRenderedMessageId = 0;
+      currentId = id;
+      $list.find('.tgc-item').removeClass('active');
+      $list.find('.tgc-item[data-id="'+id+'"]').addClass('active');
+
+      $.get(URL_CHAT, { id:id, json:1 }, function(r){
+        if (!r || r.status !== 'ok') { alert((r&&r.error)||'Не удалось загрузить диалог'); return; }
+        var chat = r.chat || {};
+        currentChatMeta = chat;
+        $title.text(chat.title ? chat.title : ('Диалог #'+chat.id));
+        renderMsgs(r.messages || [], chat);
+        refreshMarkReadButton();
+        $btnDel.show();
+        $replyChat.val(chat.id || id);
+        $replyForm.show();
+      }, 'json').fail(function(xhr){
+        if (window.console && console.error) console.error('tgconsult: load chat failed', xhr.status, xhr.responseText);
+        alert('Ошибка запроса диалога');
+      });
+    }
+
+    var currentChatPollBusy = false;
+    function pollCurrentChat(){
+      if (!currentId) {
+        setTimeout(pollCurrentChat, 3000);
+        return;
+      }
+      if (currentChatPollBusy) {
+        setTimeout(pollCurrentChat, 3000);
+        return;
+      }
+
+      currentChatPollBusy = true;
+      $.get(URL_CHAT, { id: currentId, json: 1, after_id: lastRenderedMessageId }, function(r){
+        if (!r || r.status !== 'ok') {
+          return;
+        }
+
+        var chat = r.chat || {};
+        currentChatMeta = chat;
+        if (currentId && parseInt(currentId, 10) === parseInt(chat.id, 10)) {
+          $title.text(chat.title ? chat.title : ('Диалог #'+chat.id));
+          appendNewMsgs(r.messages || [], chat);
+        }
+      }, 'json').always(function(){
+        currentChatPollBusy = false;
+        setTimeout(pollCurrentChat, 3000);
+      });
+    }
+
+    // Клики по списку — только AJAX, без переходов
+    $list.on('click', '.tgc-item, .tgc-item *', function(e){
+      e.preventDefault(); e.stopPropagation();
+      var id = $(this).closest('.tgc-item').data('id');
+      loadChat(id);
+      return false;
+    });
+    $list.on('click', 'a', function(e){ e.preventDefault(); e.stopPropagation(); return false; });
+
+    // Поиск слева
+    $('#tgc-q').on('input', function(){
+      var q = ($(this).val() || '').toLowerCase();
+      $list.find('.tgc-item').each(function(){
+        var txt = ($(this).text() || '').toLowerCase();
+        $(this).toggle(txt.indexOf(q) !== -1);
+      });
+    });
+
+    $replyForm.on('submit', function(e){
+      e.preventDefault();
+      if (!currentId) return;
+
+      var text = ($replyText.val() || '').trim();
+      if (!text) return;
+
+      $replySend.prop('disabled', true);
+      $.ajax({
+        url: URL_REPLY,
+        type: 'POST',
+        dataType: 'json',
+        data: {
+          chat_id: currentId,
+          text: text,
+          _csrf: ($csrf.val() || '')
+        }
+      }).done(function(r){
+        var payload = (r && r.data) ? r.data : r;
+        var status = (r && r.status) ? r.status : ((payload && payload.status) ? payload.status : 'ok');
+        if (!payload || status !== 'ok') {
+          alert((r && r.errors && r.errors[0]) || (payload && payload.errors && payload.errors[0]) || (r && r.error) || (payload && payload.error) || 'Не удалось отправить сообщение');
+          return;
+        }
+
+        var createdTs = parseTs(payload.created_ts);
+        if (createdTs <= 0 && payload.created_raw) {
+          var parsedMs = Date.parse(String(payload.created_raw).replace(' ', 'T'));
+          if (!isNaN(parsedMs)) {
+            createdTs = Math.floor(parsedMs / 1000);
+          }
+        }
+        var msg = {
+          id: payload.id || 0,
+          sender: 'manager',
+          text: payload.text || text,
+          created: payload.created || '',
+          author_name: payload.author_name || ((currentChatMeta && currentChatMeta.manager_name) || 'Менеджер')
+        };
+        if ($body.find('.tgc-empty').length) {
+          $body.empty();
+        }
+        appendMsg(msg, currentChatMeta || {});
+        $body.scrollTop($body.prop('scrollHeight'));
+        $replyText.val('').focus();
+
+        var $it = $list.find('.tgc-item[data-id="'+currentId+'"]');
+        if ($it.length) {
+          $it.find('.tgc-last').text(msg.text);
+          if (msg.created) {
+            $it.find('.tgc-date').text(msg.created);
+          }
+          if (createdTs > 0) {
+            $it.attr('data-ts', String(createdTs));
+          }
+          setUnread($it, false);
+          sortChatList();
+        }
+      }).fail(function(xhr){
+        if (window.console && console.error) console.error('tgconsult: reply failed', xhr.status, xhr.responseText);
+        alert('Ошибка сети при отправке ответа');
+      }).always(function(){
+        $replySend.prop('disabled', false);
+      });
+    });
+
+    function doMarkRead(url, onDone, onFail) {
+      $.ajax({
+        url: url,
+        type: 'POST',
+        dataType: 'json',
+        data: { chat_id: currentId, _csrf: ($csrf.val() || ''), csrf: ($csrf.val() || '') }
+      }).done(onDone).fail(onFail);
+    }
+
+    $btnMarkRead.on('click', function(e){
+      e.preventDefault();
+      if (!currentId) return;
+
+      var $it = currentListItem();
+      if (!$it.length || !isItemUnread($it)) return;
+
+      var done = function(r){
+        var payload = (r && r.data) ? r.data : r;
+        var status = (r && r.status) ? r.status : ((payload && payload.status) ? payload.status : 'ok');
+        if (!payload || status !== 'ok') {
+          alert((r && r.errors && r.errors[0]) || (payload && payload.errors && payload.errors[0]) || (r && r.error) || (payload && payload.error) || 'Не удалось отметить диалог прочитанным');
+          return;
+        }
+
+        var $item = currentListItem();
+        if ($item.length) {
+          setUnread($item, false);
+          sortChatList();
+        }
+      };
+
+      doMarkRead(URL_MARK_READ, done, function(xhr){
+        // fallback для инсталляций, где action зарегистрирован как markRead
+        doMarkRead(URL_MARK_READ_ALT, done, function(xhr2){
+          if (window.console && console.error) console.error('tgconsult: markRead failed', xhr.status, xhr.responseText, xhr2.status, xhr2.responseText);
+          alert('Ошибка сети при отметке диалога');
+        });
+      });
+    });
+
+    // Удаление диалога
+    $btnDel.on('click', function(e){
+      e.preventDefault();
+      if (!currentId) return;
+      if (!confirm('Удалить диалог #'+currentId+' и все его сообщения? Это действие необратимо.')) return;
+
+      $.ajax({
+        url: URL_DELETE,
+        type: 'POST',
+        dataType: 'json',
+        data: { id: currentId, _csrf: ($csrf.val() || '') }
+      }).done(function(r){
+        if (!r || r.status !== 'ok') {
+          alert((r && r.errors && r.errors[0]) || (r && r.error) || 'Не удалось удалить диалог');
+          return;
+        }
+        // убрать из списка
+        var $it = $list.find('.tgc-item[data-id="'+currentId+'"]');
+        var $next = $it.nextAll('.tgc-item:visible').first();
+        if (!$next.length) $next = $it.prevAll('.tgc-item:visible').first();
+        $it.remove();
+
+        // очистить правую часть
+        $title.text('Выберите диалог');
+        $body.empty().append('<div class="tgc-empty">Справа будет выбранный диалог</div>');
+        $btnMarkRead.hide();
+        $btnDel.hide();
+        $replyForm.hide();
+        $replyChat.val('');
+        $replyText.val('');
+        currentChatMeta = null;
+        var nextId = $next.length ? $next.data('id') : null;
+        currentId = null;
+
+        // если есть соседний — подгрузим
+        if (nextId) loadChat(nextId);
+      }).fail(function(xhr){
+        if (window.console && console.error) console.error('tgconsult: delete failed', xhr.status, xhr.responseText);
+        alert('Ошибка сети при удалении');
+      });
+    });
+
+    var chatsPollBusy = false;
+    function pollChats(){
+      if (chatsPollBusy) {
+        setTimeout(pollChats, 5000);
+        return;
+      }
+      chatsPollBusy = true;
+      $.get(URL_CHATS, { json: 1 }, function(r){
+        if (r && r.status === 'ok') {
+          syncChatList(r.chats || []);
+        }
+      }, 'json').always(function(){
+        chatsPollBusy = false;
+        setTimeout(pollChats, 5000);
+      });
+    }
+
+    // Автоподгрузка первого диалога
+    $list.find('.tgc-item').each(function(){
+      var $item = $(this);
+      var chatId = parseInt($item.attr('data-id'), 10) || 0;
+      if (!chatId) return;
+      knownChats[chatId] = {
+        ts: parseTs($item.attr('data-notify-ts') || $item.attr('data-ts')),
+        notifyId: parseInt($item.attr('data-notify-id'), 10) || 0,
+        unread: isItemUnread($item),
+        lastText: $item.find('.tgc-last').text() || '',
+        displayName: $item.find('.tgc-name-text').text() || 'Гость'
+      };
+    });
+    sortChatList();
+    var preferredChatId = 0;
+    try {
+      preferredChatId = parseInt((new URL(window.location.href)).searchParams.get('chat_id'), 10) || 0;
+    } catch (e) {}
+    var $first = preferredChatId ? $list.find('.tgc-item[data-id="'+preferredChatId+'"]').first() : $();
+    if (!$first.length) {
+      $first = $list.find('.tgc-item:visible').first();
+    }
+    if ($first.length) loadChat($first.data('id'));
+    pollChats();
+    pollCurrentChat();
+  });
+})();
+</script>
+{/literal}

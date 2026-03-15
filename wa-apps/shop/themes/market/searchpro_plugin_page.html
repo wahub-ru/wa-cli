@@ -1,0 +1,74 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Variables *}
+    {$wa->globals('is_show_sidebar', true)}
+    {$filters = $wa->globals('market_searchpro_filters')}
+    {$is_enabled_filters = !empty($filters) && count($filters) > 0}
+    {$is_show_sidebar = !!$theme_settings['shop_catalog_sidebar_enabled']}
+
+    {* Template *}
+    <div class="searchpro-page{if !$is_enabled_filters || !$is_show_sidebar} searchpro-page_no-filters{/if}" id="{$id}">
+        <div class="searchpro-page__header-container">
+            {$page_h1}
+        </div>
+        <div class="searchpro-page__description-container">
+            <div class="content-decorator">
+                <p>
+                    {call plural forms=["{_wp("Найден")}", "{_wp("Найдено")}", "{_wp("Найдено")}"] n=$products_count} {$products_count} {call plural forms=["{_wp("товар")}", "{_wp("товара")}", "{_wp("товаров")}"] n=$products_count}
+                {' '}
+                {if $is_in_category}
+                    {$category = $wa->shop->category($category_id)}
+                    [`в категории`]
+                    {' '}
+                    <a href="{$wa->shop->categoryUrl($category)}">{$category.name}</a>
+                    .
+                    {' '}
+                    [`Если в этой категории нет нужного товара`], [`посмотрите`]
+                    {' '}
+                    <a href="{$all_results_url}">
+                        [`все результаты поиска`]
+                    </a>
+                {elseif $categories_count > 1}
+                    [`в`]
+                    {' '}
+                    {$categories_count}
+                    {' '}
+                    [`категориях`]
+                {/if}
+                </p>
+            </div>
+        </div>
+        <div class="searchpro-page__categories-container">
+            {if !$is_in_category && $category_status && !empty($categories) && count($categories) > 1 && $category_mode === 'inline'}
+                {$_categories = []}
+                {foreach $categories as $category_id => $category}
+                    {if !$category.name}
+                        {continue}
+                    {/if}
+                    {$_categories[$category_id] = $category}
+                {/foreach}
+                {$categories = $_categories}
+
+                {if $category_inline_mode_style === 'images'}
+                    {call categories_thumbs
+                        categories=$categories
+                        show_logo=true
+                        show_real_count=true
+                        use_url_field='search_url'
+                    }
+                {else}
+                    {call categories_mini
+                        categories=$categories
+                        show_real_count=true
+                        use_url_field='search_url'
+                    }
+                {/if}
+            {/if}
+        </div>
+
+        <div class="search-page__content-container">
+            {$page_content}
+        </div>
+    </div>
+{/strip}

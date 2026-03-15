@@ -1,0 +1,429 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$is_pin = !empty($pin_required)}
+
+    {if $is_pin}
+        {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Заказ")} {$encoded_order_id}"])}
+        <div class="my-order-page block">
+            <h1 class="block__header block__header_text">
+                [`Заказ`] {$encoded_order_id}
+            </h1>
+            <div class="block__content">
+                <form class="form" action="" method="post">
+                    <div class="form__group">
+                        <div class="content-decorator">
+                            [`Введите четырехзначный`] PIN-[`код`], [`который был отправлен вам в уведомлении о заказе по электронной почте.`]
+                        </div>
+                    </div>
+                    <div class="form__group">
+                        <div class="form__fields">
+                            <div class="form__field">
+                                <div class="form-field form-field_size_s">
+                                    <div class="form-field__name-container">
+                                        PIN
+                                    </div>
+                                    <div class="form-field__content-container">
+                                        <input type="text" class="input-text {if $wrong_pin}input-text_error{/if}" name="pin" placeholder="PIN">
+                                        {if $wrong_pin}
+                                            <div class="form-field__error-container">PIN-[`код введен неверно`]</div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form__group">
+                        <button class="button">[`Посмотреть заказ`]</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {else}
+        {* Theme Settings *}
+        {$shipping_mode = $theme_settings['shop_my_order_shipping_mode']}
+        {$discount_mode = $theme_settings['shop_my_order_discount_mode']}
+
+        {* Variables *}
+        {$plugins = $wa->globals('plugins')|default:[]}
+        {$is_enabled_increase = $plugins['shop_increase']}
+
+        {$is_show_shipping = $shipping_mode === 'always'}
+        {if $shipping_mode === 'not_zero'}
+            {$is_show_shipping = $order.shipping > 0}
+        {/if}
+
+        {$is_show_discount = $discount_mode === 'always'}
+        {if $discount_mode === 'not_zero'}
+            {$is_show_discount = $order.discount > 0}
+        {/if}
+
+        {$comission = 0}
+        {$comission_label = _wp("Комиссия")}
+
+        {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Заказ")} {$order.id_str}"])}
+
+        {$product_ids = []}
+
+        {if isset($order.items)}
+            {$_items = $order.items}
+            {$order.items = []}
+
+            {foreach $_items as $i => $item}
+                {if $is_enabled_increase && $item.product_id === '2147483647' && $item.sku_id === '2147483647'}
+                    {* Скорее всего, комиссия из плагина "Комиссия/Скидка по способу оплаты" *}
+                    {$comission = $item.price|floatval}
+                    {$comission_label = $item.name}
+                    {continue}
+                {/if}
+
+                {if $item.type === 'product'}
+                    {$product = $wa->shop->product($item.product_id)}
+                    {$product_url = {call get_product_url product=$product}}
+
+                    {$item['product_url'] = $product_url|default:''}
+
+                    {$has_image = isset($product.image_id) && $product.image_id != NULL}
+                    {if $has_image}
+                        {$item['image_url'] = $wa->shop->productImgUrl($product, '60')}
+                    {/if}
+                {/if}
+
+                {if $item.type === 'service'}
+                    {$order.items[$item.parent_id]['services'][$item.service_id] = $item}
+                {else}
+                    {$order.items[$i] = $item}
+                    {$order.items[$i]['services'] = []}
+                {/if}
+            {/foreach}
+        {/if}
+
+        {if $comission}
+            {$subtotal = $subtotal - $comission}
+        {/if}
+
+        <div class="my-order-page block">
+            <h1 class="block__header block__header_text">
+                [`Заказ`] {$order.id_str}
+            </h1>
+            <div class="block__content">
+                <div class="my-order-page__status-container">
+                    {$style = $order.state->getOption('style')}
+                    [`Статус`]:
+                    {' '}
+                    <span class="my-order-page__status" style="color: {$style['color']}">{$order.state->getName()}</span>
+                </div>
+
+                <div class="my-order-page__date-container">
+                    [`Дата заказа`]:
+                    {' '}
+                    <span class="my-order-page__date">{$order.create_datetime|wa_date:'j f Y / H:i'}</span>
+                </div>
+
+                <div class="my-order-page__contact-container">
+                    {call contact_block contact=$contact size='l'}
+                </div>
+
+                <div class="my-order-page__address-container">
+                    {if $shipping_address || $billing_address}
+                        <div class="my-order-page__addresses">
+                            {if $shipping_address}
+                                <div class="my-order-page__address">
+                                    <div class="block block_secondary block_size_xs">
+                                        <div class="block__header block__header_text">
+                                            [`Адрес получателя`]
+                                        </div>
+                                        <div class="block__content">
+                                            <div class="my-order-page__address-content">
+                                                {$shipping_address}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                            {if $billing_address}
+                                <div class="my-order-page__address">
+                                    <div class="block block_secondary block_size_xs">
+                                        <div class="block__header block__header_text">
+                                            [`Адрес плательщика`]
+                                        </div>
+                                        <div class="block__content">
+                                            <div class="my-order-page__address-content">
+                                                {$billing_address}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    {/if}
+                </div>
+
+                {if $order.shipping_name}
+                    <div class="my-order-page__shipping-container" data-shipping_id="{$order.params.shipping_id|default:''|escape}">
+                        [`Доставка`]:
+                        {' '}
+                        <span class="my-order-page__shipping">{$order.shipping_name}</span>
+                    </div>
+                {/if}
+
+                {if !empty($order.params.tracking_number)}
+                    <div class="my-order-page__tracking-number-container" data-shipping_id="{$order.params.shipping_id|default:''|escape}">
+                        [`Номер отправления`]:
+                        {' '}
+                        <span class="my-order-page__tracking-number">{$order.params.tracking_number}</span>
+                    </div>
+                {/if}
+
+                {if !empty($tracking) && $order.state->getId() != 'completed'}
+                    <div class="my-order-page__tracking-container" data-shipping_id="{$order.params.shipping_id|default:''|escape}">
+                        {$tracking}
+                    </div>
+                {/if}
+
+                {if $order.payment_name}
+                    <div class="my-order-page__payment-container" data-payment_id="{$order.params.payment_id|default:''|escape}">
+                        [`Оплата`]:
+                        {' '}
+                        <span class="my-order-page__payment">{$order.payment_name}</span>
+                    </div>
+                {/if}
+
+                {if !empty($payment)}
+                    <div class="my-order-page__payment-plugin-container content-decorator" data-payment_id="{$order.params.payment_id|default:''|escape}">
+                        {$payment}
+                        <div class="content-decorator__trigger"></div>
+                    </div>
+                {/if}
+
+                <div class="my-order-page__items-container">
+                    <div class="order-items-table table table_responsive">
+                        <div class="order-items-table__head table__head">
+                            <div class="order-items-table__row order-list-item table__row">
+                                <div class="table__head-cell order-items-table__cell order-items-table__cell_sku">[`Артикул`]</div>
+                                <div class="table__head-cell order-items-table__cell order-items-table__cell_image"></div>
+                                <div class="table__head-cell order-items-table__cell order-items-table__cell_name">[`Наименование товара`]</div>
+                                <div class="table__head-cell order-items-table__cell order-items-table__cell_quantity">[`Quantity`]</div>
+                                <div class="table__head-cell order-items-table__cell order-items-table__cell_total">[`Total`]</div>
+                            </div>
+                        </div>
+                        <div class="order-items-table__body table__body">
+                        {foreach $order.items as $item}
+                            <div class="order-items-table__row order-list-item order-list-item_{$item.type} table__row" data-item-id="{$item.id|escape}" data-product-id="{$item.product_id|escape}">
+                                <div class="order-items-table__cell order-items-table__cell_sku order-list-item__block order-list-item__block_sku {if $item.sku_code} order-list-item__block_sku_exist{/if} table__cell">
+                                    <div class="table__label-text">
+                                        [`Артикул`]
+                                    </div>
+                                    {$item.sku_code}
+                                </div>
+                                <div class="order-items-table__cell order-items-table__cell_image order-list-item__block order-list-item__block_image table__cell">
+                                    {if $item.type === 'product'}
+                                        <span class="order-list-item__image-box">
+                                            <span class="image-box image-box_fill">
+                                                {if isset($item['image_url'])}
+                                                    {call image
+                                                    src=$item['image_url']
+                                                    classes='order-list-item__image'
+                                                    alt=$item.name
+                                                    r2x=true
+                                                    }
+                                                {else}
+                                                    {if !empty($theme_settings['product_dummy_image'])}
+                                                        {call image
+                                                        src=$theme_settings['product_dummy_image']
+                                                        classes='order-list-item__image'
+                                                        alt=$item.name
+                                                        attrs=[
+                                                        'width' => 70
+                                                        ]
+                                                        }
+                                                    {else}
+                                                        {call svg_icon classes='order-list-item__image order-list-item__image_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                                    {/if}
+                                                {/if}
+                                            </span>
+                                        </span>
+                                    {/if}
+                                </div>
+                                <div class="order-items-table__cell order-items-table__cell_name order-list-item__block order-list-item__block_name table__cell">
+                                    <div class="table__label-text">
+                                        [`Наименование товара`]
+                                    </div>
+                                    {if $item.type === 'product'}
+                                        <div class="order-list-item__product-info">
+                                    {/if}
+                                    {if isset($item.product_url) && !empty($item.product_url)}
+                                        <a class="link" href="{$item.product_url}">{$item.name}</a>
+                                    {else}
+                                        {$item.name}
+                                    {/if}
+
+                                    {if $item.type === 'product'}
+                                        {if !empty($item.download_link)}
+                                            {' '}
+                                            <a class="link" href="{$item.download_link}">[`Скачать`]</a>
+                                        {/if}
+                                        </div>
+                                    {/if}
+
+                                    {if count($item.services) > 0}
+                                        <div class="order-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="order-list-item__service">
+                                                    + {$service.name}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="order-items-table__cell order-items-table__cell_quantity order-list-item__block order-list-item__block_quantity table__cell">
+                                    <div class="table__label-text">
+                                        [`Quantity`]
+                                    </div>
+                                    <span class="order-list-item__price">
+                                        {wa_currency_html($item.price, $order.currency)} &times; {$item.quantity}
+                                    </span>
+                                    {if count($item.services) > 0}
+                                        <div class="order-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="order-list-item__service">
+                                                    {wa_currency_html($service.price, $order.currency)} &times; {$service.quantity}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="order-items-table__cell order-items-table__cell_total order-list-item__block order-list-item__block_total table__cell">
+                                    <div class="table__label-text">
+                                        [`Total`]
+                                    </div>
+                                    <span class="order-list-item__total">
+                                        {wa_currency_html($item.price * $item.quantity, $order.currency)}
+                                    </span>
+                                    {if count($item.services) > 0}
+                                        <div class="order-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="order-list-item__service">
+                                                    {wa_currency_html($service.price * $service.quantity, $order.currency)}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/foreach}
+                        </div>
+                    </div>
+				</div>
+				<div class="my-order-page__summary-container">
+					<div class="order-summary">
+						<div class="order-summary__sub-totals">
+							<div class="order-summary__sub-total order-summary__sub-total_sub-total">
+								<div class="row-value">
+								    <div class="row-value__label-container">
+								        <span class="row-value__label-text">
+								            {_wp("Подытог")}
+								        </span>
+								    </div>
+								    <div class="row-value__value-container">
+								        <span class="row-value__value-text">
+								            {shop_currency_html($subtotal, $order.currency)}
+								        </span>
+								    </div>
+								</div>
+
+							</div>
+							{if $comission}
+								<div class="order-summary__sub-total order-summary__sub-total_comission">
+									<div class="row-value">
+									    <div class="row-value__label-container">
+									        <span class="row-value__label-text">
+									            {$comission_label}
+									        </span>
+									    </div>
+									    <div class="row-value__value-container">
+									        <span class="row-value__value-text">
+									            {wa_currency_html($comission, $order.currency)}
+									        </span>
+									    </div>
+									</div>
+
+								</div>
+							{/if}
+							{if $is_show_shipping}
+								<div class="order-summary__sub-total order-summary__sub-total_shipping">
+									<div class="row-value">
+									    <div class="row-value__label-container">
+									        <span class="row-value__label-text">
+									            {_wp("Доставка")}
+									        </span>
+									    </div>
+									    <div class="row-value__value-container">
+									        <span class="row-value__value-text">
+									            {wa_currency_html($order.shipping, $order.currency)}
+									        </span>
+									    </div>
+									</div>
+
+								</div>
+							{/if}
+							{if $is_show_discount}
+								<div class="order-summary__sub-total order-summary__sub-total_discount">
+									<div class="row-value">
+									    <div class="row-value__label-container">
+									        <span class="row-value__label-text">
+									            {_wp("Скидка")}
+									        </span>
+									    </div>
+									    <div class="row-value__value-container">
+									        <span class="row-value__value-text">
+									            {wa_currency_html($order.discount, $order.currency)}
+									        </span>
+									    </div>
+									</div>
+
+								</div>
+							{/if}
+							{if $order.tax > 0}
+								<div class="order-summary__sub-total order-summary__sub-total_tax">
+									<div class="row-value">
+									    <div class="row-value__label-container">
+									        <span class="row-value__label-text">
+									            {_wp("Налог")}
+									        </span>
+									    </div>
+									    <div class="row-value__value-container">
+									        <span class="row-value__value-text">
+									            {wa_currency_html($order.tax, $order.currency)}
+									        </span>
+									    </div>
+									</div>
+
+								</div>
+							{/if}
+							<div class="order-summary__total-container">
+								<span class="order-summary__total-label">[`Итоговая сумма`]:</span>
+								<span class="order-summary__total">{shop_currency_html($order.total, true)}</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- plugin hook: 'frontend_my_order' -->
+		{foreach $frontend_my_order as $plugin => $_}
+			{capture assign='output'}
+				<!-- frontend_my_order.{$plugin} -->
+				{$_}
+			{/capture}
+
+			{if $plugin === 'discount4review-plugin'}
+				<div class="discount4review-decorator">
+					{$output}
+				</div>
+			{else}
+				{$output}
+			{/if}
+		{/foreach}
+	{/if}
+{/strip}

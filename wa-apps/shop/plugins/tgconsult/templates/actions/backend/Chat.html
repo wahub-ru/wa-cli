@@ -1,0 +1,48 @@
+{literal}
+<style>
+.tgc-page{max-width:920px; margin:12px auto; border:1px solid #e6e6e6; border-radius:8px; overflow:hidden;}
+.tgc-chat-head{padding:10px 12px; border-bottom:1px solid #e6e6e6; background:#fafafa;}
+.tgc-chat-body{padding:14px; background:#eef3f9;}
+.tgc-bubble{max-width:70%; padding:8px 12px; border-radius:16px; margin:6px 0; position:relative; white-space:pre-wrap;}
+.tgc-leftmsg{background:#fff; color:#222; border-top-left-radius:4px;}
+.tgc-rightmsg{background:#d1f5d3; color:#0b3d0b; float:right; clear:both; border-top-right-radius:4px;}
+.tgc-time{display:block; font-size:11px; color:#7a7a7a; margin-top:4px;}
+.tgc-reply{border-top:1px solid #e6e6e6; padding:10px; display:flex; gap:10px;}
+.tgc-reply textarea{flex:1; min-height:44px;}
+</style>
+{/literal}
+<div class="tgc-page">
+  <div class="tgc-chat-head">
+    <strong>Диалог #{$chat.id|escape}</strong> · Токен: {$chat.token|escape}
+  </div>
+  <div class="tgc-chat-body">
+    {foreach $messages as $m}
+      <div class="tgc-bubble {if $m.sender == 'manager'}tgc-rightmsg{else}tgc-leftmsg{/if}">
+        {$m.text|escape}
+        <span class="tgc-time">{$m.created|wa_datetime:"d.m.Y H:i"}</span>
+      </div>
+    {/foreach}
+    <div style="clear:both"></div>
+  </div>
+
+  <form id="tgc-reply-form" class="tgc-reply" method="post" action="?plugin=tgconsult&module=backend&action=reply">
+    {$wa->csrf()}
+    <input type="hidden" name="chat_id" value="{$chat.id|escape}">
+    <textarea name="text" placeholder="Написать ответ…" required></textarea>
+    <button type="submit" class="button green">Отправить</button>
+  </form>
+</div>
+{literal}
+<script>
+(function($){
+  $('#tgc-reply-form').on('submit', function(e){
+    e.preventDefault();
+    var $f=$(this);
+    $.post($f.attr('action'), $f.serialize(), function(r){
+      if (r && r.status === 'ok') { location.reload(); }
+      else { alert((r&&r.error)||'Ошибка отправки'); }
+    }, 'json').fail(function(){ alert('Сеть недоступна или ошибка сервера'); });
+  });
+})(jQuery);
+</script>
+{/literal}

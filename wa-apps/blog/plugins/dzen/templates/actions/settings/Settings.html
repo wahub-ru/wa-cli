@@ -1,0 +1,146 @@
+<script>
+    document.title = '{$title|escape:'javascript'}';
+</script>
+<link rel="stylesheet" href="{$wa_app_static_url}plugins/dzen/css/backend.css?{$wa->version()}">
+<script src="{$wa_app_static_url}plugins/dzen/js/settings.js?{$wa->version()}"></script>
+<form action="?plugin=dzen&amp;module=settings" method="post" class="dzen-admin" id="plugin-dzen-form" data-feed-url-all="{$feed_url_all_in_one|escape}" data-has-feed-urls="{if $has_available_feed_urls}1{else}0{/if}" data-feed-stats="{$feed_stats_payload_json|escape}">
+    {$wa->csrf()}
+    <input type="hidden" name="settings[api_token_action]" value="keep" class="js-dzen-api-token-action">
+
+    <header class="dzen-admin__header">
+        <div>
+            <h6 class="heading dzen-admin__title">Настройки фида Дзена</h6>
+            <p class="dzen-admin__subtitle">Настройте общие параметры RSS-выгрузки и правила публикации.</p>
+        </div>
+        <div class="dzen-admin__actions">
+            <input type="submit" class="button blue js-dzen-save-btn" value="Сохранить">
+                        <em class="hint js-status" style="display:none;"></em>
+        </div>
+    </header>
+
+    <section class="dzen-card dzen-card--success">
+        <h6 class="dzen-card__title">Статус и проверка</h6>
+        <p class="hint">При первой разметке лента должна содержать минимум 10 материалов. На сайте должно быть не менее 3 публикаций за последний месяц.</p>
+        <ul class="dzen-status-list">
+            <li class="is-ok">URL фида сформирован</li>
+            <li class="js-dzen-default-status {if $settings.default_enclosure_url|trim != ''}is-ok{else}is-muted{/if}">{if $settings.default_enclosure_url|trim != ''}Обложка по умолчанию настроена{else}Обложка по умолчанию не задана{/if}</li>
+        </ul>
+    </section>
+
+    <section class="dzen-card">
+        <h6 class="dzen-card__title">Фиды и источники</h6>
+
+        <div class="dzen-field-grid dzen-field-grid--single">
+            <div class="dzen-field">
+                <label class="dzen-choice"><input type="radio" name="settings[feed_mode]" value="all_in_one" {if $settings.feed_mode == 'all_in_one'}checked{/if}> Единый фид для всех блогов</label>
+                <label class="dzen-choice"><input type="radio" name="settings[feed_mode]" value="separate_by_blog" {if $settings.feed_mode == 'separate_by_blog'}checked{/if}> Отдельный фид для каждого блога</label>
+            </div>
+
+            <div class="dzen-field js-dzen-feed-blogs-wrap" {if $settings.feed_mode != 'separate_by_blog'}style="display:none"{/if}>
+                <label class="dzen-label">Блоги для фида</label>
+                <div class="dzen-checkbox-list">
+                    {if $all_blogs}
+                    {foreach $all_blogs as $blog_id => $blog}
+                        <label class="dzen-switch dzen-switch--sm dzen-switch--with-label">
+                            <input type="checkbox" name="settings[feed_blog_ids][]" value="{$blog_id}" data-feed-url="{$feed_urls_by_blog[$blog_id]|default:''|escape}" {if in_array($blog_id, $selected_blog_ids)}checked{/if}>
+                            <span class="dzen-switch__slider" aria-hidden="true"></span>
+                            <span class="dzen-switch__label">{$blog.name|default:$blog.url|escape}</span>
+                        </label>
+                    {/foreach}
+                {else}
+                    <p class="hint">Нет доступных блогов. Сначала создайте блог и опубликуйте его в маршрутизации.</p>
+                {/if}
+                </div>
+                <p class="hint">Выберите хотя бы один блог</p>
+            </div>
+
+            <div class="dzen-field">
+                <label class="dzen-label">URL фида</label>
+                <div class="dzen-url-list js-dzen-feed-urls-wrap">
+                    {if !$has_available_feed_urls}
+                        <span class="hint">Нет доступных блогов. Создайте блог в приложении «Блог» и добавьте его в маршрутизацию сайта.</span>
+                    {elseif !$feed_url_examples}
+                        <span class="hint">Выберите хотя бы один блог</span>
+                    {else}
+                        {foreach $feed_url_examples as $feed_url}
+                            <div class="dzen-url-box">
+                                <input type="text" readonly value="{$feed_url|escape}" class="js-dzen-feed-url-input">
+                                <button type="button" class="button small js-dzen-copy-url" data-url="{$feed_url|escape}" title="Скопировать URL" aria-label="Скопировать URL">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy dzen-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/></svg>
+                                </button>
+                                <a href="{$feed_url|escape}" target="_blank" rel="noopener" class="button small light-gray" title="Открыть URL" aria-label="Открыть URL">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-up-right dzen-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/><path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></svg>
+                                </a>
+                            </div>
+                        {/foreach}
+                    {/if}
+                </div>
+                <p class="hint js-dzen-copy-status" style="display:none"></p>
+            </div>
+        </div>
+    </section>
+
+    <section class="dzen-card">
+        <h6 class="dzen-card__title">Параметры по умолчанию</h6>
+        <div class="dzen-field-grid">
+            <div class="dzen-field">
+                <label class="dzen-label">Порядок выбора изображения</label>
+                <select name="settings[default_enclosure_mode]">
+                    <option value="added_first" {if $settings.default_enclosure_mode == 'added_first'}selected{/if}>Сначала загруженная обложка, затем изображение из текста</option>
+                    <option value="content_first" {if $settings.default_enclosure_mode == 'content_first'}selected{/if}>Сначала изображение из текста, затем загруженная обложка</option>
+                    <option value="default_only" {if $settings.default_enclosure_mode == 'default_only'}selected{/if}>Использовать только изображение по умолчанию</option>
+                </select>
+            </div>
+            <div class="dzen-field">
+                <label class="dzen-label">URL изображения по умолчанию (enclosure)</label>
+                <input type="text" name="settings[default_enclosure_url]" value="{$settings.default_enclosure_url|escape}" placeholder="{$site_example_image_url|escape}" class="js-dzen-default-enclosure-input">
+                <input type="hidden" name="settings[default_enclosure_delete]" value="0" class="js-dzen-default-enclosure-delete">
+                <div class="dzen-upload-actions">
+                    <input type="file" id="dzen-default-enclosure-file" style="display:none" accept="image/jpeg,image/png,image/gif">
+                    <a href="#" class="button small js-dzen-default-upload-btn">Загрузить файл</a>
+                    <a href="#" class="button small light-gray js-dzen-default-remove-btn" {if !$settings.default_enclosure_url}style="display:none"{/if}>Удалить</a>
+                    <span class="hint js-dzen-default-upload-status" style="display:none"></span>
+                </div>
+                <img src="{$settings.default_enclosure_url|escape}" alt="default enclosure" class="dzen-cover-preview js-dzen-default-enclosure-preview" {if !$settings.default_enclosure_url}style="display:none"{/if}>
+            </div>
+        </div>
+    </section>
+
+    <section class="dzen-card">
+        <h6 class="dzen-card__title">Материалы и лимиты</h6>
+        <div class="dzen-field-grid dzen-field-grid--single">
+            <div class="dzen-field">
+                <label class="dzen-label">Ограничение количества материалов в фиде</label>
+                <input type="number" name="settings[feed_posts_limit]" value="{$settings.feed_posts_limit|escape}" min="0" placeholder="0 — без ограничений">
+            </div>
+            <div class="dzen-field">
+                <label class="dzen-switch dzen-switch--with-label">
+                    <input type="checkbox" name="settings[clear_feed_cache]" value="1">
+                    <span class="dzen-switch__slider" aria-hidden="true"></span>
+                    <span class="dzen-switch__label">Очистить кеш RSS-фида после сохранения</span>
+                </label>
+                <p class="hint">При включении опции кеш фида будет принудительно сброшен один раз.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="dzen-card">
+        <h6 class="dzen-card__title">Технические параметры API</h6>
+        <div class="dzen-field-grid">
+            <div class="dzen-field">
+                <label class="dzen-label">Токен API</label>
+                {if $settings.api_token}
+                    <div class="dzen-upload-actions">
+                        <button type="button" class="button small js-dzen-show-token-btn">Показать токен</button>
+                        <button type="button" class="button small light-gray js-dzen-recreate-token-btn">Пересоздать</button>
+                        <button type="button" class="button small red js-dzen-delete-token-btn">Удалить</button>
+                    </div>
+                    <input type="password" readonly value="{$settings.api_token|escape}" class="js-dzen-api-token-input">
+                {else}
+                    <button type="button" class="button small js-dzen-create-token-btn">Создать токен</button>
+                {/if}
+                <p class="hint">Используется для внешней записи Dzen-полей через API.</p>
+            </div>
+        </div>
+    </section>
+</form>

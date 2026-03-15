@@ -1,0 +1,1551 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {if class_exists('shopFrac')}
+        {$product = shopFrac::inheritSkuFieldsFromProduct($product)}
+    {/if}
+
+    {$product_info = []}
+    {$product_info['favorite'] = isset($market['favorite_products'][$product['id']])}
+    {$product_info['compare'] = isset($market['compare_products'][$product['id']])}
+    {$product_info['cart'] = isset($market['cart_skus'][$product['sku_id']])}
+    {$product_info['cart_quantity'] = ifset($market['cart_skus'][$product['sku_id']], 0)}
+    {$product_info['sku'] = $product['skus'][$product['sku_id']]}
+    {$product_info['available'] = $product.status && $product_info['sku'].available && ($wa->shop->settings('ignore_stock_count') || $product_info['sku'].count === null || $product_info['sku'].count > 0)}
+    {$product_info['multi_skus'] = count($product['skus']) > 1}
+
+    {if isset($product['stock_unit_id']) && isset($formatted_units[$product['stock_unit_id']])}
+        {$product_info['stock_unit'] = $formatted_units[$product['stock_unit_id']]}
+    {else}
+        {$product_info['stock_unit'] = null}
+    {/if}
+
+    {if class_exists('shopFrac')}
+        {$product_info['order_multiplicity_factor'] = floatval($product['order_multiplicity_factor']|default:1)}
+        {$product_info['order_count_step'] = floatval($product['skus'][$product['sku_id']]['order_count_step']|default:1)}
+        {$product_info['order_count_min'] = floatval($product['skus'][$product['sku_id']]['order_count_min']|default:1)}
+    {else}
+        {$product_info['order_multiplicity_factor'] = 1}
+        {$product_info['order_count_step'] = 1}
+        {$product_info['order_count_min'] = 1}
+    {/if}
+
+    {if $product_info['sku']['count'] !== null && !$market['ignore_stock_count']}
+        {$product_info['order_count_max'] = max(0, $product_info['sku']['count'] - $product_info['cart_quantity'])}
+    {else}
+        {$product_info['order_count_max'] = null}
+    {/if}
+
+    {$options['show_changing_button'] = $theme_settings['shop_misc_change_add2cart']}
+
+    {if !$product_info['cart']}
+        {$options['show_changing_button'] = false}
+    {/if}
+
+    {$options['dp_variant'] = $theme_settings['shop_product_dp_enabled']}
+    {$options['show_dp'] = $options['dp_variant'] !== 'disable'}
+
+    {if !$market['plugins']['shop_dp']}
+        {$options['show_dp'] = false}
+    {/if}
+
+    {if $options['dp_variant'] === 'only_available' && !$product_info['available']}
+        {$options['show_dp'] = false}
+    {/if}
+
+    {$options['show_services'] = $theme_settings['shop_product_services_enabled']}
+
+    {if !$services}
+        {$options['show_services'] = false}
+    {/if}
+
+    {$options['show_reviews'] = true}
+
+    {if $theme_settings['shop_product_reviews_hide']}
+        {$options['show_reviews'] = false}
+    {/if}
+
+    {if $wa->globals('is_mobile')}
+        {$options['show_summary'] = $theme_settings['shop_product_summary_mobile_enabled']}
+    {else}
+        {$options['show_summary'] = $theme_settings['shop_product_summary_enabled']}
+    {/if}
+
+    {if !$product['summary']}
+        {$options['show_summary'] = false}
+    {/if}
+
+    {* Theme Settings *}
+    {$hide_empty_stocks = $theme_settings['shop_product_hide_empty_stocks']}
+    {$hide_unavailable_feature_skus = $theme_settings['shop_product_feature_select_hide_unavailable']}
+    {$is_show_common_stocks_count = $theme_settings['shop_product_show_common_stocks_count']}
+    {$price_text = $theme_settings['shop_product_price_text']}
+    {$add_to_cart_button_tag = $theme_settings['shop_misc_add2cart_button_tag']|default:'default'}
+    {$zero_price_text = $theme_settings['shop_misc_zero_price_text']|default:''}
+    {$delivery_time_variant = $theme_settings['shop_misc_delivery_time']}
+    {$show_delivery_time = $delivery_time_variant !== 'disable'}
+    {$delivery_text = $theme_settings['shop_misc_delivery_text']|default:''}
+    {$delivery_text_tooltip = $theme_settings['shop_misc_delivery_text_tooltip']|default:''}
+    {$show_bonuses = $theme_settings['shop_misc_bonuses_block']}
+
+    {* Variables *}
+    {$product_features_rendered = $product_features_rendered|default:[]}
+    {$skus_features_rendered = $skus_features_rendered|default:[]}
+    {$primary_sku = $product.skus[$product.sku_id]}
+    {$count_reviews = count($product['reviews'])}
+
+    {$is_modal = $wa->get('cart') || $wa->get('modal')}
+    {$is_mobile_modal = $wa->get('mobile')}
+    {$is_features_selectable = $product['sku_type'] == '1'}
+    {$has_compare_price = $product_info['sku']['compare_price'] > 0}
+    {$has_multi_sku = count($product['skus']) > 1}
+    {$is_favorite = !!"{call in_favorite product_id=$product.id}"}
+    {$is_compare = $wa->shop->inComparison($product.id)}
+    {$default_sku = $product.sku_id}
+    {if $wa->get('sku') !== null}
+        {$default_sku = 0}
+    {/if}
+    {$_show_fractional = !empty($formatted_units[$product["stock_unit_id"]]) && !empty($formatted_units[$product["base_unit_id"]]) && ($product["stock_unit_id"] !== $product["base_unit_id"]) && !empty($product_info['sku']["stock_base_ratio"]) && $wa->globals('market.has_premium')}
+
+    {$product_price = null}
+    {$product_compare_price = null}
+    {$stock_unit = null}
+    {$base_unit = null}
+    {$base_price = null}
+
+    {if !empty($_show_fractional)}
+        {$stock_unit = $formatted_units[$product["stock_unit_id"]]}
+        {$base_unit = $formatted_units[$product["base_unit_id"]]}
+        {$product_price = shop_currency($product_info['sku']["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $market['currency'], "format" => "price_wrapper"])}
+        {$product_compare_price = shop_currency($product_info['sku']["compare_price"], ["unit" => $stock_unit["name_short"], "in_currency" => $market['currency'], "format" => "price_wrapper"])}
+        {$base_price = ($product_info['sku']["price"]/$product_info['sku']["stock_base_ratio"])}
+    {else}
+        {$product_price = shop_currency($product_info['sku']["price"], ["in_currency" => $market['currency'], "format" => "price_wrapper"])}
+        {$product_compare_price = shop_currency($product_info['sku']["compare_price"], ["in_currency" => $market['currency'], "format" => "price_wrapper"])}
+
+        {if !empty($fractional_config) && $fractional_config["stock_units_enabled"] && !empty($formatted_units) && !empty($formatted_units[$product["stock_unit_id"]]) && $wa->globals('market.has_premium')}
+            {$stock_unit = $formatted_units[$product["stock_unit_id"]]}
+            {$product_price = shop_currency($product_info['sku']["price"], ["unit" => $stock_unit["name_short"], "in_currency" => $market['currency'], "format" => "price_wrapper"])}
+            {$product_compare_price = shop_currency($product_info['sku']["compare_price"], ["unit" => $stock_unit["name_short"], "in_currency" => $market['currency'], "format" => "price_wrapper"])}
+        {/if}
+    {/if}
+
+    {* TODO: (wahub.ru) Fix неправильная проверка на существование единицы измерения (заменены условия и добавлено значение по умолчанию) *}
+    {$stock_unit["name_short"] = $stock_unit["name_short"]|default:null}
+
+    {$product_quantity_multiplicity = $product["order_multiplicity_factor"]|default:1|floatval|json_encode}
+    {$product_quantity_step = $product_info['sku']["order_count_step"]|default:1|floatval|json_encode}
+    {$product_quantity_min = $product_info['sku']["order_count_min"]|default:1|floatval|json_encode}
+    {$product_base_ratio = $wa->shop->numberFormat($product_info['sku']["stock_base_ratio"])|default:0}
+
+    {$product_data = [
+        'currency' => $currency_info,
+        'hide_unavailable_feature_skus' => $hide_unavailable_feature_skus,
+        'default_sku' => $default_sku|intval,
+        'show_fractional' => $_show_fractional,
+        'stock_unit_id' => $product.stock_unit_id,
+        'base_unit_id' => $product.base_unit_id
+    ]}
+
+    {$skus = []}
+
+    {foreach $product.skus as $sku}
+        {$sku_available = $product.status && $sku.available && ($wa->shop->settings('ignore_stock_count') || $sku.count === null || $sku.count > 0)}
+        {$is_in_cart = "{call in_cart sku_id=$sku.id}" == 1}
+        {call in_cart_quantity sku_id=$sku.id assign='_'}
+        {$in_cart_quantity = $wa->globals('market.return')}
+        {$max_count = null}
+        {if $sku.count > 0 && !$wa->shop->settings('ignore_stock_count')}
+            {$max_count = $sku.count - $in_cart_quantity}
+        {/if}
+
+        {$sku_stock_base_ratio = $wa->shop->numberFormat($sku.stock_base_ratio)|default:0}
+
+        {$skus[$sku.id] = [
+        'id' => intval($sku.id),
+        'name' => "{$product.name} ({$sku.name})",
+        'compare_price' => floatval(shop_currency($sku.compare_price, $product.currency, null, false)),
+        'price' => floatval(shop_currency($sku.price, $product.currency, null, false)),
+        'available' => $sku_available,
+        'sku' => $sku.sku,
+        'image_id' => intval($sku.image_id),
+        'is_in_cart' => $is_in_cart,
+        'in_cart_quantity' => $in_cart_quantity|intval,
+        'count' => $sku.count,
+        'max_count' => $max_count,
+        'stock_base_ratio' => $sku_stock_base_ratio,
+        'order_count_step' => $sku["order_count_step"],
+        'order_count_min' => $sku["order_count_min"],
+        'features' => $skus_features_rendered[$sku.id]
+        ]}
+    {/foreach}
+
+    {$sku_stocks = []}
+    {if $primary_sku.stock}
+        {foreach $stocks as $stock_id => $stock}
+            {if isset($primary_sku.stock[$stock_id])}
+                {$stock_count = $primary_sku.stock[$stock_id]|intval}
+            {else}
+                {$stock_count = null}
+            {/if}
+
+            {$sku_stocks[$stock_id] = [
+                'name' => $stock.name,
+                'count' => $stock_count
+            ]}
+        {/foreach}
+    {/if}
+
+    {$stocks_available_statuses = $wa->globals('market.stocks_available_statuses')}
+
+    {$custom_available_status = []}
+    {if !$theme_settings['shop_product_show_exact_count']}
+        {call get_available_status_depends_on_stocks product_stocks=$sku_stocks}
+        {$custom_available_status = $wa->globals('market.return')}
+    {/if}
+
+    {$stocks_statuses = []}
+    {if $stocks_available_statuses && isset($stocks_available_statuses['stocks_statuses']) && is_array($stocks_available_statuses['stocks_statuses'])}
+        {$stocks_statuses = $stocks_available_statuses['stocks_statuses']}
+    {/if}
+
+    {if $delivery_time_variant === 'only_available' && !$product_info['available']}
+        {$show_delivery_time = false}
+    {/if}
+
+    {if empty($delivery_text)}
+        {$show_delivery_time = false}
+    {/if}
+
+    {$is_enabled_arrived = $market['plugins']['shop_arrived'] && !$is_mobile_modal}
+    {$arrived_button = null}
+
+    {if $is_enabled_arrived}
+        {capture assign='arrived_button'}
+            {shopArrivedPlugin::getFormHtml($product)}
+        {/capture}
+    {/if}
+
+    {$has_pnotice = $market['plugins']['shop_pnotice'] && (isset($frontend_product['pnotice-plugin']) && $frontend_product['pnotice-plugin']['cart']) && !$is_mobile_modal}
+
+    {if $plugins['shop_pricedown'] && isset($frontend_product['pricedown-plugin'])}
+        {$hook_output = $frontend_product['pricedown-plugin']['cart']}
+        {if !empty($hook_output)}
+            {$test = '<a href="javascript:void(0);">'|cat:"{call svg_icon icon='chart-line-up' width=16 height=16 fill='currentColor'}"}
+            {$frontend_product['pricedown-plugin']['cart'] = $hook_output|replace:'<a href="javascript:void(0);">':$test}
+        {/if}
+    {/if}
+
+    {capture assign='gallery_content'}
+        {* Product Gallery Start *}
+            {* Theme Settings *}
+            {$is_enabled_button = $theme_settings['shop_product_gallery_button_enabled']}
+
+            {* Variables *}
+            {$gallery_image_size = $wa->shop->config('image_max_size')|default:'970'}
+            {$has_compare_price = $product_info['sku'].compare_price != 0}
+            {$has_multi_skus = count($product.skus) > 1}
+            {$video = $product.video}
+            {$has_video = !!$video}
+
+            {if $has_video}
+                {$video_rate = $video.height / 600}
+                {$video.height = 600}
+                {$video.width = ceil($video.width / $video_rate)}
+            {/if}
+
+            {* Template *}
+            <div class="product-gallery {if $has_multi_skus}product-gallery_has-multi-skus{/if}" data-url="{$wa->shop->productUrl($product)}">
+                <div class="product-gallery__header">
+                    {if !$wa->globals('is_mobile')}
+                        <div class="product-gallery__header-product-name">
+                            <span class="title title_h3">{$product.name}</span>
+                        </div>
+                    {/if}
+                    {if $is_enabled_button}
+                        <div class="product-gallery__header-product-offer{if !$product_info['available']} product-gallery__header-product-offer_disabled{/if}{if $arrived_button} product-gallery__header-product-offer_has-arrived{/if}">
+                            <div class="product-gallery__offer">
+                                <div class="product-gallery__offer-prices">
+                                    {if !empty($price_text) && (empty($zero_price_text) || $product.price > 0 && !empty($zero_price_text))}
+                                        <span class="product-gallery__price-text">
+                                            {$price_text}
+                                        </span>
+                                    {/if}
+                                    <span class="product-gallery__price{if $has_compare_price} product-gallery__price_with-compare{/if}">
+                                        {if $product.price == 0 && !empty($zero_price_text)}
+                                            {$zero_price_text}
+                                        {else}
+                                            {shop_currency_html($product.price)}{if $stock_unit["name_short"]}<span class="unit">/{$stock_unit["name_short"]}</span>{/if}
+                                        {/if}
+                                    </span>
+
+                                    {if $has_compare_price}
+                                        <span class="product-gallery__compare-price">
+                                            {shop_currency_html($product_info['sku'].compare_price)}{if $stock_unit["name_short"]}<span class="unit">/{$stock_unit["name_short"]}</span>{/if}
+                                        </span>
+                                    {/if}
+                                </div>
+                                <div class="product-gallery__offer-button">
+                                    <form class="product-gallery__add-to-cart-form" action="{$wa->getUrl('shop/frontendCart/add')|escape}" method="post">
+                                        <input type="hidden" name="product_id" value="{$product.id|escape}" />
+                                        {capture assign="button_text"}
+                                            {if $options['show_changing_button']}
+                                                [`В корзине`]
+                                            {else}
+                                                {eval var=$theme_settings['shop_misc_add2cart_button_text']|default:''}
+                                            {/if}
+                                        {/capture}
+
+                                        {if $add_to_cart_button_tag === 'default'}
+                                            <button class="add-to-cart button button_wide button_size_l{if $options['show_changing_button']} button_style_inverse{/if}" data-success-text="{_wp('В корзине')}"{if !$product_info['available']} disabled="disabled"{/if}>
+                                                {$button_text}
+                                            </button>
+                                        {else}
+                                            <a class="product-gallery__add-to-cart-button add-to-cart button button_wide button_size_l{if $options['show_changing_button']} button_style_inverse{/if}{if !$product_info['available']} button_disabled{/if}" href="#" data-default-text="В корзину" data-success-text="{_wp('В корзине')}">
+                                                {$button_text}
+                                            </a>
+                                        {/if}
+                                    </form>
+                                    {if $arrived_button}
+                                        <div class="product-gallery__arrived">
+                                            <button class="product-gallery__arrived-button button button_style_inverse button_size_l button_fill" type="button">[`Уведомить`]</button>
+                                            {$arrived_button}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+                <div class="product-gallery__main">
+                    <div class="product-gallery__images-container">
+                        <div class="product-gallery__images swiper">
+                            <div class="product-gallery__images-wrapper swiper-wrapper">
+                                {if $has_video}
+                                    <div class="product-gallery__image product-gallery__image_video swiper-slide">
+                                        <div class="product-gallery__video">
+                                            <div class="image-box image-box_fill">
+                                                <iframe src="{$video.url}?enablejsapi=1" width="{$video.width}" height="{$video.height}" allowfullscreen></iframe>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/if}
+
+                                {if count($product.images) > 0}
+                                    {foreach $product.images as $image}
+                                        <div class="product-gallery__image swiper-slide" data-image_id="{$image.id|escape}">
+                                            <span class="image-box image-box_fill">
+                                                <img src="{$wa->shop->imgUrl($image, $gallery_image_size)|escape}" alt="{$product.name|escape}" />
+                                            </span>
+                                        </div>
+                                    {/foreach}
+                                {else}
+                                    <div class="product-gallery__image product-gallery__image_dummy swiper-slide">
+                                        <span class="image-box image-box_fill">
+                                            {call svg_icon classes='product-cart-form__dummy-image' icon='no-thumb' width=200 height=200 fill='#CFCFCF'}
+                                        </span>
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                        <div class="product-gallery__arrow product-gallery__arrow_prev">
+                            {call svg_icon classes='product-gallery__arrow-icon' icon='arrow-left' width=16 height=26}
+                        </div>
+                        <div class="product-gallery__arrow product-gallery__arrow_next">
+                            {call svg_icon classes='product-gallery__arrow-icon' icon='arrow-right' width=16 height=26}
+                        </div>
+                    </div>
+                    {if count($product.images) > 1 || (count($product.images) === 1 && $has_video)}
+                        {if !$wa->globals('is_mobile')}
+                            <div class="product-gallery__thumbs-container">
+                                <div class="product-gallery__thumbs swiper">
+                                    <div class="product-gallery__thumbs-wrapper swiper-wrapper">
+                                        {if $video}
+                                            <div class="product-gallery__thumb-slide swiper-slide">
+                                                <div class="product-gallery__thumb product-gallery__thumb_video">
+                                                    {if count($video.images) > 0}
+                                                        <span class="image-box image-box_fill">
+                                                            <img class="product-gallery__video-thumb" src="{$video.images[0]}" alt="{$product.name|escape}" />
+                                                        </span>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                        {/if}
+                                        {foreach $product.images as $image}
+                                            <div class="product-gallery__thumb-slide swiper-slide">
+                                                <div class="product-gallery__thumb {if $image@first}product-gallery__thumb_focus{/if}" data-extend_image="{$wa->shop->imgUrl($image, '0x600')|escape}">
+                                                    <span class="image-box image-box_fill">
+                                                        <img src="{$wa->shop->imgUrl($image, '80')|escape}" alt="{$product.name|escape}" />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        {/foreach}
+                                    </div>
+                                </div>
+                                <div class="product-gallery__thumb-arrow product-gallery__thumb-arrow_prev">
+                                    {call svg_icon classes='product-gallery__thumb-arrow-icon' icon='arrow-top' width=12 height=8}
+                                </div>
+                                <div class="product-gallery__thumb-arrow product-gallery__thumb-arrow_next">
+                                    {call svg_icon classes='product-gallery__thumb-arrow-icon' icon='arrow-bottom' width=12 height=8}
+                                </div>
+                            </div>
+                        {else}
+                            <div class="product-gallery__pagination gallery-pagination gallery-pagination_product"></div>
+                        {/if}
+                    {/if}
+                </div>
+            </div>
+        {* Product Gallery End *}
+    {/capture}
+
+    {$product_data['skus'] = $skus}
+    {$product_data['services'] = $sku_services}
+    {$product_data['gallary'] = $gallery_content}
+    {$product_data['features_values'] = $product_features_rendered}
+
+    {if $is_features_selectable}
+        {$product_data['features'] = $sku_features_selectable}
+        {$product_data['default_sku_features'] = $product.sku_features}
+    {/if}
+
+    {$dp_content = null}
+    {if $options['show_dp']}
+        {$dp_content = "{shopDpPluginHelper::product($product)}"}
+    {/if}
+
+    {$brand = null}
+
+    {if $theme_settings['shop_product_brand_enabled']}
+        {if $market['plugins']['shop_brand'] && is_callable(['shopBrandViewHelper', 'getProductBrand'], false)}
+            {$brand = shopBrandViewHelper::getProductBrand($product)}
+        {elseif $market['plugins']['shop_productbrands'] && is_callable(['shopProductbrandsPlugin', 'productBrand'], false)}
+            {$_brand = shopProductbrandsPlugin::productBrand($product.id)}
+            {$brand = [
+                'name' => $_brand.name,
+                'frontend_url' => $_brand.url,
+                'image_url' => "{$wa_url}wa-data/public/shop/brands/{$_brand.id}/{$_brand.id}{$_brand.image}"
+            ]}
+        {/if}
+    {/if}
+
+    {$form_variant = $theme_settings['shop_product_form_variant']}
+
+    {if isset($product['params']['product_form_variant'])}
+        {$form_variant = $product['params']['product_form_variant']}
+    {elseif isset($category['params']['product_form_variant'])}
+        {$form_variant = $category['params']['product_form_variant']}
+    {else}
+        {$form_variant = $theme_settings['shop_product_form_variant']}
+    {/if}
+
+    {$is_alt_form_block = $form_variant == 'alt'}
+
+    {* Template *}
+    <form class="product-cart-form{if $is_alt_form_block} product-cart-form_alt{/if}{if !$product_info['available']} product-cart-form_not-available{/if}{if $options['show_changing_button']} product-cart-form_added{else} product-cart-form_add2cart{/if}{if $product_info['sku']['sku']} product-cart-form_has-sku{/if}{if $is_modal} product-cart-form_modal{/if}" action="{$wa->getUrl('shop/frontendCart/add')|escape}" method="post" data-product_url="{$wa->shop->productUrl($product)}">
+        <input type="hidden" name="product_data" value="{json_encode($product_data)|escape}" />
+        {if $is_modal}
+            {$wa->css()}
+            {$wa->js()}
+        {/if}
+
+        <input type="hidden" name="product_id" value="{$product.id|escape}" />
+        {if !$has_multi_sku}
+            <input type="hidden" name="sku_id" value="{$product.sku_id|escape}" />
+        {/if}
+
+        {capture assign="product_additional_buttons"}
+            <div class="product-additional-buttons">
+                {if $theme_settings['shop_product_compare_enabled']}
+                    <div class="product-additional-buttons__container">
+                        <span class="product-additional-buttons__button pseudo-link-box pseudo-link-box_link pseudo-link-box_style_gray product-compare {if $is_compare}product-compare_active{/if}" data-product_id="{$product.id|escape}" title="{if $is_compare}[`Удалить из сравнения`]{else}[`К сравнению`]{/if}">
+                            <span class="icon-box icon-box_size_l">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='compare' classes='product-compare-button__icon' width=15 height=15 fill='currentColor'}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="pseudo-link-box__link">[`К сравнению`]</span>
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                {/if}
+
+                {if $theme_settings['shop_product_favorite_enabled']}
+                    <div class="product-additional-buttons__container">
+                        <span class="product-additional-buttons__button pseudo-link-box pseudo-link-box_link pseudo-link-box_style_gray product-favorite {if $is_favorite}product-favorite_active{/if}" data-product_id="{$product.id|escape}" title="{if $is_favorite}[`Удалить из избранного`]{else}[`В избранное`]{/if}">
+                            <span class="icon-box icon-box_size_l">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='favorite' classes='product-favorite-button__icon' width=16 height=16 fill='none'}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="pseudo-link-box__link">[`В избранное`]</span>
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                {/if}
+                {$social_source = $theme_settings['shop_product_social_source']|default:'yastatic'}
+                {if $social_source !== 'disabled' && !empty($theme_settings['shop_product_social_services'])}
+                    {$social_services = $theme_settings['shop_product_social_services']}
+                    {$is_cdn = $wa->getCdn()->count() > 0}
+                    {$product_image_url = $wa->shop->productImgUrl($product, '970')}
+
+                    {if !$is_cdn}
+                        {$product_image_url = $wa->domainUrl()|cat:$product_image_url}
+                    {/if}
+
+                    {if !$product_image_url}
+                        {$social_services = $social_services|replace:'pinterest':''}
+                    {/if}
+
+                    {if !empty($social_services)}
+                        <div class="product-additional-buttons__container">
+                            <div class="product-additional-buttons__button pseudo-link-box pseudo-link-box_link pseudo-link-box_style_gray dropdown{if $is_alt_form_block} dropdown_right{/if} dropdown_click">
+                                <span class="icon-box icon-box_size_l">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon='share' classes='product-favorite-button__icon' width=16 height=16 fill='none'}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        <span class="pseudo-link-box__link">[`Поделиться`]</span>
+                                    </span>
+                                </span>
+                                {call share_block classes="share_dropdown dropdown__dropdown" pinterest_image=$product_image_url source=$social_source services=$social_services}
+                            </div>
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+        {/capture}
+
+        {if !$wa->globals('is_mobile') && $is_alt_form_block}
+            {$wa->globals('breadrumbs_block_add_content', $product_additional_buttons)}
+        {/if}
+
+        {capture assign="header_block"}
+            <div class="product-cart-form__header block__header">
+                {if !$is_modal}
+                    <div class="product-cart-form__title-block">
+                        <h1 class="title title_h1">{$product.name}</h1>
+                    </div>
+                {/if}
+                <div class="product-cart-form__top-blocks-container">
+                    <div class="product-cart-form__top-blocks{if $is_alt_form_block} product-cart-form__top-blocks_col{/if}">
+
+                        {if $options['show_reviews']}
+                            <div class="product-cart-form__top-block product-cart-form__top-block_rating">
+                                {call rating_overview product=$product size='l' is_compact=true is_link=true count_reviews=$reviews_total_count}
+                            </div>
+                        {/if}
+
+                        {if $brand}
+                            <div class="product-cart-form__top-block">
+                                <span class="value">
+                                    <span class="value__label-text">
+                                        {if $theme_settings['shop_product_brand_caption']}
+                                            {$theme_settings['shop_product_brand_caption']}:
+                                        {else}
+                                            {_wp("Бренд")}:
+                                        {/if}
+                                    </span>
+                                    <span class="value__value-text">
+                                        <a class="link" href="{$brand.frontend_url|escape}">
+                                            {$brand.name|escape}
+                                        </a>
+                                    </span>
+                                </span>
+                            </div>
+                        {/if}
+
+                        <!-- plugin hook: 'frontend_product.menu' -->
+                        {* @event frontend_product.%plugin_id%.menu *}
+                        {if !empty($frontend_product)}
+                            {foreach $frontend_product as $plugin => $_}
+                                {if $plugin === 'complex-plugin' || !is_array($_) || !$_.menu}
+                                    {continue}
+                                {/if}
+
+                                <div class="product-cart-form__top-block">
+                                    {$_.menu}
+                                </div>
+                            {/foreach}
+                        {/if}
+                        {if !$wa->globals('is_mobile') && !$is_alt_form_block}
+                            <div class="product-cart-form__top-block product-cart-form__top-block_additional-buttons">
+                                {$product_additional_buttons}
+                            </div>
+                        {/if}
+                        {if $product_info['sku']['sku']}
+                            <div class="product-cart-form__top-block product-cart-form__top-block_sku">
+                                <span class="value">
+                                    <span class="value__label-text">
+                                        [`Артикул`]:
+                                    </span>
+                                    <span class="value__value-text product-cart-form__sku-value">
+                                        {$product_info['sku']['sku']|escape}
+                                    </span>
+                                </span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        {/capture}
+
+        {if !$is_mobile_modal && !$is_alt_form_block}
+            {$header_block}
+        {/if}
+
+        {if !empty($frontend_product['complex-plugin']['menu'])}
+            <div class="product-cart-form__complex-top-block">
+                {$frontend_product['complex-plugin']['menu']}
+            </div>
+        {/if}
+
+        <div class="product-cart-form__container">
+			{if $is_mobile_modal && $is_modal}
+			{else}
+                {* Theme Settings *}
+                {$is_enabled_zoom = $theme_settings['shop_product_zoom_enabled'] && !$is_modal}
+                {$thumbs_position = $theme_settings['shop_product_image_thumbs_position']}
+
+                {if $wa->globals('is_mobile')}
+                    {$thumbs_position = 'bottom'}
+                {/if}
+
+				<div class="product-cart-form__container-image">
+					<div class="product-cart-form__r-additional-buttons">
+						{if $theme_settings['shop_product_compare_enabled']}
+							<div class="product-cart-form__r-additional-button product-compare {if $is_compare}product-compare_active{/if}"{' '}
+									data-product_id="{$product.id|escape}" title="{if $is_compare}[`Удалить из сравнения`]{else}[`К сравнению`]{/if}">
+								<span class="image-box">
+									{call svg_icon
+									icon='compare' width=17 height=17 fill='none'}
+								</span>
+							</div>
+						{/if}
+
+						{if $theme_settings['shop_product_favorite_enabled']}
+							<div class="product-cart-form__r-additional-button product-favorite {if $is_favorite}product-favorite_active{/if}"{' '}
+									data-product_id="{$product.id|escape}" title="{if $is_favorite}[`Удалить из избранного`]{else}[`В избранное`]{/if}">
+								<span class="image-box">
+									{call svg_icon
+									icon='favorite' width=17 height=17 fill='none'}
+								</span>
+							</div>
+						{/if}
+					</div>
+
+					{* Product Images Start *}
+						{* Variables *}
+						{$video = $product->video}
+						{$has_video = !!$video}
+
+						{if $has_video}
+							{$video_rate = $video.width / 440}
+							{$video.width = 440}
+							{$video.height = ceil($video.height / $video_rate)}
+						{/if}
+
+						{$checked_sku_image_id = 0}
+						{if $wa->get('sku')}
+							{$checked_sku_id = $wa->get('sku')}
+							{$checked_sku = $skus[$checked_sku_id]}
+							{$checked_sku_image_id = $checked_sku['image_id']}
+						{/if}
+
+						<div class="product-images{if $has_video} product-images_has-video{/if} product-images_thumbs-position_{$thumbs_position|escape}{if $is_alt_form_block} product-images_bigger{/if}{if $theme_settings['header_floating_enabled']} product-images_header-floating{/if}" data-is_enabled_zoom="{$is_enabled_zoom|escape}" data-product-name="{$product.name|escape}">
+							<div class="product-images__images-container">
+                                <div class="product-cart-form__badges">
+                                    {if $product.badge}
+                                        <div class="product-cart-form__badge">
+                                            {call product_badge product=$product}
+                                        </div>
+                                    {/if}
+
+                                    {if $has_compare_price}
+                                        <div class="product-cart-form__badge">
+                                            {call product_badge product=$product is_discount=true}
+                                        </div>
+                                    {/if}
+                                </div>
+	                            {if $market['plugins']['shop_autobadge']}
+									{if !empty($product.autobadge)}
+                                        <div class="product-cart-form__autobadge">
+                                            {$product.autobadge}
+                                        </div>
+									{/if}
+	                            {/if}
+                                {if $is_enabled_zoom}
+								    <div class="product-images__zoom-container"></div>
+                                {/if}
+								<div class="product-images__images swiper">
+									<div class="product-images__images-wrapper swiper-wrapper">
+										{if $has_video}
+											<div class="swiper-slide product-images__image product-images__image_video product-images__image_hide" data-prevent-open-gallery="1" data-no-zoom="1">
+                                                {$matches = []}
+                                                {$_ = preg_match_all('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*?[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video.url, $matches)}
+                                                {$video_id = $matches[count($matches) - 1][0]}
+                                                {if $video_id}
+                                                    {call yt_video video_id=$video_id classes='product-images__video'}
+                                                {else}
+                                                    <iframe class="product-images__video" src="{$video.url}" width="{$video.width}" height="{$video.height}" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+                                                {/if}
+											</div>
+										{/if}
+
+										{if count($product.images) > 0}
+                                            {$image_size = 667}
+                                            {$thumbs_size = 48}
+                                            {if $thumbs_position == 'left'}
+                                                {$thumbs_size = 78}
+                                            {/if}
+
+                                            {if $is_alt_form_block}
+                                                {$image_size = 995}
+                                                {$thumbs_size = 120}
+                                            {/if}
+
+                                            {if $thumbs_position == 'left'}
+                                                {$image_size = $image_size - $thumbs_size}
+                                            {/if}
+
+											{foreach $product.images as $image}
+												<div class="swiper-slide product-images__image{if $checked_sku_image_id == $image.id} product-images__image_sku-selected{/if}" data-image_id="{$image.id|escape}" data-index="{$image@index}">
+													<a class="image-box image-box_fill" href="{$wa->shop->imgUrl($image, '970')|escape}">
+														{call image
+															src=$wa->shop->imgUrl($image, $image_size)
+															alt=$product.name
+                                                            r2x=true
+															data=[
+																'no-resize' => 1,
+																'no-srcset' => 1,
+																'zoom_src' => $wa->shop->imgUrl($image, '970')
+															]
+														}
+													</a>
+												</div>
+											{/foreach}
+										{else}
+											<div class="swiper-slide product-images__image product-images__image_dummy" data-prevent-open-gallery="1" data-no-zoom="1">
+												<span class="image-box image-box_fill">
+													{if !empty($theme_settings['product_dummy_image'])}
+														{call image
+                                                            src=$theme_settings['product_dummy_image']
+                                                            alt=$product.name
+														}
+													{else}
+														{call svg_icon classes='product-cart-form__dummy-image' icon='no-thumb' width=200 height=200 fill='#CFCFCF'}
+													{/if}
+												</span>
+											</div>
+										{/if}
+									</div>
+								</div>
+							</div>
+
+							{if count($product.images) > 1 || (count($product.images) === 1 && $has_video)}
+								<div class="product-images__thumbs-container">
+									<div class="product-images__thumbs-container-wrapper">
+										<div class="product-images__thumbs swiper">
+											<div class="product-images__thumbs-wrapper swiper-wrapper">
+												{if $video}
+                                                    <div class="swiper-slide product-images__thumb-slide">
+                                                        <div class="product-images__thumb product-images__thumb_video">
+                                                            {if count($video.images) > 0}
+                                                                <span class="image-box image-box_fill">
+                                                                    <img class="product-images__video-thumb" src="{$video.images[0]}" alt="{$product.name|escape}" />
+                                                                </span>
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+												{/if}
+												{foreach $product.images as $image}
+                                                    <div class="swiper-slide product-images__thumb-slide">
+                                                        <div class="product-images__thumb {if $image@first}product-images__thumb_focus{/if}" data-full_image="{$wa->shop->imgUrl($image, '970')|escape}" data-extend_image="{$wa->shop->imgUrl($image, '440')|escape}">
+                                                            <span class="image-box image-box_fill">
+                                                                {call image
+                                                                src=$wa->shop->imgUrl($image, $thumbs_size)
+                                                                alt=$product.name
+                                                                r2x=true
+                                                                }
+                                                            </span>
+                                                        </div>
+                                                    </div>
+												{/foreach}
+											</div>
+										</div>
+										<div class="product-images__arrow product-images__arrow_prev">
+											{call svg_icon classes='product-images__arrow-icon' icon='arrow-left' width=10 height=6}
+										</div>
+										<div class="product-images__arrow product-images__arrow_next">
+											{call svg_icon classes='product-images__arrow-icon' icon='arrow-right' width=10 height=6}
+										</div>
+									</div>
+								</div>
+							{/if}
+						</div>
+					{* Product Images End *}
+				</div>
+			{/if}
+			<div class="product-cart-form__container-content">
+                <div class="product-cart-form__columns">
+                    {$is_first_col_add_to_cart = !$is_alt_form_block && $theme_settings['shop_product_add_to_cart_first_col']|default:false}
+
+                    {if !$is_alt_form_block}
+                        {if isset($product['params']['product_add_to_cart_first_col'])}
+                            {$is_first_col_add_to_cart = $product['params']['product_add_to_cart_first_col'] == 1}
+                        {elseif isset($category['params']['product_add_to_cart_first_col'])}
+                            {$is_first_col_add_to_cart = $category['params']['product_add_to_cart_first_col'] == 1}
+                        {/if}
+                    {/if}
+                    {capture assign="add_to_cart_content"}
+                        {* Product Add To Cart Start *}
+                        {$is_enabled_buy1click_button = $theme_settings['shop_product_buy1click_enabled']}
+                        {$is_enabled_buy1click2_buttons = $theme_settings['shop_product_buy1click2_enabled']}
+                        {$is_enabled_bestprice_button = $theme_settings['shop_product_bestprice_enabled']}
+                        {$is_enabled_estdelivery = $theme_settings['shop_product_estdelivery_enabled']}
+                        {$show_buy1click2_list = $theme_settings['shop_product_buy1click2_list']}
+
+
+                        {$is_enabled_buy1click = $market['plugins']['shop_buy1click'] && !$is_mobile_modal}
+                        {$is_enabled_buy1click2 = $market['plugins']['shop_buy1click2'] && !$is_mobile_modal}
+                        {$is_enabled_bestprice = $market['plugins']['shop_bestprice'] && !$is_mobile_modal}
+                        {$is_enabled_flexdiscount = $market['plugins']['shop_flexdiscount'] && !$is_mobile_modal}
+
+                        {$has_compare_price = $product_info['sku'].compare_price > 0 && !$base_price}
+                        {$buy1click_button = null}
+                        {$buy1click2_buttons = null}
+                        {$buy1click2_list = null}
+
+
+                        {if $is_enabled_buy1click && $is_enabled_buy1click_button}
+                            {$buy1click_button = "{shopBuy1clickViewHelper::getButton($product.id)|replace:'{$class_placeholder}':'button button_style_light button_fill'}"}
+                        {/if}
+
+                        {if $is_enabled_buy1click2 && $is_enabled_buy1click2_buttons}
+                            {$ids = []}
+                            {if $show_buy1click2_list}
+                                {$ids = explode(',',$show_buy1click2_list)}
+                            {/if}
+                            {$buy1click2_buttons = "{shopBuy1click2ViewHelper::getButtons($ids, $product.id)}"}
+                        {/if}
+
+                        {if $is_enabled_bestprice_button && $is_enabled_bestprice}
+                            {$bestprice_button = "{shopBestpricePlugin::inProduct($product)}"}
+                        {/if}
+
+                        {$warehouse_block = null}
+                        {if $plugins['shop_warehouse'] && $plugins['shop_warehouse']}
+                            {$warehouse_block = shopWarehouseViewHelper::getStocksButton($product, [ 'mode' => 'sync', 'from' => 'product' ])}
+                        {/if}
+
+                        {if !$plugins['shop_estdelivery']}
+                            {$is_enabled_estdelivery = false}
+                        {else}
+                            {$estdelivery_text = shopEstdeliveryViewHelper::renderAllPlaceholders($product.sku_id, true)|join:''}
+                        {/if}
+
+                        <div class="product-add-to-cart {if !$product_info['available']}product-add-to-cart_disabled{/if} {if $has_compare_price}product-add-to-cart_has-compare-price{/if} {if $arrived_button || $has_pnotice}product-add-to-cart_has-arrived{/if}{if $is_modal &&  $is_mobile_modal} product-add-to-cart_mobile-modal{/if}{if $product.price == 0 && !empty($zero_price_text)} product-add-to-cart_zero-price{/if}">
+                            <div class="product-add-to-cart__skus-stocks{if !$theme_settings['shop_product_available_enabled']} product-add-to-cart__skus-stocks_disabled{/if}">
+                                {if $warehouse_block}
+                                    {$warehouse_block}
+                                {else}
+                                    <div class="product-skus-stocks product-cart-form__ajax" data-no-sku-text="[`Товар с выбранным набором характеристик недоступен для покупки`]">
+                                        <div class="product-skus-stocks__sku-stocks">
+                                            {if $primary_sku.available}
+                                                {if !empty($sku_stocks) && !$is_show_common_stocks_count}
+                                                    {$is_sku_empty = $primary_sku.count !== null && $primary_sku.count == 0}
+
+                                                    {foreach $sku_stocks as $stock_id => $sku_stock}
+                                                        {$stock = $stocks[$stock_id]}
+                                                        {$is_stock_empty = $sku_stock.count === 0}
+
+                                                        <div class="product-skus-stocks__sku-stock{if $is_stock_empty && $hide_empty_stocks} product-skus-stocks__sku-stock_empty{/if}">
+                                                            <div class="product-skus-stocks__sku-stock-name">
+                                                                {$sku_stock.name}:
+                                                            </div>
+                                                            <div class="product-skus-stocks__sku-stock-available">
+                                                                {call product_available n=$sku_stock.count low=$stock.low_count critical=$stock.critical_count show_exact_count=$theme_settings['shop_product_show_exact_count'] show_only_status=$theme_settings['shop_product_show_only_status'] custom_statuses_content=$stocks_statuses[$stock_id]|default:null stock_unit=$stock_unit["name_short"]}
+                                                            </div>
+                                                        </div>
+                                                    {/foreach}
+
+                                                    {if $is_sku_empty && $hide_empty_stocks}
+                                                        <div class="product-skus-stocks__sku-stock">
+                                                            <div class="product-skus-stocks__sku-stock-available">
+                                                                {call product_available n=$primary_sku.count low=5 critical=2 show_exact_count=$theme_settings['shop_product_show_exact_count'] show_only_status=$theme_settings['shop_product_show_only_status'] custom_status=$custom_available_status stock_unit=$stock_unit["name_short"]}
+                                                            </div>
+                                                        </div>
+                                                    {/if}
+                                                {else}
+                                                    <div class="product-skus-stocks__sku-stock">
+                                                        <div class="product-skus-stocks__sku-stock-available">
+                                                            {call product_available n=$primary_sku.count low=5 critical=2 show_exact_count=$theme_settings['shop_product_show_exact_count'] show_only_status=$theme_settings['shop_product_show_only_status'] custom_status=$custom_available_status stock_unit=$stock_unit["name_short"]}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+                                            {else}
+                                                <div class="product-skus-stocks__sku-stock">
+                                                    <div class="product-skus-stocks__sku-stock-available">
+                                                        {call product_available n=0 low=5 critical=2 show_exact_count=$theme_settings['shop_product_show_exact_count'] show_only_status=$theme_settings['shop_product_show_only_status']  custom_status=$custom_available_status stock_unit=$stock_unit["name_short"]}
+                                                    </div>
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+
+                            {if $is_enabled_estdelivery && $estdelivery_text}
+                                <div class="product-add-to-cart__estdelivery">
+                                    <div class="shop-estdelivery-plugin">
+                                        {call svg_icon icon='delivery-truck' width=17 height=17 fill='currentColor'}
+                                        {$estdelivery_text}
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {if $show_delivery_time}
+                                {$delivery_text = "{call get_delivery_text text=$delivery_text product_stocks=$sku_stocks}"}
+
+                                <div class="product-add-to-cart__delivery-date {if $delivery_text_tooltip}dropdown{/if} delivery-date{if $delivery_time_variant === 'only_available'} product-add-to-cart__delivery-date_hide{/if} product-cart-form__ajax">
+                                    {$delivery_text}
+                                    {if $delivery_text_tooltip}
+                                        {$delivery_text_tooltip = "{call get_delivery_text text=$delivery_text_tooltip product_stocks=$sku_stocks}"}
+                                        <div class="delivery-date__dropdown dropdown__dropdown dropdown__dropdown_right-arrow">
+                                            {$delivery_text_tooltip}
+                                        </div>
+                                    {/if}
+                                </div>
+                            {/if}
+
+                            {if $show_bonuses}
+                                <div class="product-add-to-cart__bonuses">
+                                    {call bonus_block price=$product.price}
+                                </div>
+                            {/if}
+
+                            <div class="product-add-to-cart__prices{if $price_text} product-add-to-cart__prices_text{/if}{if $base_price} product-add-to-cart__prices_base{/if}">
+                                {if $price_text}
+                                <span class="product-add-to-cart__price-text">
+                                    {$price_text}
+                                </span>
+                                <div class="product-add-to-cart__prices-block">
+                                    {/if}
+                                    <span class="product-add-to-cart__price{if $has_compare_price} product-add-to-cart__price_with-compare{/if}">
+                                        {if $product_info['sku']['price'] == 0 && !empty($zero_price_text)}
+                                            <span class="zero-price-text">{$zero_price_text}</span>
+                                        {else}
+                                            {shop_currency_html($product.price)}
+                                            {if $stock_unit["name_short"]}
+                                                {$delim = '/'}
+                                                {if $base_price}
+                                                    {$delim = _wp('за')}
+                                                {/if}
+                                                <span class="unit"> {$delim} {$stock_unit["name_short"]}</span>
+                                            {/if}
+                                        {/if}
+                                    </span>
+                                    {if $base_price}
+                                        <div class="product-add-to-cart__base-price">
+                                            {shop_currency_html($base_price)}<span class="unit unit_bottom">[`за`] {$base_unit["name_short"]}</span>
+                                        </div>
+                                    {/if}
+                                    <span class="product-add-to-cart__compare-price">
+                                        {if $has_compare_price}
+                                            {shop_currency_html($product_info['sku'].compare_price)}
+                                        {/if}
+                                    </span>
+                                    {if $price_text}
+                                </div>
+                                {/if}
+                            </div>
+
+                            {if $is_enabled_flexdiscount}
+                                {if is_callable(['shopFlexdiscountPluginHelper', 'price'], false)}
+                                    {$flexdiscount_price_output = shopFlexdiscountPluginHelper::price($product, 0, 0, 1)|replace:'"ruble"':'"ruble ruble"'}
+
+                                    {if $flexdiscount_price_output}
+                                        <div class="product-add-to-cart__flexdiscount">
+                                            <div class="flexdiscount-decorator">
+                                                {$flexdiscount_price_output}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                {/if}
+                            {/if}
+
+                            {if $theme_settings['block_product_under_price']}
+                                {$custom_text = $wa->block('market.product.under.price')}
+                            {else}
+                                {$custom_text = null}
+                            {/if}
+
+                            {if $custom_text}
+                                <div class="product-add-to-cart__custom-text">
+                                    {$custom_text}
+                                </div>
+                            {/if}
+
+                            {capture assign="add_to_cart_controls"}
+                                <div class="product-add-to-cart__controls{if $is_modal && $is_mobile_modal} product-add-to-cart__controls_mobile-modal{/if}">
+                                    <div class="product-add-to-cart__controls-quantity{if $stock_unit["name_short"]} product-add-to-cart__controls-quantity_unit{/if}">
+                                        <span class="product-add-to-cart__quantity quantity quantity_size_l quantity_min{if $wa->shop->settings('ignore_stock_count')} quantity_ignore-max{/if}{if $product_quantity_step > 1} quantity_step{/if}">
+                                            <span class="quantity__button quantity__minus-button">
+                                                <span class="image-box">
+                                                    {call svg_icon icon='minus' width=10 height=10 fill='currentColor'}
+                                                </span>
+                                                <span class="quantity__step">{$product_quantity_step}</span>
+                                            </span>
+                                            <span class="quantity__input-box">
+                                                <input class="quantity__field quantity__field_active quantity__input input-text" name="quantity" inputmode="decimal" data-field-id="stock" value="{$product_quantity_min}" data-min="{$product_quantity_min}" data-max="{if $wa->shop->settings('ignore_stock_count')}null{else}{$skus[$product_info['sku'].id]['max_count']}{/if}" data-step="{$product_quantity_step}" data-multiplicity="{$product_quantity_multiplicity}"{if $stock_unit["name_short"]} data-unit="{$stock_unit["name_short"]}"{/if}{if !$product_info['available']} disabled{/if}>
+                                                {if $base_unit}
+                                                    <input class="quantity__field input-text" inputmode="decimal" data-field-id="base" value="{$product_quantity_min * $product_base_ratio}" data-ratio="{$product_base_ratio}" data-unit="{$base_unit["name_short"]}"{if !$product_info['available']} disabled{/if}>
+                                                {elseif $stock_unit["name_short"]}
+                                                    <span class="quantity__unit quantity__unit_bottom">
+                                                        {$stock_unit["name_short"]}
+                                                    </span>
+                                                {/if}
+                                            </span>
+                                            <span class="quantity__button quantity__plus-button">
+                                                <span class="image-box">
+                                                    {call svg_icon icon='plus' width=10 height=10 fill='currentColor'}
+                                                </span>
+                                                <span class="quantity__step">{$product_quantity_step}</span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div class="product-add-to-cart__controls-button">
+                                        {capture assign="button_text"}
+                                            {if $options['show_changing_button']}
+                                                [`В корзине`]
+                                            {else}
+                                                {eval var=$theme_settings['shop_misc_add2cart_button_text']|default:''}
+                                            {/if}
+                                        {/capture}
+
+                                        {if $add_to_cart_button_tag === 'default'}
+                                            <button class="product-add-to-cart__button add-to-cart button button_size_l button_fill{if $options['show_changing_button']} button_style_inverse{/if}" {if !$product_info['available']}disabled="disabled"{/if} data-default-text="В корзину" data-success-text="{_wp('В корзине')}">
+                                                {$button_text}
+                                            </button>
+                                        {else}
+                                            <a class="product-add-to-cart__button add-to-cart button button_size_l button_fill{if $options['show_changing_button']} button_style_inverse{/if}{if !$product_info['available']} button_disabled{/if}" href="{call get_product_url product=$product}" data-default-text="В корзину" data-success-text="{_wp('В корзине')}">
+                                                {$button_text}
+                                            </a>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/capture}
+                            {if $base_unit}
+                                <div class="product-add-to-cart__full">
+                                    [`Итого`]: <span class="product-add-to-cart__full-price">{shop_currency_html($product.price * $product_quantity_min)}</span>
+                                </div>
+                                <div class="product-add-to-cart__controls-wrapper quantity-toggles">
+                                    <div class="quantity-toggles__list">
+                                        <span class="quantity-toggles__item quantity-toggles__item_active" data-field-id="stock">
+                                            {$stock_unit["name_short"]}
+                                        </span>
+                                        <span class="quantity-toggles__item" data-field-id="base">
+                                            {$base_unit["name_short"]}
+                                        </span>
+                                    </div>
+                                    <div class="product-add-to-cart__ratio-wrapper">
+                                        <span class="product-add-to-cart__stock-ratio">{sprintf(_w("1 %s"), $stock_unit["name_short"])}</span>
+                                        <span>&nbsp;=&nbsp;</span>
+                                        <span class="product-add-to-cart__base-ratio">{$product_base_ratio}</span>&nbsp;<span>{$base_unit["name_short"]}</span>
+                                    </div>
+                                    {$add_to_cart_controls}
+                                </div>
+                            {else}
+                                {$add_to_cart_controls}
+                            {/if}
+
+                            {if $buy1click_button}
+                                <div class="product-add-to-cart__buy-one-click">
+                                    <span class="buy1click-decorator buy1click-decorator_button">
+                                        {$buy1click_button}
+                                    </span>
+                                </div>
+                            {/if}
+
+                            {if $buy1click2_buttons}
+                                <div class="product-add-to-cart__buy-one-click">
+                                    <div class="buy1click2-decorator">
+                                        {$buy1click2_buttons}
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {if $arrived_button}
+                                <div class="product-add-to-cart__arrived">
+                                    <button class="product-add-to-cart__arrived-button button button_style_inverse button_size_l button_fill" type="button">[`Уведомить`]</button>
+                                    {$arrived_button}
+                                </div>
+                            {/if}
+
+                            <!-- plugin hook: 'frontend_product.cart' -->
+                            {* @event frontend_product.%plugin_id%.cart *}
+                            {foreach $frontend_product as $plugin => $_}
+                                {if empty($_.cart)
+                                || $plugin === 'dp-plugin'
+                                || ($arrived_button && $plugin === 'arrived-plugin')
+                                || (!$market['plugins']['shop_seosku'] && $plugin === 'seosku-plugin')
+                                || (!$has_pnotice && $plugin === 'pnotice-plugin')}
+                                    {continue}
+                                {/if}
+
+                                {$plugin_name = substr($plugin, 0, strpos($plugin, '-'))}
+
+                                <!-- frontend_product.{$plugin}.cart -->
+                                <div class="product-add-to-cart__{$plugin_name}{if $plugin === 'que-plugin'} content-decorator form-decorator{/if}">
+                                    {if $product_info['sku']['price'] == 0 || $plugin != 'reqprice-plugin'}
+                                        {$_.cart}
+                                    {/if}
+                                </div>
+                            {/foreach}
+                        </div>
+
+                        {* TODO: (wahub.ru) Fix $bestprice_button инициализировался с ошибкой при отсутствии плагина *}
+                        {if $bestprice_button|default:false}
+                            <div class="bestprice-block">
+                                <div class="bestprice-decorator">
+                                    {$button_classes = 'button button_fill'}
+                                    {if $is_link}
+                                        {$button_classes = 'button_clean pseudo-link'}
+                                    {/if}
+                                    {$bestprice_button|replace:'i-bestprice__button':"{$button_classes} js-bestprice-button"}
+                                </div>
+                            </div>
+                        {/if}
+                        {* Product Add To Cart End *}
+                    {/capture}
+
+                    <div class="product-cart-form__columns-main{if $is_first_col_add_to_cart} product-cart-form__columns-cart{/if}">
+                        {if $is_alt_form_block}
+                            {$header_block}
+                        {/if}
+                        <div class="product-cart-form__blocks items-list items-list_24 {if $theme_settings['header_floating_enabled']}product-cart-form__blocks_header-floating{/if}">
+                            <div class="product-cart-form__block">
+                                <div class="product-cart-form__sub-blocks">
+                                    {$product_blocks = []}
+                                    {$sorting_blocks = explode(',', $theme_settings['shop_product_form_main_col_sorting']|replace:' ':'')|default:[]}
+                                    {if !$is_mobile_modal}
+                                        {if $options['show_summary']}
+                                            {$product_blocks['summary'] = $product.summary}
+                                        {/if}
+                                        {if !$wa->get('cart') && !empty($product['features'])}
+                                            {capture assign='block_content'}
+                                                <div class="product-short-features">
+                                                    {call render_features sku=$primary_sku _features=$primary_sku.features is_short=true}
+                                                </div>
+                                            {/capture}
+                                            {$product_blocks['features'] = $block_content}
+                                        {/if}
+                                    {/if}
+                                    {if $market['plugins']['shop_productgroup']}
+                                        {$productGroupBlock = shopProductgroupViewHelper::getGroupsBlock($product['id'])}
+                                        {if !empty($productGroupBlock|trim)}
+                                            {$product_blocks['productgroup'] = $productGroupBlock}
+                                        {/if}
+                                    {/if}
+                                    {if $has_multi_sku || $is_features_selectable}
+                                        {capture assign='block_content'}
+                                            {$features_select_variant = $theme_settings['shop_product_feature_select_variant']}
+                                            {$skus_select_variant = $theme_settings['shop_product_skus_select_variant']}
+                                            {$is_features_selectable = $product.sku_type == '1'}
+                                            {if $is_features_selectable}
+                                                {$default_sku_features = $product.sku_features}
+
+                                                {foreach $features_selectable as $feature}
+                                                    {foreach $feature.values as $value_id => $value}
+                                                        {if !isset($default_sku_features[$feature.id])}
+                                                            {$default_sku_features[$feature.id] = $value_id}
+                                                        {/if}
+                                                    {/foreach}
+                                                {/foreach}
+
+                                                <div class="product-features-selects{if $is_mobile_modal} product-features-selects_mobile-modal{/if}">
+                                                    {foreach $features_selectable as $feature}
+                                                        {$default_value_id = $default_sku_features[$feature.id]|default:null}
+                                                        {$is_color = $feature.type === 'color'}
+
+                                                        <div class="product-features-selects__item">
+                                                            <div class="block block_size_xs block_secondary">
+                                                                <div class="block__header block__header_text">
+                                                                    {if $is_mobile_modal}
+                                                                        Выберите {$feature.name|escape|mb_strtolower}:
+                                                                    {else}
+                                                                        {$feature.name|escape}:
+                                                                    {/if}
+                                                                </div>
+                                                                <div class="block__content">
+                                                                    {if $features_select_variant === 'blocks'}
+                                                                        {* Product Feature Select Start *}
+                                                                            <div class="product-feature-select{if $is_color} product-feature-select_color{/if}" data-id="{$feature.id|escape}">
+                                                                                {foreach $feature.values as $value_id => $value}
+                                                                                    {$sku_url = null}
+                                                                                    {if $market['plugins']['shop_seosku']}
+                                                                                        {$sku_url = shopSeoskuViewHelper::getSkuUrlBySkuFeature($product, $feature.id, $value_id)}
+                                                                                    {/if}
+
+                                                                                    {$is_selected = $default_value_id == $value_id}
+
+                                                                                    {capture assign='sku_feature_output'}
+                                                                                        {if $is_color}
+                                                                                            {$is_dark = !!"{call is_dark hex=$value.hex}"}
+
+                                                                                            <span class="product-feature-select__color-wrapper tooltip">
+                                                                                                <span class="tooltip__content tooltip__content_show-m">
+                                                                                                    {$value.value}
+                                                                                                </span>
+                                                                                                <span class="product-feature-select__color {if $is_dark}product-feature-select__color_dark{/if} {if $is_selected}product-feature-select__color_selected{/if}" data-value="{$value_id}" style="background-color: {$value.hex|escape};">
+                                                                                                </span>
+                                                                                            </span>
+                                                                                        {else}
+                                                                                            <span class="product-feature-select__value {if $is_selected}product-feature-select__value_selected{/if}" data-value="{$value_id|escape}">
+                                                                                                {$value|escape}
+                                                                                            </span>
+                                                                                        {/if}
+                                                                                    {/capture}
+
+                                                                                    {if $sku_url}
+                                                                                        <a href="{$sku_url|escape}" class="seosku-link">
+                                                                                            {$sku_feature_output}
+                                                                                        </a>
+                                                                                    {else}
+                                                                                        {$sku_feature_output}
+                                                                                    {/if}
+                                                                                {/foreach}
+
+                                                                                <input class="product-feature-select__input sku-feature" type="hidden" data-feature-id="{$feature.id|escape}" name="features[{$feature.id|escape}]" value="{$default_value_id|escape}">
+                                                                            </div>
+                                                                        {* Product Feature Select End *}
+                                                                    {elseif $features_select_variant === 'select'}
+                                                                        <select class="select-decorator" data-fill="0" name="features[{$feature.id|escape}]">
+                                                                            {foreach $feature.values as $value_id => $value}
+                                                                                {$is_selected = $default_value_id == $value_id}
+
+                                                                                {if $feature.type === 'color'}
+                                                                                    {capture assign="color_label"}
+                                                                                        <span class="select__color" style="background-color: {$value.hex|escape};"></span> {$value.value|escape}
+                                                                                    {/capture}
+                                                                                    <option value="{$value_id|escape}" {if $is_selected}selected="selected"{/if} data-label="{$color_label|escape}">
+                                                                                        {$value.value|escape}
+                                                                                    </option>
+                                                                                {else}
+                                                                                    <option value="{$value_id|escape}" {if $is_selected}selected="selected"{/if}>
+                                                                                        {$value|escape}
+                                                                                    </option>
+                                                                                {/if}
+                                                                            {/foreach}
+                                                                        </select>
+                                                                    {/if}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {/foreach}
+                                                </div>
+                                            {else}
+                                                {if $wa->get('sku')}
+                                                    {$checked_sku = $wa->get('sku')}
+                                                {else}
+                                                    {$checked_sku = $product.sku_id}
+                                                {/if}
+
+                                                <div class="product-skus">
+                                                    {if $skus_select_variant == 'select'}
+                                                        {$skus_options = []}
+
+                                                        {foreach $product.skus as $sku}
+                                                            {$sku_available = $product.status && $sku.available && ($wa->shop->settings('ignore_stock_count') || $sku.count === null || $sku.count > 0)}
+
+                                                            {$is_selected = $sku.id == $checked_sku}
+
+                                                            {$skus_options[] = [
+                                                            'value' => $sku.id,
+                                                            'label' => $sku.name|escape,
+                                                            'selected' => $is_selected,
+                                                            'classes' => 'product-skus__variant',
+                                                            'disabled' => !$sku_available && $theme_settings['shop_product_skus_select_disable_unavailable']
+                                                            ]}
+                                                        {/foreach}
+
+                                                        {call select
+                                                            classes='product-skus__select'
+                                                            select_name="sku_id"
+                                                            options=$skus_options
+                                                        }
+                                                    {else}
+                                                        {foreach $product.skus as $sku}
+                                                            {$sku_available = $product.status && $sku.available && ($wa->shop->settings('ignore_stock_count') || $sku.count === null || $sku.count > 0)}
+                                                            {if $sku_available}
+                                                                {$sku_url = null}
+                                                                {if $market['plugins']['shop_seosku']}
+                                                                    {$sku_url = shopSeoskuViewHelper::getSkuUrl($sku.id)}
+                                                                {/if}
+                                                                {capture assign='sku_output'}
+                                                                    <label class="product-skus__item radio">
+                                                                        <input class="radio__control" type="radio" name="sku_id" value="{$sku.id}" {if $sku.id == $checked_sku}checked="checked"{/if} />
+                                                                        <span class="radio__mark"></span>
+                                                                        <span class="radio__label product-skus__item-label">
+                                                                            {$sku.name}
+                                                                        </span>
+                                                                    </label>
+                                                                {/capture}
+
+                                                                {if $sku_url}
+                                                                    <a class="seosku-link" href="{$sku_url|escape}">
+                                                                        {$sku_output}
+                                                                    </a>
+                                                                {else}
+                                                                    {$sku_output}
+                                                                {/if}
+                                                            {/if}
+                                                        {/foreach}
+                                                    {/if}
+                                                </div>
+                                            {/if}
+
+                                        {/capture}
+                                        {$product_blocks['skus'] = $block_content}
+                                    {/if}
+                                    {if $options['show_services']}
+                                        {capture assign='block_content'}
+                                            <div class="block block_secondary block_size_xs">
+                                                <div class="block__header block__header_text">
+                                                    {if $theme_settings['shop_product_services_caption']}
+                                                        {$theme_settings['shop_product_services_caption']}:
+                                                    {else}
+                                                        {_wp("Дополнительные услуги")}:
+                                                    {/if}
+                                                </div>
+                                                <div class="block__content">
+                                                    {$hide_unavailable_service_variants = $theme_settings['shop_product_services_hide_unavailable']}
+
+                                                    <div class="services">
+                                                        {foreach $services as $service}
+                                                            {$has_variants = isset($service.variants)}
+                                                            <div class="services__item">
+                                                                <div class="service">
+                                                                    <div class="service__control">
+                                                                        <label class="checkbox">
+                                                                            <input class="checkbox__control service__checkbox" type="checkbox" name="services[]" value="{$service.id}" />
+                                                                            <span class="checkbox__mark"></span>
+                                                                            <span class="checkbox__label">
+                                                                                {$service.name|escape}{' '}
+
+                                                                                {if $service.price && !isset($service.variants)}
+                                                                                    ({if $service.price > 0}+{/if}
+                                                                                    <span class="service__price">{shop_currency_html($service.price, $service.currency)}</span>
+                                                                                    )
+                                                                                {/if}
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                    {if $has_variants}
+                                                                        <div class="service__variants{if $hide_unavailable_service_variants} service__variants_hide_unavailable{/if}">
+                                                                            {$services_options = []}
+
+                                                                            {foreach $service.variants as $variant}
+                                                                                {$is_selected = $service.variant_id == $variant.id}
+                                                                                {$services_options[] = [
+                                                                                    'value' => $variant.id,
+                                                                                    'label' => "{$variant.name|escape} (+{shop_currency($variant.price, $service.currency)})",
+                                                                                    'selected' => $is_selected,
+                                                                                    'classes' => 'service__variant'
+                                                                                ]}
+                                                                            {/foreach}
+
+                                                                            {call select
+                                                                                classes='service__select-variants'
+                                                                                select_name="service_variant[{$service.id|escape}]"
+                                                                                options=$services_options
+                                                                                fill=true
+                                                                                disabled=true
+                                                                            }
+                                                                        </div>
+                                                                    {else}
+                                                                        <input class="service__input-variant" type="hidden" name="service_variant[{$service.id|escape}]" value="{$service.variant_id|escape}">
+                                                                    {/if}
+                                                                </div>
+                                                            </div>
+                                                        {/foreach}
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        {/capture}
+                                        {$product_blocks['services'] = $block_content}
+                                    {/if}
+
+                                    {foreach $product_blocks as $block_name => $block_html}
+                                        {$order = array_search($block_name, $sorting_blocks)}
+                                        <div class="product-cart-form__sub-block product-cart-form__sub-block_{$block_name}"{if $order !== false} style="order: {$order}"{/if}>
+                                            {$block_html}
+                                        </div>
+                                    {/foreach}
+                                </div>
+                            </div>
+                            {if $is_first_col_add_to_cart}
+                                <div class="product-cart-form__block">
+                                    {$add_to_cart_content}
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                    <div class="product-cart-form__columns-additional{if $is_mobile_modal} product-cart-form__columns-additional_mobile-modal{/if}">
+                        <div class="product-cart-form__blocks items-list items-list_16 {if $theme_settings['header_floating_enabled']}product-cart-form__blocks_header-floating{/if}">
+                            {if !$is_first_col_add_to_cart}
+                                <div class="product-cart-form__block{if $is_mobile_modal} product-cart-form__block_mobile-modal{/if}">
+                                    {$add_to_cart_content}
+                                </div>
+                            {/if}
+
+                            {$later_block_aux_plugins = ['seoratings-plugin']}
+                            {$later_blocks_aux = []}
+                            <!-- plugin hook: 'frontend_product.block_aux' -->
+                            {* @event frontend_product.%plugin_id%.block_aux *}
+                            {if !empty($frontend_product)}
+                                {foreach $frontend_product as $plugin => $_}
+                                    {if $plugin === 'dp-plugin'}
+                                        {continue}
+                                    {/if}
+
+                                    {if (!isset($_.block_aux) || empty($_.block_aux)) && !$_.columns_main|default:false}
+                                        {continue}
+                                    {/if}
+
+                                    {$plugin_name = substr($plugin, 0, strpos($plugin, '-'))}
+
+                                    {if in_array($plugin, $later_block_aux_plugins)}
+                                        {$later_blocks_aux[$plugin_name] = $_.block_aux}
+                                        {continue}
+                                    {/if}
+
+                                    {if $_.block_aux}
+                                        <div class="product-cart-form__block product-cart-form__{$plugin_name}-block{if $plugin === 'que-plugin'} content-decorator form-decorator{/if}">
+                                            {$_.block_aux}
+                                        </div>
+                                    {/if}
+
+                                    {if $_.columns_main|default:false}
+                                        <div class="product-cart-form__block">
+                                            {$_.columns_main}
+                                        </div>
+                                    {/if}
+                                {/foreach}
+                            {/if}
+
+                            {if $plugins['shop_promos']}
+                                {capture assign="promos_block"}
+                                    {shopPromosPluginHelper::getProductActivePromos()}
+                                    {shopPromosPluginHelper::getPromoCodeProductPrompt()}
+                                    {shopPromosPluginHelper::getNPMProductPrompt()}
+                                    {shopPromosPluginHelper::getGiftProductPrompt()}
+                                    {shopPromosPluginHelper::getBonusCardProductPrompt()}
+                                {/capture}
+                                {if !empty($promos_block)}
+                                    <div class="product-cart-form__block product-cart-form__promos-block content-decorator">
+                                        {$promos_block}
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            {if !$is_modal && $theme_settings['shop_product_messengers_enabled']}
+                                {$whatsapp = "{eval var=$theme_settings['whatsapp']}"}
+                                {$telegram = "{eval var=$theme_settings['telegram']}"}
+                                {$has_whatsapp = !empty($whatsapp)}
+                                {$has_telegram = !empty($telegram)}
+
+                                {if $has_whatsapp || $has_telegram}
+                                    <div class="product-cart-form__block items-list items-list_align-start items-list_8">
+                                        {if $has_whatsapp}
+                                            <a class="items-list__soc-item button button_style_transparent_gray" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}?text=Вопрос по товару: {$product.name|escape}" target="_blank" data-analytic-click="whatsapp_product">
+                                                <span class="icon-box">
+                                                    <span class="icon-box__icon">
+                                                        {call svg_icon icon='whatsapp' width=24 height=24}
+                                                    </span>
+                                                    <span class="icon-box__content">
+                                                        [`Написать в`] Whatsapp
+                                                    </span>
+                                                </span>
+                                            </a>
+                                        {/if}
+                                        {if $has_telegram}
+                                            <a class="items-list__soc-item button button_style_transparent_gray" href="https://t.me/{$telegram|replace:' ':''|escape}" target="_blank" data-analytic-click="telegram_product">
+                                                <span class="icon-box">
+                                                    <span class="icon-box__icon">
+                                                        {call svg_icon icon='telegram' width=24 height=24}
+                                                    </span>
+                                                    <span class="icon-box__content">
+                                                        [`Написать в`] Telegram
+                                                    </span>
+                                                </span>
+                                            </a>
+                                        {/if}
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            {if !$is_mobile_modal}
+                                {if $dp_content}
+                                    <div class="product-cart-form__block{if $options['dp_variant'] === 'only_available'} product-cart-form__block_hide-not-available{/if}">
+                                        <div class="product-cart-form__dp-container">
+                                            {$dp_content}
+                                            <div class="product-cart-form__dp-spinner">
+                                                <span class="spinner">
+                                                    <span class="image-box">
+                                                        {call svg_icon classes="spinner " icon='spinner' width=64 height=64 fill='currentColor'}
+                                                    </span>
+                                                </span>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/if}
+
+                                {if !empty($later_blocks_aux)}
+                                    {foreach $later_blocks_aux as $plugin_name => $block_aux}
+                                        <div class="product-cart-form__block product-cart-form__{$plugin_name}-block">
+                                            {$block_aux}
+                                        </div>
+                                    {/foreach}
+                                {/if}
+
+                                <!-- plugin hook: 'frontend_product.columns_additional' -->
+                                {* @event frontend_product.%plugin_id%.columns_additional *}
+                                {if !empty($frontend_product)}
+                                    {foreach $frontend_product as $plugin => $_}
+                                        {if !$_.columns_additional|default:false}
+                                            {continue}
+                                        {/if}
+
+                                        <div class="product-cart-form__block">
+                                            {$_.columns_additional}
+                                        </div>
+                                    {/foreach}
+                                {/if}
+                            {/if}
+
+                            {if $is_modal}
+                                <div class="product-cart-form__block">
+                                    <div class="product-cart-form__detail-button">
+                                        <a class="button button_style_inverse button_fill button_size_l" href="{$wa->shop->productUrl($product)}">
+                                            [`Подробнее о товаре`]
+                                        </a>
+                                    </div>
+                                </div>
+                            {else}
+                                {if $theme_settings['shop_product_advantages_position'] === 'cart_form'}
+                                    <article class="product-cart-form__block product-cart-form__advantages">
+                                        {call advantages size='xs'}
+                                    </article>
+                                {/if}
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+			</div>
+		</div>
+	</form>
+{/strip}

@@ -1,0 +1,2351 @@
+{strip}
+    {$get_ajax_blocks = $get_ajax_blocks|default:false}
+    {$options = []}
+    {$options['with_border'] = false}
+
+    {if $theme_settings['header_variant'] == 4}
+        {$options['with_border'] = true}
+    {elseif $theme_settings['header_variant'] == 5 && $theme_settings['header_variant_5_bottom_bar_transparent']}
+        {$options['with_border'] = true}
+    {/if}
+
+    {* Theme Settings *}
+    {$limit = $theme_settings['header_bottom_bar_limit']}
+
+    {if $wa->globals('market.theme_exists.shop')}
+        {call get_catalog_categories}
+        {$_categories = $wa->globals('market.return')|default:[]}
+    {else}
+        {$_categories = []}
+    {/if}
+
+    {$categories = []}
+    {$hidden_categories = []}
+
+    {foreach $_categories as $i => $category}
+        {$is_hidden = $limit != -1 && $category@iteration > $limit}
+
+        {if $is_hidden}
+            {$hidden_categories[$i] = $category}
+        {else}
+            {$categories[$i] = $category}
+        {/if}
+    {/foreach}
+
+    {if count($hidden_categories) > 0}
+        {$categories['-1'] = ['id' => '-1', 'name' => "{_wp("Ещё")}", 'childs' => $hidden_categories]}
+    {/if}
+
+    {* Template *}
+
+    {function input_search size=null style=null}
+        {$products_count = "{call products_count_all}"|intval}
+        {$placeholder = "{include "string:{$theme_settings['search-phrase']}"}"}
+
+        {$icon_size = 16}
+        {if $size === 'l'}
+            {$icon_size = 20}
+        {/if}
+
+        {$query = ''}
+
+        {if $wa_app === 'shop' && $wa->param('action') === 'search'}
+            {$query = $wa->get('query')}
+        {/if}
+
+        {$searchpro_html = null}
+
+        {if $wa->globals('market.plugins.shop.searchpro')}
+            {$searchpro_html = shopSearchproPluginViewHelper::field()}
+        {/if}
+
+        {if $searchpro_html}
+            <div class="searchpro-wrapper {if $size}searchpro-wrapper_size_{$size|escape}{/if} {if $style}searchpro-wrapper_style_{$style|escape}{/if}">
+                {$searchpro_html}
+            </div>
+        {else}
+            <form class="input-search {if $size}input-search_size_{$size|escape}{/if} {if $style}input-search_style_{$style|escape}{/if}" action="{$wa->getUrl('shop/frontend/search')|escape}" {if $theme_settings['header_search_autocomplete_enabled']}data-autocomplete="1"{/if}>
+                <div class="input-search__input-container">
+                    <input class="input-search__input input-text input-text_size_s input-text_fill" name="query" placeholder="{$placeholder}" value="{$query|escape}" autocomplete="off" />
+                </div>
+                <div class="input-search__button-container">
+                    <button class="input-search__button button">
+                        {call svg_icon icon='search' width=$icon_size height=$icon_size fill='currentColor'}
+                    </button>
+                </div>
+            </form>
+        {/if}
+    {/function}
+
+    <div class="header {if $options['with_border']}header_with-border{/if} r-hidden-md">
+        {if !$get_ajax_blocks}
+            {if $wa->globals('market.promo_banner_hash')}
+                <div class="header__banner">
+                    {call panel_banner hash=$wa->globals('market.promo_banner_hash')}
+                </div>
+            {/if}
+
+            {if !$wa->globals('is_checkout')}
+                <div class="header__top-bar">
+                    {function header_top_bar}
+                        <div class="header-top-bar">
+                            <div class="container">
+                                <div class="header-top-bar__container">
+                                    {if $wa_app === 'shop'}
+                                        {$not_empty_frontend_header = []}
+
+                                        {foreach $frontend_header as $plugin => $_}
+                                            {if $_}
+                                                {$not_empty_frontend_header[$plugin] = $_}
+                                            {/if}
+                                        {/foreach}
+
+                                        <!-- plugin hook: 'frontend_header' -->
+                                        {if $not_empty_frontend_header}
+                                            <span class="link-decorator">
+                                                {* @event frontend_header.%plugin_id% *}
+                                                {foreach $not_empty_frontend_header as $plugin => $_}
+                                                    {if $plugin === 'cityselect-plugin'}{continue}{/if}
+                                                    <!-- frontend_header.{$plugin} -->
+                                                    {$_}
+                                                {/foreach}
+                                            </span>
+                                        {/if}
+                                    {elseif $wa_app === 'photos'}
+                                        {$not_empty_frontend_layout_header = []}
+
+                                        {foreach $frontend_layout as $plugin => $_}
+                                            {if !empty($_.header)}
+                                                {$not_empty_frontend_layout_header[$plugin] = $_.header}
+                                            {/if}
+                                        {/foreach}
+
+                                        <!-- plugin hook: 'frontend_layout.%plugin_id%.header' -->
+                                        {if $not_empty_frontend_layout_header}
+                                            <span class="link-decorator">
+                                                {* @event frontend_layout.%plugin_id%.header *}
+                                                {foreach $not_empty_frontend_layout_header as $plugin => $_}
+                                                    {if $plugin === 'cityselect-plugin'}{continue}{/if}
+                                                    <!-- frontend_layout.{$plugin}.header -->
+                                                    {$_}
+                                                {/foreach}
+                                            </span>
+                                        {/if}
+                                    {/if}
+
+                                    {if $theme_settings['header_regions_enabled'] === 'regions' && $wa->globals('market.plugins.shop.regions')}
+                                        <div class="header-top-bar__container-region">
+                                            {shopRegionsViewHelper::getWindow()}
+                                        </div>
+                                    {elseif $theme_settings['header_regions_enabled'] === 'cityselect' && $wa->globals('market.plugins.shop.cityselect')}
+                                        <div class="header-top-bar__container-region">
+                                            {shopCityselectPlugin::showCity('0')}
+                                        </div>
+                                    {/if}
+
+                                    <nav class="header-top-bar__container-nav">
+                                        {* Variables *}
+                                        {$links = []}
+
+                                        {if $theme_settings['header_top_bar_source'] === 'shop_pages'}
+                                            {call get_shop_pages}
+                                            {$pages = $wa->globals('market.return')}
+
+                                            {if $theme_settings['header_top_bar_pages']}
+                                                {$pages_urls = explode(',', $theme_settings['header_top_bar_pages'])}
+
+                                                {$pages_by_url = []}
+
+                                                {foreach $pages as $page}
+                                                    {$pages_by_url[$page.full_url] = $page}
+                                                {/foreach}
+
+                                                {foreach $pages_urls as $page_url}
+                                                    {if isset($pages_by_url[$page_url])}
+                                                        {$links[] = $pages_by_url[$page_url]}
+                                                    {/if}
+                                                {/foreach}
+                                            {else}
+                                                {$links = $pages}
+                                            {/if}
+                                        {elseif $theme_settings['header_top_bar_source'] === 'wa_apps'}
+                                            {$links = $wa->apps()}
+                                        {elseif $theme_settings['header_top_bar_source'] === 'catalog'}
+                                            {call get_catalog_categories}
+                                            {$categories = $wa->globals('market.return')|default:[]}
+
+                                            {foreach $categories as $category}
+                                                {$is_hidden = $category.params['hidden']|default:false}
+
+                                                {if $is_hidden}
+                                                    {continue}
+                                                {/if}
+
+                                                {$links[] = $category}
+                                            {/foreach}
+                                        {elseif $theme_settings['header_top_bar_source'] == "menu_app" && $wa->menu}
+                                            {$menu_id = $theme_settings["header_top_menu_app_id"]}
+                                            {$links = $wa->menu->get($menu_id)}
+                                        {/if}
+
+                                        {$visible_links = []}
+                                        {$hidden_links = []}
+
+                                        {foreach $links as $link}
+                                            {$is_hidden = $theme_settings['header_top_bar_limit'] != -1 && $link@iteration > $theme_settings['header_top_bar_limit']}
+
+                                            {if $is_hidden}
+                                                {$hidden_links[] = $link}
+                                            {else}
+                                                {$visible_links[] = $link}
+                                            {/if}
+                                        {/foreach}
+
+                                        {$has_hidden = count($hidden_links) > 0}
+
+                                        {* Template *}
+                                        <ul class="header-top-bar-links">
+                                            {foreach $visible_links as $key => $link}
+                                                <li class="header-top-bar-links__item" data-key="{$key}">
+                                                    {if !empty($link.childs)}
+                                                        <div class="dropdown">
+                                                            <a class="link-box link-box_style_alt-gray" href="{$link.url}">
+                                                                <span class="icon-box icon-box_size_s">
+                                                                    <span class="icon-box__content">
+                                                                        <span class="link-box__link">
+                                                                            {$link.name|escape}
+                                                                        </span>
+                                                                    </span>
+                                                                    <span class="icon-box__icon">
+                                                                        {call svg_icon icon="arrow-bottom" classes="link-box__icon dropdown__icon" width=10 height=6}
+                                                                    </span>
+                                                                </span>
+                                                            </a>
+
+                                                            <div class="dropdown__dropdown">
+                                                                <ul class="dropdown-links">
+                                                                    {foreach $link.childs as $link_child}
+                                                                        <li class="dropdown-links__item">
+                                                                            <a class="link link_style_alt-gray dropdown-links__link" href="{$link_child.url|escape}" {if !empty($link_child.target)}target="{$link_child.target}"{/if}>
+                                                                                {$link_child.name|escape}
+                                                                            </a>
+                                                                        </li>
+                                                                    {/foreach}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    {else}
+                                                        <a class="link link_style_alt-gray" href="{$link.url|escape}" {if !empty($link.target)}target="{$link.target}"{/if}>
+                                                            {$link.name|escape}
+                                                        </a>
+                                                    {/if}
+                                                </li>
+                                            {/foreach}
+
+                                            <li class="header-top-bar-links__item" {if !$has_hidden}style="display: none;"{/if}>
+                                                <div class="dropdown">
+                                                    <span class="pseudo-link-box pseudo-link-box_style_alt-gray  pseudo-link-box_link">
+                                                        <span class="icon-box icon-box_size_s">
+                                                            <span class="icon-box__content">
+                                                                <span class="pseudo-link-box__link">
+                                                                    {_wp("Ещё")}
+                                                                </span>
+                                                            </span>
+                                                            <span class="icon-box__icon">
+                                                                {call svg_icon icon="arrow-bottom" classes="pseudo-link-box__icon dropdown__icon" width=10 height=6}
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                    <div class="dropdown__dropdown">
+                                                        <div class="dropdown-links">
+                                                            {foreach $links as $key => $link}
+                                                                {$is_hidden = $theme_settings['header_top_bar_limit'] != -1 && $link@iteration > $theme_settings['header_top_bar_limit']}
+
+                                                                <div class="dropdown-links__item" data-key="{$key}" {if !$is_hidden}style="display: none;"{/if}>
+                                                                    <a class="link link_style_alt-gray dropdown-links__link" href="{$link.url|escape}" {if !empty($link.target)}target="{$link.target}"{/if}>
+                                                                        {$link.name|escape}
+                                                                    </a>
+                                                                </div>
+                                                            {/foreach}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+
+                                            {if $wa_app == 'shop'}
+                                                {foreach $frontend_nav as $_key => $_html}
+                                                    {if $_key === 'brand-plugin'}
+                                                        {continue}
+                                                    {/if}
+
+                                                    {$_links = []}
+                                                    {$_ = preg_match_all('/<a.+>.+<\/a>/sU', $_html, $_links)}
+
+                                                    <li class="header-top-bar-links__item">
+                                                        {if count($_links[0]) > 1 || empty($_links[0])}
+                                                            <div class="dropdown">
+                                                                <span class="pseudo-link-box pseudo-link-box_style_alt-gray pseudo-link-box_link">
+                                                                    <span class="icon-box icon-box_size_s">
+                                                                        <span class="icon-box__content">
+                                                                            <span class="pseudo-link-box__link">
+                                                                                {if substr($_key, -7) == '-plugin'}
+                                                                                    {$wa->pluginName(substr($_key, 0, -7))}
+                                                                                {else}
+                                                                                    [`More`]
+                                                                                {/if}
+                                                                            </span>
+                                                                        </span>
+                                                                        <span class="icon-box__icon">
+                                                                            {call svg_icon icon="arrow-bottom" classes="pseudo-link-box__icon dropdown__icon" width=10 height=6}
+                                                                        </span>
+                                                                    </span>
+                                                                </span>
+
+                                                                <div class="dropdown__dropdown">
+                                                                    <div class="header-top-bar-links__plugin-dropdown">
+                                                                        {$_html}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {else}
+                                                            <div class="header-top-bar-links__plugin">
+                                                                {$_html}
+                                                            </div>
+                                                        {/if}
+                                                    </li>
+                                                {/foreach}
+
+                                                {foreach $frontend_nav_aux as $_key => $_html}
+                                                    {if $_key === 'brand-plugin'}
+                                                        {continue}
+                                                    {/if}
+
+                                                    {$_links = []}
+                                                    {$_ = preg_match_all('/<a.+>.+<\/a>/sU', $_html, $_links)}
+
+                                                    <li class="header-top-bar-links__item">
+                                                        {if count($_links[0]) > 1 || empty($_links[0])}
+                                                            <div class="dropdown">
+                                                                <span class="pseudo-link-box pseudo-link-box_style_alt-gray pseudo-link-box_link">
+                                                                    <span class="icon-box icon-box_size_s">
+                                                                        <span class="icon-box__content">
+                                                                            <span class="pseudo-link-box__link">
+                                                                                {if substr($_key, -7) == '-plugin'}
+                                                                                    {$wa->pluginName(substr($_key, 0, -7))}
+                                                                                {else}
+                                                                                    [`More`]
+                                                                                {/if}
+                                                                            </span>
+                                                                        </span>
+                                                                        <span class="icon-box__icon">
+                                                                            {call svg_icon icon="arrow-bottom" classes="pseudo-link-box__icon dropdown__icon" width=10 height=6}
+                                                                        </span>
+                                                                    </span>
+                                                                </span>
+                                                                <div class="dropdown__dropdown">
+                                                                    <div class="header-top-bar-links__plugin-dropdown">
+                                                                        {$_html}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {else}
+                                                            <div class="header-top-bar-links__plugin">
+                                                                {$_html}
+                                                            </div>
+                                                        {/if}
+                                                    </li>
+                                                {/foreach}
+                                            {/if}
+                                        </ul>
+
+                                    </nav>
+
+                                    {if $theme_settings['header_variant'] == 3 || in_array($theme_settings['header_variant'], [4, 5])}
+                                        {if $theme_settings['header_variant'] == 3}
+                                            {$is_enabled_phone_2 = $theme_settings['header_variant_3_phone_2_enabled']}
+                                            {$is_enabled_schedule = $theme_settings['header_variant_3_schedule_enabled']}
+                                            {$is_enabled_address = $theme_settings['header_variant_3_address_enabled']}
+                                            {$phone_2_hint = $theme_settings['header_variant_3_phone_2_hint']}
+                                            {$is_enabled_ordercall = $theme_settings['header_variant_3_ordercall_enabled']}
+                                            {$is_enabled_email = $theme_settings['header_variant_3_email_enabled']}
+                                            {$is_enabled_messengers = $theme_settings['header_variant_3_messengers_enabled']}
+                                        {elseif in_array($theme_settings['header_variant'], [4, 5])}
+                                            {$is_enabled_phone_2 = $theme_settings['header_variant_4_phone_2_enabled']}
+                                            {$is_enabled_schedule = $theme_settings['header_variant_4_schedule_enabled']}
+                                            {$is_enabled_address = $theme_settings['header_variant_4_address_enabled']}
+                                            {$phone_2_hint = $theme_settings['header_variant_4_phone_2_hint']}
+                                            {$is_enabled_ordercall = $theme_settings['header_variant_4_ordercall_enabled']}
+                                            {$is_enabled_email = $theme_settings['header_variant_4_email_enabled']}
+                                            {$is_enabled_messengers = $theme_settings['header_variant_4_messengers_enabled']}
+                                        {/if}
+
+                                        {$email = "{eval var=$theme_settings['email']|default:''}"}
+                                        {$address = "{eval var=$theme_settings['address']|default:''}"}
+
+                                        {$has_address = !empty($address)}
+                                        {$has_email = !empty($email)}
+
+                                        {$whatsapp = "{eval var=$theme_settings['whatsapp']}"}
+                                        {$telegram = "{eval var=$theme_settings['telegram']}"}
+                                        {$vk_link = $theme_settings['vk_link']}
+
+                                        {$has_whatsapp = !empty($whatsapp)}
+                                        {$has_telegram = !empty($telegram)}
+                                        {$has_vk_link = !empty($vk_link)}
+
+                                        {$is_enabled_messengers = $is_enabled_messengers && ($has_whatsapp || $has_telegram || $has_vk_link)}
+
+                                        {capture assign="phone_2_hint_output"}
+                                            {if $phone_2_hint === 'ordercall' && $wa->globals('market.plugins.shop.ordercall')}
+                                                <a class="pseudo-link pseudo-link_style_alt-gray ordercall-button call-back-button">
+                                                    [`Заказать звонок`]
+                                                </a>
+                                            {else}
+                                                {"{eval var=$theme_settings['phone_2_hint']}"|escape}
+                                            {/if}
+                                        {/capture}
+
+                                        <div class="header-top-bar__container-contacts">
+                                            <div class="header-top-bar-contacts">
+                                                <div class="header-top-bar-contacts__item">
+                                                    <div class="header-top-bar-contacts__phone">
+                                                        {if $is_enabled_phone_2 || $is_enabled_schedule || $is_enabled_address}
+                                                            <div class="dropdown dropdown_left">
+                                                                <a class="header-top-bar-contacts__phone-link link-box" href="tel:{call clean_phone phone="{eval var=$theme_settings['phone_1']}"}">
+                                                                    <span class="icon-box icon-box_size_s">
+                                                                        <span class="icon-box__content">
+                                                                            {"{eval var=$theme_settings['phone_1']}"|escape}
+                                                                        </span>
+                                                                        <span class="icon-box__icon">
+                                                                            {call svg_icon icon='arrow-bottom' classes='link-box__icon dropdown_icon' width=10 height=6}
+                                                                        </span>
+                                                                    </span>
+                                                                </a>
+
+                                                                <div class="dropdown__dropdown dropdown__dropdown_left-arrow">
+                                                                    <div class="dropdown-links dropdown-links_separated header-top-bar-contacts__dropdown">
+                                                                        {if $is_enabled_phone_2}
+                                                                            <div class="dropdown-links__item header-top-bar-contacts__dropdown-item">
+                                                                                <div class="header-top-bar-contacts__dropdown-phone">
+                                                                                    <a class="link link_style_alt-gray" href="tel:{call clean_phone phone="{eval var=$theme_settings['phone_2']}"}">
+                                                                                        {"{eval var=$theme_settings['phone_2']}"|escape}
+                                                                                    </a>
+                                                                                </div>
+                                                                                {if !empty($phone_2_hint_output)}
+                                                                                    <div class="header-top-bar-contacts__dropdown-text">
+                                                                                        {$phone_2_hint_output}
+                                                                                    </div>
+                                                                                {/if}
+                                                                            </div>
+                                                                        {/if}
+
+                                                                        {if $is_enabled_schedule}
+                                                                            <div class="dropdown-links__item header-top-bar-contacts__dropdown-item">
+                                                                                <div class="header-top-bar-contacts__dropdown-title">
+                                                                                    Режим работы:
+                                                                                </div>
+                                                                                <div class="header-top-bar-contacts__dropdown-text">
+                                                                                    {call generate_work_schedule}
+                                                                                </div>
+                                                                            </div>
+                                                                        {/if}
+
+                                                                        {if $is_enabled_address && $has_address}
+                                                                            <div class="dropdown-links__item header-top-bar-contacts__dropdown-item">
+                                                                                <div class="header-top-bar-contacts__dropdown-title">
+                                                                                    Адрес:
+                                                                                </div>
+                                                                                <div class="header-top-bar-contacts__dropdown-text">
+                                                                                    {$address}
+                                                                                </div>
+                                                                            </div>
+                                                                        {/if}
+                                                                        {if $is_enabled_email && $has_email}
+                                                                            <div class="dropdown-links__item header-top-bar-contacts__dropdown-item">
+                                                                                <div class="header-top-bar-contacts__dropdown-title">
+                                                                                    Email:
+                                                                                </div>
+                                                                                <div class="header-top-bar-contacts__dropdown-text">
+                                                                                    <a class="link" href="mailto:{$email}">{$email}</a>
+                                                                                </div>
+                                                                            </div>
+                                                                        {/if}
+                                                                        {if $is_enabled_messengers}
+                                                                            <div class="dropdown-links__item header-top-bar-contacts__dropdown-item">
+                                                                                <div class="header-top-bar-contacts__dropdown-title">
+                                                                                    [`Соцсети`] [`и`] [`мессенджеры`]:
+                                                                                </div>
+                                                                                <div class="header-top-bar-contacts__dropdown-text">
+                                                                                    <div class="messengers">
+                                                                                        {if $has_whatsapp}
+                                                                                            <div class="messengers__messenger">
+                                                                                                <a class="image-box" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                                                                                    {call svg_icon icon='whatsapp' width=24 height=24}
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        {/if}
+                                                                                        {if $has_telegram}
+                                                                                            <div class="messengers__messenger">
+                                                                                                <a class="image-box" href="https://t.me/{$telegram|replace:' ':''|escape}" target="_blank" data-analytic-click="telegram">
+                                                                                                    {call svg_icon icon='telegram' width=24 height=24}
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        {/if}
+                                                                                        {if $has_vk_link}
+                                                                                            <div class="messengers__messenger">
+                                                                                                <a class="image-box" href="{$vk_link|escape}" target="_blank">
+                                                                                                    {call svg_icon icon='vk' width=24 height=24}
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        {/if}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        {/if}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {else}
+                                                            {"{eval var=$theme_settings['phone_1']}"|escape}
+                                                        {/if}
+                                                    </div>
+                                                </div>
+
+                                                {if $theme_settings['header_top_bar_address'] && $has_address}
+                                                    <div class="header-top-bar-contacts__item header-top-bar-contacts__item_address">
+                                                        {$address}
+                                                    </div>
+                                                {/if}
+                                                {if $theme_settings['header_top_bar_email'] && $has_email}
+                                                    <div class="header-top-bar-contacts__item header-top-bar-contacts__item_email">
+                                                        <a class="link-box" href="mailto:{$email}">
+                                                            <span class="icon-box icon-box_size_s">
+                                                                <span class="icon-box__icon">
+                                                                    {call svg_icon icon="mail" classes="header-top-bar-contacts__icon header-top-bar-contacts__icon_mail link-box__icon" fill="transparent" stroke="currentColor" width=12 height=10}
+                                                                </span>
+                                                                <span class="icon-box__content">
+                                                                    <span class="link-box__link">
+                                                                        {$email}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+
+                                                {if $has_whatsapp || $has_telegram}
+                                                    <div class="header-top-bar-contacts__item header-top-bar-contacts__item_messengers">
+                                                        <div class="messengers">
+                                                            {if $has_whatsapp}
+                                                                <div class="messengers__messenger tooltip">
+                                                                    <a class="image-box" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                                                        {call svg_icon icon='whatsapp' width=24 height=24}
+                                                                    </a>
+                                                                    <span class="tooltip__content tooltip__content_bottom">
+                                                                        [`Написать в`] <br/>WhatsApp
+                                                                    </span>
+                                                                </div>
+                                                            {/if}
+                                                            {if $has_telegram}
+                                                                <div class="messengers__messenger tooltip">
+                                                                    <a class="image-box" href="https://t.me/{$telegram|replace:' ':''|escape}" data-analytic-click="telegram">
+                                                                        {call svg_icon icon='telegram' width=24 height=24 img=true}
+                                                                    </a>
+                                                                    <span class="tooltip__content tooltip__content_bottom">
+                                                                        [`Написать в`] <br/>Telegram
+                                                                    </span>
+                                                                </div>
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+                                                {/if}
+
+                                                {if $is_enabled_ordercall && $wa->globals('market.plugins.shop.ordercall')}
+                                                    <div class="header-top-bar-contacts__item">
+                                                        <a class="pseudo-link pseudo-link_style_alt-gray ordercall-button call-back-button">
+                                                            [`Заказать звонок`]
+                                                        </a>
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    {/if}
+
+                                    {if $theme_settings['header_variant'] != 5 && $wa->isAuthEnabled()}
+                                        <div class="header-top-bar__container-user">
+                                            {if $wa->user()->isAuth()}
+                                                {call get_my_nav}
+                                                {$my_nav = $wa->globals('market.return')}
+
+                                                <div class="dropdown dropdown_right">
+                                                    {$profile_link = $wa->myUrl()}
+                                                    {if $wa->globals('market.theme_exists.shop')}
+                                                        {$profile_link = $wa->getUrl('shop/frontend/myProfile')}
+                                                    {/if}
+                                                    {call contact_block contact=$wa->user() size='xs' link=$profile_link}
+                                                    {if empty($my_nav) && $wa->globals('market.theme_exists.shop')}
+                                                        {$my_nav = [
+                                                        [
+                                                        'url' => $wa->getUrl('shop/frontend/myProfile'),
+                                                        'name' => _wp("My profile")
+                                                        ],
+                                                        [
+                                                        'url' => $wa->getUrl('shop/frontend/myOrders'),
+                                                        'name' => _wp("My orders")
+                                                        ]
+                                                        ]}
+                                                    {/if}
+
+                                                    <div class="dropdown__dropdown">
+                                                        <div class="dropdown-links dropdown-links_right-arrow">
+                                                            {if !empty($my_nav)}
+                                                                {foreach $my_nav as $my_nav_item}
+                                                                    <div class="dropdown-links__item">
+                                                                        <a class="link link_style_alt-gray dropdown-links__link" href="{$my_nav_item.url|escape}">
+                                                                            {$my_nav_item.name|escape}
+                                                                        </a>
+                                                                    </div>
+                                                                {/foreach}
+                                                            {/if}
+
+                                                            <div class="dropdown-links__item">
+                                                                <a class="link-box link-box_style_alt-gray dropdown-links__link"
+                                                                   href="?logout">
+                                                            <span class="icon-box {if !empty($size)}icon-box_size_{$size}{/if}">
+                                                                <span class="icon-box__icon">
+                                                                    {call svg_icon icon='logout' classes="link-box__icon" width=14 height=14}
+                                                                </span>
+                                                                <span class="icon-box__content">
+                                                                    <span class="link-box__link">
+                                                                        {_wp("Выход")}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {elseif $theme_settings['header_top_bar_auth_variant'] === 'login'}
+                                                <a class="link-box link-box_style_alt-gray login-link" href="{$wa->loginUrl()|escape}">
+                                                    <span class="icon-box">
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon='account' width=14 height=14 fill='currentColor'}
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            <span class="link-box__link">[`Войти`]</span>
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            {elseif $theme_settings['header_top_bar_auth_variant'] !== 'disabled'}
+                                                <a class="link link_style_alt-gray login-link" href="{$wa->loginUrl()|escape}">[`Войти`]</a>
+                                                {' '}/{' '}
+                                                <a class="link link_style_alt-gray signup-link" href="{$wa->signupUrl()|escape}">[`Регистрация`]</a>
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/function}
+                    {call header_top_bar}
+
+                </div>
+            {/if}
+
+            <div class="header__middle-bar">
+                {function header_middle_bar}
+                    {$size = 'xs'}
+                    {if !$wa->globals('is_checkout')}
+                        {if $theme_settings['header_variant'] == 1}
+                            {$size = 'xl'}
+                        {elseif $theme_settings['header_variant'] == 2}
+                            {$size = 'l'}
+                        {elseif $theme_settings['header_variant'] == 3}
+                            {$size = 's'}
+                        {elseif in_array($theme_settings['header_variant'], [4, 5])}
+                            {$size = null}
+                        {/if}
+                    {/if}
+
+                    {* Arguments *}
+                    {$size = $size|default:null}
+
+                    {* Variables *}
+                    {$logo_url = null}
+
+                    {if $theme_settings['logo']}
+                        {$logo_url = "{$wa_theme_url}{$theme_settings['logo']}"}
+                    {/if}
+
+                    {if $theme_settings['logo_alt_enabled'] && $theme_settings['logo_alt']}
+                        {$logo_url = "{$wa_theme_url}{$theme_settings['logo_alt']}"}
+                    {/if}
+
+                    {$logo_desc = {$theme_settings['logo_desc']|default: ''}}
+
+                    {function middle_bar_shop_links variant=1}
+                        {* Header Middle Bar Shop Links Start *}
+                        {* Arguments *}
+                        {$is_enabled_compare = $theme_settings['header_compare_enabled']}
+                        {$is_enabled_favorite = $theme_settings['header_favorite_enabled']}
+                        {$is_enabled_cart_dropdown = $theme_settings['header_cart_dropdown_enabled']}
+
+                        {* Variables *}
+                        {$icon_size = 16}
+
+                        {if $variant == 2 || $variant == 3}
+                            {$icon_size = 20}
+                        {elseif $variant == 4}
+                            {$icon_size = 25}
+                        {/if}
+
+                        {$compare = $wa->shop->compare()|default:[]}
+                        {$count_compare = count($compare)}
+                        {$count_favorite = intval("{call favorite_count}")}
+                        {$count_cart = $wa->shop->cart->count()}
+
+                        {if $variant == 1}
+                            {$size = null}
+                        {elseif $variant == 2}
+                            {$size = 'l'}
+                        {elseif $variant == 3}
+                            {$size = 'xl'}
+                        {elseif $variant == 4}
+                            {$size = 's'}
+                        {/if}
+
+                        {$cart_url = $wa->getUrl('shop/frontend/cart')}
+
+                        {if method_exists($wa->shop, 'checkout')}
+                            {$cart_url = $wa->shop->checkout()->cartUrl()}
+                        {/if}
+
+                        {$is_column = $variant == 4}
+
+                        {* Template *}
+                        <div class="header-middle-bar-shop-links{if $size} header-middle-bar-shop-links_size_{$size|escape}{/if}">
+                            {if $variant == 4 && $wa->isAuthEnabled()}
+                                {$is_auth = $wa->user()->isAuth()}
+                                {$profile_link = ''}
+                                {$link_text = _wp("Войти")}
+                                {$photo = null}
+
+                                {if $is_auth}
+                                    {$profile_link = $wa->myUrl()}
+                                    {if $wa->globals('market.theme_exists.shop')}
+                                        {$profile_link = $wa->getUrl('shop/frontend/myProfile')}
+                                    {/if}
+
+                                    {$contact = $wa->user()}
+                                    {if $contact.name}
+                                        {$link_text = $contact.firstname|default:$contact.name|escape}
+                                    {/if}
+                                {else}
+                                    {$profile_link = $wa->loginUrl()}
+                                {/if}
+
+                                <div class="header-middle-bar-shop-links__item">
+                                    <a class="link-box link-box_style_light{if !$is_auth} login-link{/if}" href="{$profile_link|escape}" title="[`My profile`]">
+                                        <span class="icon-box icon-box_size_l icon-box_col">
+                                            <span class="icon-box__icon">
+                                                <span class="header-middle-bar-shop-links__user-image image-box">
+                                                    {call svg_icon classes='link-box__icon' icon='user' width=$icon_size height=$icon_size fill='none'}
+                                                </span>
+                                            </span>
+                                            {if in_array($variant, [1,4])}
+                                                <span class="icon-box__content">
+                                                    <span class="link-box__link link-box__link_black">
+                                                        {$link_text}
+                                                    </span>
+                                                </span>
+                                            {/if}
+                                        </span>
+                                    </a>
+                                </div>
+                            {/if}
+                            {if $is_enabled_compare}
+                                <div class="header-middle-bar-shop-links__item">
+                                    <a class="link-box link-box_style_light compare-link" href="{"{call get_compare_url}"|trim|escape}" title="[`Сравнение`]">
+                                        <span class="icon-box icon-box_size_l{if $is_column} icon-box_col{/if}">
+                                            <span class="icon-box__icon">
+                                                <span class="image-box">
+                                                    <span class="counter compare-counter {if $count_compare == 0}counter_empty{/if}">
+                                                        {$count_compare}
+                                                    </span>
+                                                    {call svg_icon classes='link-box__icon' icon='compare' width=$icon_size height=$icon_size fill='none' stroke_width=2}
+                                                </span>
+                                            </span>
+                                            {if in_array($variant, [1,4])}
+                                                <span class="icon-box__content">
+                                                    <span class="link-box__link{if $is_column} link-box__link_black{/if}">[`Сравнение`]</span>
+                                                </span>
+                                            {/if}
+                                        </span>
+                                    </a>
+                                </div>
+                            {/if}
+
+                            {if $is_enabled_favorite}
+                                <div class="header-middle-bar-shop-links__item">
+                                    <a class="link-box link-box_style_light" href="{$wa->getUrl('shop/frontend/search')|escape}?list=favorite" title="[`Избранное`]">
+                                        <span class="icon-box icon-box_size_l{if $is_column} icon-box_col{/if}">
+                                            <span class="icon-box__icon">
+                                                <span class="image-box">
+                                                    <span class="counter favorite-counter {if $count_favorite == 0}counter_empty{/if}">
+                                                        {$count_favorite}
+                                                    </span>
+                                                    {call svg_icon classes='link-box__icon' icon='favorite' width=$icon_size height=$icon_size fill='none' stroke_width=2}
+                                                </span>
+                                            </span>
+                                            {if in_array($variant, [1,4])}
+                                                <span class="icon-box__content">
+                                                    <span class="link-box__link{if $is_column} link-box__link_black{/if}">[`Избранное`]</span>
+                                                </span>
+                                            {/if}
+                                        </span>
+                                    </a>
+                                </div>
+                            {/if}
+                            <div class="header-middle-bar-shop-links__item header-middle-bar-shop-links__item_cart">
+                                {capture assign='cart_content'}
+                                    {if $variant == 3}
+                                        {* Header Middle Bar Shop Cart Start *}
+                                        {* Variables *}
+                                        {$count_cart = $wa->shop->cart->count()}
+                                        {$cart_total = $wa->shop->cart->total()}
+
+                                        {* Template *}
+                                        <a class="header-middle-bar-shop-cart {if $count_cart == 0}header-middle-bar-shop-cart_empty{/if} link-box link-box_clean link-box_style_light" href="{$cart_url|escape}">
+                                            <span class="icon-box icon-box_size_l">
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon classes='link-box__icon' icon='cart' width=$icon_size height=$icon_size fill='none'}
+                                                </span>
+                                                <span class="icon-box__content">
+                                                    <span class="header-middle-bar-shop-cart__empty-text">
+                                                        <span class="header-middle-bar-shop-cart__heading">[`В корзине`]</span>
+                                                        [`нет товаров`]
+                                                    </span>
+                                                    <span class="header-middle-bar-shop-cart__text">
+                                                        <span class="header-middle-bar-shop-cart__heading">
+                                                            [`Корзина`]
+                                                            <span class="header-middle-bar-shop-cart__count">
+                                                                <span class="cart-counter">
+                                                                    {$count_cart}
+                                                                </span>
+                                                            </span>
+                                                        </span>
+                                                        [`На сумму`] <span class="header-middle-bar-shop-cart__total">{shop_currency_html($cart_total, true)}</span>
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        </a>
+                                        {* Header Middle Bar Shop Cart End *}
+                                    {else}
+                                        <a class="link-box link-box_style_light" href="{$cart_url|escape}">
+                                            <span class="icon-box icon-box_size_l{if $is_column} icon-box_col{/if}">
+                                                <span class="icon-box__icon">
+                                                    <span class="image-box">
+                                                        <span class="counter cart-counter {if $count_cart == 0}counter_empty{/if}">
+                                                            {$count_cart}
+                                                        </span>
+                                                        {call svg_icon classes='link-box__icon' icon='cart' width=$icon_size height=$icon_size fill='none'}
+                                                    </span>
+                                                </span>
+                                                {if in_array($variant, [1,4])}
+                                                    <span class="icon-box__content">
+                                                        <span class="link-box__link{if $is_column} link-box__link_black{/if}">[`Корзина`]</span>
+                                                    </span>
+                                                {/if}
+                                            </span>
+                                        </a>
+                                    {/if}
+                                {/capture}
+
+                                {if $is_enabled_cart_dropdown}
+                                    <div class="cart-popup-container">
+                                        {$cart_content}
+                                        <div class="cart-popup-container__popup"></div>
+                                    </div>
+                                {else}
+                                    {$cart_content}
+                                {/if}
+                            </div>
+                        </div>
+                        {* Header Middle Bar Shop Links End *}
+                    {/function}
+
+                    {function middle_bar_shop variant=1}
+                        {* Header Middle Bar Shop Start *}
+                        {* Template *}
+                        {if $wa->globals('market.theme_exists.shop')}
+                            <div class="header-middle-bar-shop">
+                                {$is_catalog = $variant == 3 &&
+                                    ($theme_settings['header_variant'] != 5
+                                    || ($theme_settings['header_variant'] == 5 && $theme_settings['header_variant_5_bottom_bar_variant'] == 'links'))
+                                }
+                                {if $is_catalog}
+                                    <div class="header-middle-bar-shop__catalog-container">
+                                        <span class="button header-middle-bar-shop-catalog-button catalog-dropdown-button" data-trigger_type="{$theme_settings['header_catalog_trigger']|escape}">
+                                            <span class="icon-box icon-box_size_l">
+                                                <span class="icon-box__icon">
+                                                    <div class="burger-icon" style="width:18px;height:12px">
+                                                        <div class="burger-icon__box">
+                                                            <div class="burger-icon__inner"></div>
+                                                        </div>
+                                                    </div>
+                                                </span>
+                                                <span class="icon-box__content">
+                                                    {$theme_settings['header_catalog_name']|escape}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </div>
+                                {/if}
+
+                                <div class="header-middle-bar-shop__search-container">
+                                    {$input_search_size = 'l'}
+                                    {if $variant == 1}
+                                        {$input_search_size = null}
+                                    {/if}
+                                    {call input_search size=$input_search_size}
+                                </div>
+
+                                <div class="header-middle-bar-shop__links-container">
+                                    {$shop_links_variant = 1}
+
+                                    {if $variant == 2}
+                                        {$shop_links_variant = 3}
+                                    {elseif $variant == 3}
+                                        {$shop_links_variant = 2}
+                                        {if $theme_settings['header_variant'] == 5}
+                                            {$shop_links_variant = 4}
+                                        {/if}
+                                    {/if}
+
+                                    {call middle_bar_shop_links variant=$shop_links_variant}
+                                </div>
+                            </div>
+                        {/if}
+                        {* Header Middle Bar Shop End *}
+                    {/function}
+
+                    {function middle_bar_contacts size=null}
+                        {* Header Middle Bar Contacts Start *}
+                        {* Arguments *}
+                        {$plugins = $wa->globals('plugins')}
+                        {$is_enabled_ordercall = $plugins['shop_ordercall']}
+
+                        {* Theme Settings *}
+                        {$telegram = "{eval var=$theme_settings['telegram']}"}
+                        {$whatsapp = "{eval var=$theme_settings['whatsapp']}"}
+                        {$fill_enabled = $theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_fill_enabled']}
+
+                        {* Variables *}
+                        {$has_telegram = !empty($telegram)}
+                        {$has_whatsapp = !empty($whatsapp)}
+
+                        {$show_phone_1 = ($theme_settings['header_variant'] == 1 && $theme_settings['header_variant_1_phone_1_enabled'])
+                        || ($theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_phone_1_enabled'])}
+
+                        {$phone_1_hint = null}
+
+                        {if $theme_settings['header_variant'] == 1}
+                            {$phone_1_hint = $theme_settings['header_variant_1_phone_1_hint']}
+                        {elseif $theme_settings['header_variant'] == 2}
+                            {$phone_1_hint = $theme_settings['header_variant_2_phone_1_hint']}
+                        {/if}
+
+                        {if $phone_1_hint === 'ordercall' && !$is_enabled_ordercall}
+                            {$phone_1_hint = null}
+                        {/if}
+
+                        {if $phone_1_hint === 'ordercall'}
+                            {capture assign='phone_1_hint_output'}
+                                <span class="pseudo-link-box ordercall-button call-back-button">
+                                    <span class="icon-box">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon="call" classes="pseudo-link-box__icon" width=14 height=14}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="pseudo-link-box__link">
+                                                {_wp("Заказать звонок")}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </span>
+                            {/capture}
+                        {else}
+                            {$phone_1_hint_output = "{eval var=$theme_settings['phone_1_hint']}"|escape}
+                        {/if}
+
+                        {$has_phone_1 = $show_phone_1 && ($theme_settings['phone_1'] || $phone_1_hint_output)}
+
+                        {$show_phone_2 = ($theme_settings['header_variant'] == 1 && $theme_settings['header_variant_1_phone_2_enabled'])
+                        || ($theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_phone_2_enabled'])}
+
+                        {$phone_2_hint = null}
+
+                        {if $theme_settings['header_variant'] == 1}
+                            {$phone_2_hint = $theme_settings['header_variant_1_phone_2_hint']}
+                        {elseif $theme_settings['header_variant'] == 2}
+                            {$phone_2_hint = $theme_settings['header_variant_2_phone_2_hint']}
+                        {/if}
+
+                        {if $phone_2_hint === 'ordercall' && !$is_enabled_ordercall}
+                            {$phone_2_hint = null}
+                        {/if}
+
+                        {if $phone_2_hint === 'ordercall'}
+                            {capture assign='phone_2_hint_output'}
+                                <span class="pseudo-link-box ordercall-button call-back-button">
+                                    <span class="icon-box">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon="call" classes="pseudo-link-box__icon" width=14 height=14}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="pseudo-link-box__link">
+                                                {_wp("Заказать звонок")}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </span>
+                            {/capture}
+                        {else}
+                            {$phone_2_hint_output = "{eval var=$theme_settings['phone_2_hint']}"|escape}
+                        {/if}
+
+                        {$has_phone_2 = $show_phone_2 && ($theme_settings['phone_2'] || $phone_2_hint_output)}
+
+                        {$show_address = ($theme_settings['header_variant'] == 1 && $theme_settings['header_variant_1_address_enabled'])
+                        || ($theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_address_enabled'])}
+
+                        {$show_schedule = ($theme_settings['header_variant'] == 1 && $theme_settings['header_variant_1_schedule_enabled'])
+                        || ($theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_schedule_enabled'])}
+
+                        {$show_email = ($theme_settings['header_variant'] == 1 && $theme_settings['header_variant_1_email_enabled'] && $theme_settings['email'])
+                        || ($theme_settings['header_variant'] == 2 && $theme_settings['header_variant_2_email_enabled'] && $theme_settings['email'])}
+                        {$has_content = false}
+
+                        {$disabled_phone_1 = false}
+                        {$disabled_phone_2 = false}
+
+                        {if $fill_enabled}
+                            {if !$has_phone_1}
+                                {$disabled_phone_1 = true}
+                            {/if}
+
+                            {if !$has_phone_2}
+                                {$disabled_phone_2 = true}
+                            {/if}
+
+                            {if $has_phone_1 && $has_phone_2}
+                                {$fill_enabled = false}
+                            {/if}
+                        {/if}
+
+                        {$has_hints = $phone_1_hint_output !== '' || $phone_2_hint_output !== ''}
+
+                        {capture assign='content'}
+                            <div class="header-middle-bar-contacts {if $size}header-middle-bar-contacts_size_{$size|escape}{/if}{if $fill_enabled} header-middle-bar-contacts_fill{/if}">
+                                {if !$disabled_phone_1}
+                                    <div class="header-middle-bar-contacts__phone-container header-middle-bar-contacts__phone-container_phone-1">
+                                        {if $show_phone_1 || $size === 'xs'}
+                                            {$has_content = true}
+                                            <div class="header-middle-bar-phone {if $size === 's'}header-middle-bar-phone_size_s{/if}">
+                                                <div class="header-middle-bar-phone__phone">
+                                                    <a class="link" href="tel:{str_replace(array('+', ' ', '(' , ')', '-'), '', $theme_settings['phone_1'])}">{"{eval var=$theme_settings['phone_1']}"|escape}</a>
+                                                </div>
+                                                {if $has_hints}
+                                                    <div class="header-middle-bar-phone__hint">
+                                                        {$phone_1_hint_output}
+                                                    </div>
+                                                {/if}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                {/if}
+                                {if $size != 'xs'}
+                                    {if !$disabled_phone_2}
+                                        <div class="header-middle-bar-contacts__phone-container header-middle-bar-contacts__phone-container_phone-2">
+                                            {if $show_phone_2}
+                                                {$has_content = true}
+                                                <div class="header-middle-bar-phone {if $size === 's'}header-middle-bar-phone_size_s{/if}">
+                                                    <div class="header-middle-bar-phone__phone">
+                                                        <a class="link" href="tel:{str_replace(array('+', ' ', '(' , ')', '-'), '', $theme_settings['phone_2'])}">{"{eval var=$theme_settings['phone_2']}"|escape}</a>
+                                                        {if $size == null && ($has_telegram || $has_whatsapp)}
+                                                            <div class="header-middle-bar__messengers-container">
+                                                                <div class="messengers">
+                                                                    {if $has_telegram}
+                                                                        <div class="messengers__messenger">
+                                                                            <a class="image-box" href="tg://resolve?domain={$telegram|replace:' ':''|escape}" data-analytic-click="telegram" target="_blank">
+                                                                                {call svg_icon
+                                                                                icon='telegram' width=20 height=20}
+                                                                            </a>
+                                                                        </div>
+                                                                    {/if}
+
+                                                                    {if $has_whatsapp}
+                                                                        <div class="messengers__messenger">
+                                                                            <a class="image-box" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                                                                {call svg_icon
+                                                                                icon='whatsapp' width=20 height=20}
+                                                                            </a>
+                                                                        </div>
+                                                                    {/if}
+                                                                </div>
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                    {if $has_hints}
+                                                        <div class="header-middle-bar-phone__hint">
+                                                            {$phone_2_hint_output}
+                                                        </div>
+                                                    {/if}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                    {if $size === 's'}
+                                        <div class="header-middle-bar-contacts__email-container{if $disabled_phone_1 && $disabled_phone_2} header-middle-bar-contacts__email-container_pull-left{/if}">
+                                            {if $show_email}
+                                                {$has_content = true}
+                                                <a class="link-box" href="mailto:{$theme_settings.email|escape}">
+                                                    <span class="icon-box">
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon="mail" classes="link-box__icon" width=14 height=14}
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            <span class="link-box__link">
+                                                                {"{eval var=$theme_settings['email']}"|escape}
+                                                            </span>
+                                                        </span>
+                                                    </span>
+                                                </a>
+                                            {/if}
+                                        </div>
+                                    {/if}
+                                    <div class="header-middle-bar-contacts__address-container">
+                                        <div class="header-middle-bar-address">
+                                            {if $show_address}
+                                                {$has_content = true}
+                                                <div class="header-middle-bar-address__address">
+                                                    {"{eval var=$theme_settings['phone_1']}"|nl2br}
+                                                </div>
+                                            {/if}
+                                            {if $show_schedule}
+                                                {$has_content = true}
+                                                <div class="header-middle-bar-address__hint">
+                                                    {call generate_work_schedule}
+                                                </div>
+                                            {/if}
+                                            {if $size == null}
+                                                {if $show_email}
+                                                    {$has_content = true}
+                                                    <div class="header-middle-bar-address__hint">
+                                                        <a class="link-box" href="mailto:{$theme_settings.email|escape}">
+                                                            <span class="icon-box">
+                                                                <span class="icon-box__icon">
+                                                                    {call svg_icon icon="mail" classes="link-box__icon" width=14 height=14}
+                                                                </span>
+                                                                <span class="icon-box__content">
+                                                                    <span class="link-box__link">
+                                                                        {"{eval var=$theme_settings['email']}"|escape}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/capture}
+
+                        {if $has_content}
+                            {$content}
+                        {/if}
+                        {* Header Middle Bar Contacts End *}
+                    {/function}
+
+                    {* Template *}
+                    <div class="header-middle-bar {if $theme_settings['header_variant'] != 5 && ($size == null || $size === 'xs')}header-middle-bar_compact{/if}">
+                        <div class="container">
+                            <div class="header-middle-bar__container">
+                                <div class="header-middle-bar__container-logo {if !$logo_desc}header-middle-bar__container-logo_padding-right{/if}">
+                                    {if $logo_url}
+                                        <a class="image-box image-box_contain" href="{$wa_url|escape}">
+                                            <img class="header-middle-bar__logo" src="{$logo_url|escape}" alt="{$wa->accountName()|escape}" />
+                                        </a>
+                                    {/if}
+                                </div>
+                                {if $logo_desc}
+                                    <div class="header-middle-bar__container-logo-desc">
+                                        {$logo_desc}
+                                    </div>
+                                {/if}
+
+                                <div class="header-middle-bar__container-main">
+                                    {if $size === 's'}
+                                        {call middle_bar_shop variant=2}
+                                    {elseif $size == null}
+                                        {call middle_bar_shop variant=3}
+                                    {elseif $size === 'l'}
+                                        {$contacts = "{call middle_bar_contacts size='s'}"}
+                                        {$has_contacts = $contacts != ''}
+
+                                        <div class="header-middle-bar__main-container">
+                                            {if $has_contacts}
+                                                <div class="header-middle-bar__main-container-top">
+                                                    {$contacts}
+                                                </div>
+                                            {/if}
+                                            <div class="header-middle-bar__main-container-bottom">
+                                                {call middle_bar_shop variant=1}
+                                            </div>
+                                        </div>
+                                    {elseif $size === 'xl'}
+                                        {call middle_bar_contacts size=null}
+                                    {elseif $size === 'xs'}
+                                        {call middle_bar_contacts size='xs'}
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/function}
+
+                {call header_middle_bar}
+
+            </div>
+        {/if}
+        {if !$wa->globals('is_checkout')}
+            {if $theme_settings['header_variant'] != 4}
+                <div class="header__bottom-bar">
+                    {function header_bottom_bar}
+                        {if $theme_settings['header_variant'] == 1}
+                            {$is_enabled_catalog = $theme_settings['header_variant_1_bottom_bar_variant'] === 'catalog_search'}
+                        {elseif $theme_settings['header_variant'] == 2}
+                            {$is_enabled_catalog = $theme_settings['header_variant_2_bottom_bar_variant'] === 'catalog_links'}
+                        {elseif $theme_settings['header_variant'] == 3}
+                            {$is_enabled_catalog = $theme_settings['header_variant_3_bottom_bar_variant'] === 'catalog_links'}
+                        {elseif $theme_settings['header_variant'] == 5}
+                            {$is_enabled_catalog = $theme_settings['header_variant_5_bottom_bar_variant'] === 'catalog_links'}
+                        {else}
+                            {$is_enabled_catalog = false}
+                        {/if}
+
+                        {$catalog = false}
+                        {$links = true}
+                        {$shop_links = true}
+
+                        {if $theme_settings['header_variant'] == 1 && $is_enabled_catalog}
+                            {$catalog = true}
+                            {$links = false}
+                        {elseif in_array($theme_settings['header_variant'], [2,3,5])}
+                            {$shop_links = false}
+                            {if $is_enabled_catalog}
+                                {$catalog = true}
+                            {/if}
+                        {/if}
+
+                        {* Arguments *}
+                        {$catalog = $catalog|default:false}
+                        {$links = $links|default:false}
+                        {$shop_links = $shop_links|default:false}
+
+                        {* Variables *}
+                        {$catalog = $wa->shop && $catalog}
+                        {$shop_links = $wa->shop && $shop_links}
+                        {$theme_url = ''}
+
+                        {if isset($wa_real_parent_theme_url)}
+                            {$theme_url = $wa_real_parent_theme_url}
+                        {elseif isset($wa_real_theme_url)}
+                            {$theme_url = $wa_real_theme_url}
+                        {else}
+                            {$theme_url = $wa->shop->themeUrl($wa->param('theme'))}
+                        {/if}
+
+                        {$is_compact = $theme_settings['header_variant'] == 5}
+                        {$is_transparent = $is_compact && $theme_settings['header_variant_5_bottom_bar_transparent']}
+                        {$is_ajax = $wa->get('get_ajax_blocks') === 'hidden_links_block'}
+
+                        {* Template *}
+                        <div class="header-bottom-bar{if $is_compact} header-bottom-bar_compact{/if}{if $is_transparent} header-bottom-bar_transparent{/if}">
+                            <div class="container">
+                                <div class="header-bottom-bar__container">
+                                    {if $catalog}
+                                        <div class="header-bottom-bar__container-shop-catalog">
+                                            <span class="catalog-dropdown-button header-bottom-bar-shop-catalog-button button button_fill button_style_alt{if !$is_transparent} button_rect{/if}" data-trigger_type="{$theme_settings['header_catalog_trigger']|escape}">
+                                                <span class="icon-box icon-box_size_xl">
+                                                    <span class="icon-box__icon">
+                                                        <div class="burger-icon" style="width:18px;height:12px">
+                                                            <div class="burger-icon__box">
+                                                                <div class="burger-icon__inner"></div>
+                                                            </div>
+                                                        </div>
+                                                    </span>
+                                                    <span class="icon-box__content">
+                                                        {$theme_settings['header_catalog_name']|escape}
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    {/if}
+                                    {if $links}
+                                        <nav class="header-bottom-bar__container-links {if $shop_links}header-bottom-bar__container-links_search{/if}">
+                                            {* Header Bottom Bar Links Start *}
+                                                {* Theme Settings *}
+                                                {$show_products_count = $theme_settings['header_horizontal_catalog_count_enabled']}
+                                                {$brands_position = $theme_settings['header_brands_catalog_position']}
+                                                {$show_catalog_brands = $theme_settings['header_horizontal_catalog_brands']}
+                                                {$is_enabled_brands_dropdown = $theme_settings['header_brands_dropdown']}
+                                                {$catalog_variant = $theme_settings['header_horizontal_catalog_variant']}
+                                                {$limit = $theme_settings['header_bottom_bar_limit']}
+                                                {$brands_name = $theme_settings['header_brands_catalog_name']}
+                                                {$source = $theme_settings['header_bottom_bar_source']}
+                                                {$filter_pages = $theme_settings['header_bottom_bar_pages']}
+                                                {$tree_depth = $theme_settings['header_horizontal_max_depth']}
+                                                {$is_overlay_enabled = !!$theme_settings['header_horizontal_overlay_enabled']}
+                                                {$is_enabled_icon_links = $theme_settings['header_horizontal_icons_enabled']}
+                                                {$icon_link_size = $theme_settings['header_horizontal_icons_size']|intval}
+
+                                                {$enabled_categories = []}
+                                                {if $theme_settings["header_bottom_id_categories"]}
+                                                    {$enabled_categories = explode(",",$theme_settings["header_bottom_id_categories"])}
+                                                {/if}
+
+                                                {* Variables *}
+                                                {$plugins = $wa->globals('plugins')}
+                                                {$is_enabled_brands = ($plugins['shop_brand'] || $plugins['shop_productbrands']) && $show_catalog_brands}
+
+                                                {if $wa->globals('market.theme_exists.shop')}
+                                                    {call get_catalog_categories args=['depth'=>$tree_depth]}
+                                                    {$_categories = $wa->globals('market.return')|default:[]}
+                                                {else}
+                                                    {$_categories = []}
+                                                {/if}
+                                                {$limit = $limit|default:-1}
+                                                {$show_products_count = $show_products_count|default:false}
+
+                                                {$horizontal_categories = []}
+                                                {$hidden_categories = []}
+
+                                                {$has_exclude_categories = count($enabled_categories) > 0}
+
+                                                {$index = 0}
+                                                {foreach $_categories as $i => $category}
+                                                    {$is_hidden = ($limit != -1 && $index >= $limit) || $is_ajax}
+
+                                                    {if $has_exclude_categories && !in_array($category.id, $enabled_categories)}
+                                                        {continue}
+                                                    {/if}
+
+                                                    {$index = $index + 1}
+
+                                                    {if $is_hidden}
+                                                        {$hidden_categories[$i] = $category}
+                                                    {else}
+                                                        {$horizontal_categories[$i] = $category}
+                                                    {/if}
+                                                {/foreach}
+
+                                                {$horizontal_categories['-1'] = ['id' => '-1', 'name' => "{_wp("Ещё")}", 'childs' => $hidden_categories]}
+
+                                                {$wa->globals('market.horizontal_categories', $horizontal_categories)}
+
+                                                {capture assign='brands_links'}
+                                                    {if $is_enabled_brands}
+                                                        <div class="header-bottom-bar-links__item-container">
+                                                            <div class="header-bottom-bar-links__item">
+                                                                <a class="{if $is_enabled_brands_dropdown}brands-dropdown-button {/if}button button_rect button_fill header-bottom-bar-links__link{if $is_transparent} header-bottom-bar-links__link_colored{/if}" href="{$wa->getUrl('shop/frontend/brands')|escape}">
+                                                                    {if $is_enabled_icon_links || $is_compact}
+                                                                        <span class="icon-box">
+                                                                            <span class="icon-box__icon">
+                                                                                {if $theme_settings['header_brands_catalog_svg']}
+                                                                                    <img src="{$theme_url}{$theme_settings['header_brands_catalog_svg']}" alt="{$brands_name}">
+                                                                                {else}
+                                                                                    {call svg_icon icon='tag' width=$icon_link_size height=$icon_link_size}
+                                                                                {/if}
+                                                                            </span>
+                                                                            <span class="icon-box__content">{$brands_name}</span>
+                                                                        </span>
+                                                                    {else}
+                                                                        {$brands_name|escape}
+                                                                    {/if}
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    {/if}
+                                                {/capture}
+
+                                                {$additional_links = []}
+                                                {if $is_compact}
+                                                    {$add_links_defaults = [
+                                                        '1' => [
+                                                            'icon' => 'sale',
+                                                            'name' => _wp("Акции")
+                                                        ],
+                                                        '2' => [
+                                                            'icon' => 'confeti' ,
+                                                            'name' => _wp("Новинки")
+                                                        ]
+                                                    ]}
+
+                                                    {for $i = 1; $i <= 2; $i++}
+                                                        {$additional_link_url = $theme_settings["header_variant_5_bottom_bar_add_link_{$i}_url"]|default:''}
+                                                        {$additional_link_name = $theme_settings["header_variant_5_bottom_bar_add_link_{$i}_name"]|default:$add_links_defaults[$i]['name']}
+                                                        {if !empty($additional_link_url)}
+                                                            {if is_numeric($additional_link_url)}
+                                                                {$additional_link_category = $wa->shop->category($additional_link_url)}
+                                                                {if $additional_link_category}
+                                                                    {$additional_link_url = $wa->shop->categoryUrl($additional_link_category)}
+                                                                {/if}
+                                                            {/if}
+                                                            {$additional_links[] = [
+                                                                'url' => $additional_link_url,
+                                                                'name' => $additional_link_name,
+                                                                'icon' => $add_links_defaults[$i]['icon'],
+                                                                'custom_icon' => $theme_settings["header_variant_5_bottom_bar_add_link_{$i}_svg"]
+                                                            ]}
+                                                        {/if}
+                                                    {/for}
+                                                {/if}
+
+
+                                                {* Template *}
+                                                <ul class="header-bottom-bar-links{if $is_compact} header-bottom-bar-links_alt{/if}{if $is_transparent} header-bottom-bar-links_transparent{/if} hide-links-menu" data-is_overlay_enabled="{call bool2str value=$is_overlay_enabled}" data-more-id="bottom-bar">
+                                                    {if $brands_position === 'begin'}
+                                                        {$brands_links}
+                                                    {/if}
+
+                                                    {if $source === 'catalog'}
+                                                        {function button_html classes=''}
+                                                            {if $is_pseudo}
+                                                                <span class="button button_rect button_fill header-bottom-bar-links__link {$classes}">
+                                                                    {call svg_icon icon='menu-dots' width=16 height=4 fill='currentColor'}
+                                                                </span>
+                                                            {else}
+                                                                <a class="button button_rect button_fill header-bottom-bar-links__link hide-links-menu__link {$classes}" href="{$category.url}" data-category_id="{$category.id|escape}">
+                                                                    {$icon_url = null}
+                                                                    {capture assign='link_content'}
+                                                                        {$category.name}
+                                                                    {/capture}
+
+                                                                    {if $is_enabled_icon_links}
+                                                                        {$icon_url = "{call shop_category_icon category=$category size=$icon_link_size}"}
+                                                                        {if $icon_url}
+                                                                            {capture assign='link_content'}
+                                                                                <span class="icon-box">
+                                                                                    <span class="icon-box__icon" style="width: {$icon_link_size + 10}px;">
+                                                                                        {call image
+                                                                                            src=$icon_url
+                                                                                            classes='header-bottom-bar-links__link-image'
+                                                                                            alt=$category.name
+                                                                                            attrs=[
+                                                                                                'data-width' => $icon_link_size,
+                                                                                                'data-height' => $icon_link_size
+                                                                                            ]
+                                                                                            lazy=false
+                                                                                        }
+                                                                                    </span>
+                                                                                    <span class="icon-box__content">{$link_content}</span>
+                                                                                </span>
+                                                                            {/capture}
+                                                                        {/if}
+                                                                    {/if}
+
+                                                                    {$link_content}
+                                                                </a>
+                                                            {/if}
+                                                        {/function}
+
+                                                        {foreach $horizontal_categories as $category}
+                                                            {$is_pseudo = $category.id == -1}
+                                                            {$side = null}
+
+                                                            {if count($horizontal_categories) / 2 < $category@iteration}
+                                                                {$side = 'right'}
+                                                            {/if}
+
+                                                            {capture assign='button_html_item'}
+                                                                <li class="header-bottom-bar-links__item-container {if $is_pseudo}header-bottom-bar-links__item-container_more hide-links-menu__more-container{else}hide-links-menu__item{/if}">
+                                                                    <div class="header-bottom-bar-links__item{if $is_pseudo} hide-links-menu__more{/if}">
+                                                                        {if $catalog_variant === 'tree'}
+                                                                            {if count($category.childs) > 0 || $is_pseudo}
+                                                                                <div class="header-bottom-bar-links__dropdown-block dropdown dropdown_fill {if $is_pseudo}dropdown_right{/if}">
+                                                                                    {call button_html category=$category}
+                                                                                    <div class="header-bottom-bar-links__dropdown dropdown__dropdown">
+                                                                                        {$classes = ''}
+                                                                                        {$data = []}
+                                                                                        {if $is_pseudo}
+                                                                                            {$classes = 'hide-links-menu-more-list'}
+                                                                                            {$data = [
+                                                                                                'more-id' => 'bottom-bar'
+                                                                                            ]}
+                                                                                        {/if}
+                                                                                        {call catalog_tree
+                                                                                            categories=$category.childs
+                                                                                            classes=$classes
+                                                                                            side=$side
+                                                                                            depth=0
+                                                                                            max_depth=$tree_depth
+                                                                                            show_products_count=$show_products_count
+                                                                                            data=$data
+                    																	}
+                    																</div>
+                    															</div>
+                    														{else}
+                    															{call button_html category=$category}
+                    														{/if}
+                    													{elseif $catalog_variant === 'extend'}
+                    														{if $is_pseudo}
+                    															<span class="catalog-category-button button button_rect button_fill header-bottom-bar-links__link" data-category_id="{$category.id|escape}">
+                    																{call svg_icon icon='menu-dots' width=16 height=4 fill='currentColor'}
+                    															</span>
+                    														{else}
+                    															{call button_html category=$category classes='catalog-category-button'}
+                    														{/if}
+                    													{elseif $catalog_variant === 'disabled'}
+                                                                            {if $is_pseudo}
+                    															<span class="catalog-category-button button button_rect button_fill header-bottom-bar-links__link" data-category_id="{$category.id|escape}">
+                                                                                    {call svg_icon icon='menu-dots' width=16 height=4 fill='currentColor'}
+                    															</span>
+                                                                            {else}
+                                                                                {call button_html category=$category}
+                                                                            {/if}
+                    													{/if}
+                    												</div>
+                    											</li>
+                    										{/capture}
+                    										{if $category.id == '-1'}
+                    											{$button_html_pseudo = $button_html_item}
+                    										{else}
+                    											{$button_html_item}
+                    										{/if}
+                    									{/foreach}
+                    								{else}
+                    									{$links = []}
+
+                    									{if $source === 'wa_apps'}
+                    										{$links = $wa->apps()}
+                    									{elseif $source === 'shop_pages'}
+                    										{if $wa->globals('market.theme_exists.shop')}
+                    											{call get_shop_pages}
+                    											{$pages = $wa->globals('market.return')}
+                    										{else}
+                    											{$pages = []}
+                    										{/if}
+
+                    										{if $filter_pages}
+                    											{$pages_urls = explode(',', $filter_pages)}
+                    											{$pages_by_url = []}
+
+                    											{foreach $pages as $page}
+                    												{$pages_by_url[$page.full_url] = $page}
+                    											{/foreach}
+
+                    											{foreach $pages_urls as $page_url}
+                    												{if isset($pages_by_url[$page_url])}
+                    													{$links[] = $pages_by_url[$page_url]}
+                    												{/if}
+                    											{/foreach}
+                    										{else}
+                    											{$links = $pages}
+                    										{/if}
+                    									{elseif $source == "menu_app" && $wa->menu}
+                    										{$menu_id = $theme_settings["header_bottom_menu_app_id"]}
+                    										{$links = $wa->menu->get($menu_id)}
+                    									{/if}
+
+                    									{$visible_links = []}
+                    									{$hidden_links = []}
+
+                    									{foreach $links as $link}
+                    										{$is_hidden = ($limit != -1 && $link@iteration > $limit) || $is_ajax}
+
+                    										{if $is_hidden}
+                    											{$hidden_links[] = $link}
+                    										{else}
+                    											{$visible_links[] = $link}
+                    										{/if}
+                    									{/foreach}
+
+                    									{foreach $visible_links as $link}
+                    										{capture assign='link_button'}
+                    											<a class="{if $catalog_variant === 'extend' && $source == "menu_app"}catalog-category-button {/if}button button_rect button_fill header-bottom-bar-links__link hide-links-menu__link" href="{$link.url|escape}" {if !empty($link.target)}target="{$link.target|escape}"{/if}{if $link.id} data-category_id="{$link.id|escape}"{/if}>
+                                                                    {capture assign='link_content'}
+                                                                        {$link.name}
+                                                                    {/capture}
+
+                                                                    {if $is_enabled_icon_links}
+                                                                        {$icon_url = null}
+                                                                        {if isset($link['field_icon']) && !empty($link['field_icon'])}
+                                                                            {$icon_url = $link['field_icon']}
+                                                                        {/if}
+                                                                        {if $icon_url}
+                                                                            {capture assign='link_content'}
+                                                                                <span class="icon-box">
+                                                                                    <span class="icon-box__icon" style="width: {$icon_link_size + 10}px;">
+                                                                                        {call image
+                                                                                        src=$icon_url
+                                                                                        classes='header-bottom-bar-links__link-image'
+                                                                                        alt=$link.name
+                                                                                        attrs=[
+                                                                                        'data-width' => $icon_link_size,
+                                                                                        'data-height' => $icon_link_size
+                                                                                        ]
+                                                                                        lazy=false
+                                                                                        }
+                                                                                    </span>
+                                                                                    <span class="icon-box__content">{$link_content}</span>
+                                                                                </span>
+                                                                            {/capture}
+                                                                        {/if}
+                                                                    {/if}
+
+                                                                    {$link_content}
+                    											</a>
+                    										{/capture}
+
+                    										<li class="header-bottom-bar-links__item-container hide-links-menu__item">
+                    											<div class="header-bottom-bar-links__item">
+                    												{if $link.childs && !in_array($theme_settings['header_horizontal_catalog_variant'], ['extend', 'disabled'])}
+                    													<div class="header-bottom-bar-links__dropdown-button dropdown dropdown_fill dropdown_right">
+                    														{$link_button}
+                    														<div class="header-bottom-bar-links__dropdown dropdown__dropdown">
+                    															{if $source == "menu_app"}
+                    																{call catalog_tree
+                                                                                        categories=$link.childs
+                                                                                        side=$side
+                                                                                        depth=0
+                                                                                        max_depth=$tree_depth
+                                                                                        show_products_count=false
+                    																}
+                    															{else}
+                    																<div class="header-bottom-bar-links-dropdown">
+                                                                                        {foreach $link.childs as $link_child}
+                                                                                            <div class="header-bottom-bar-links-dropdown__item">
+                                                                                                <a class="link link_style_hover header-bottom-bar-links-dropdown__link" href="{$link_child.url|escape}" {if !empty($link_child.target)}target="{$link_child.target|escape}"{/if}>
+                                                                                                    {$link_child.name|escape}
+                                                                                                </a>
+                                                                                            </div>
+                                                                                        {/foreach}
+                    																</div>
+                    															{/if}
+                    														</div>
+                    													</div>
+                    												{else}
+                    													{$link_button}
+                    												{/if}
+                    											</div>
+                    										</li>
+                    									{/foreach}
+
+                    									{$has_hidden = count($hidden_links) > 0}
+
+                                                        {capture assign='button_html_pseudo'}
+                                                            <li class="header-bottom-bar-links__item-container header-bottom-bar-links__item-container_more hide-links-menu__more-container{if !$has_hidden} hide-links-menu__more-container_hide{/if}">
+                                                                <div class="header-bottom-bar-links__item hide-links-menu__more">
+                                                                    <div class="header-bottom-bar-links__dropdown-block dropdown dropdown_fill dropdown_right">
+                                                                        <span class="button button_rect button_fill header-bottom-bar-links__link">
+                                                                            {call svg_icon icon='menu-dots' width=16 height=4 fill='currentColor'}
+                                                                        </span>
+                                                                        <div class="header-bottom-bar-links__dropdown dropdown__dropdown">
+                                                                            <div class="header-bottom-bar-links-dropdown hide-links-menu-more-list" data-more-id="bottom-bar">
+                                                                                {if $has_hidden}
+                                                                                    {foreach $hidden_links as $link}
+                                                                                        <div class="header-bottom-bar-links-dropdown__item">
+                                                                                            <a class="link link_style_hover header-bottom-bar-links-dropdown__link" href="{$link.url|escape}" {if !empty($link.target)}target="{$link.target|escape}"{/if}>
+                                                                                                {$link.name|escape}
+                                                                                            </a>
+                                                                                        </div>
+                                                                                    {/foreach}
+                                                                                {/if}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        {/capture}
+                                                    {/if}
+
+
+                    								{if $brands_position === 'end' && !$is_compact}
+                    									{$brands_links}
+                    								{/if}
+
+                    								{if !empty($button_html_pseudo)}
+                    									{$button_html_pseudo}
+                    								{/if}
+                    							</ul>
+                                                {if !empty($additional_links) || ($brands_position === 'end' && $is_compact)}
+                                                    <ul class="header-bottom-bar-links{if $is_compact} header-bottom-bar-links_alt{/if}{if $is_transparent} header-bottom-bar-links_transparent{/if} header-bottom-bar-links_additional" data-is_overlay_enabled="{call bool2str value=$is_overlay_enabled}">
+                                                        {if !empty($additional_links)}
+                                                            {foreach $additional_links as $additional_link}
+                                                                {$additional_link_text = "{call set_date_to_text text=$additional_link['name']}"}
+
+                                                                <li class="header-bottom-bar-links__item-container">
+                                                                    <div class="header-bottom-bar-links__item">
+                                                                        <a class="header-bottom-bar-links__link{if $is_transparent} header-bottom-bar-links__link_colored{/if} button button_rect button_fill" href="{$additional_link['url']|escape}">
+                                                                            {if $is_enabled_icon_links || $is_compact}
+                                                                                <span class="icon-box">
+                                                                                    <span class="icon-box__icon">
+                                                                                        {if $additional_link['custom_icon']}
+                                                                                            <img src="{$theme_url}{$additional_link['custom_icon']}" alt="{$additional_link_text}">
+                                                                                        {else}
+                                                                                            {call svg_icon icon=$additional_link['icon'] width=$icon_link_size height=$icon_link_size}
+                                                                                        {/if}
+                                                                                    </span>
+                                                                                    <span class="icon-box__content">{$additional_link_text}</span>
+                                                                                </span>
+                                                                            {else}
+                                                                                {$additional_link_text}
+                                                                            {/if}
+                                                                        </a>
+                                                                    </div>
+                                                                </li>
+                                                            {/foreach}
+                                                        {/if}
+                                                        {if $brands_position === 'end'}
+                                                            {$brands_links}
+                                                        {/if}
+                                                    </ul>
+                                                {/if}
+                    						{* Header Bottom Bar Links End *}
+
+                    						{if $shop_links}
+                    							{* Header Bottom Bar Alt Search Start *}
+                    								{* Variables *}
+                    								{$plugins = $wa->globals('plugins')}
+                    								{$is_install_searchpro = $plugins['shop_searchpro']}
+                    								{$products_count = "{call products_count_all}"|intval}
+                    								{$query = ''}
+                    								{$placeholder = "{include "string:{$theme_settings['search-phrase']}"}"}
+
+                    								{if $wa->globals('market.route') == 'shop/frontend/search'}
+                    									{$query = $wa->get('query')}
+                    								{/if}
+
+                    								{* Template *}
+                    								{capture assign='input_html'}
+                    									<form class="header-bottom-bar-alt-search {if $query}header-bottom-bar-alt-search_open{/if}" action="{$wa->getUrl('shop/frontend/search')|escape}" {if $theme_settings['header_search_autocomplete_enabled']}data-autocomplete="1"{/if}>
+                    										<div class="header-bottom-bar-alt-search__button-container">
+                    											<button class="button button_rect button_fill header-bottom-bar-alt-search__button">
+                    												<span class="icon-box">
+                    													<span class="icon-box__icon">
+                    														{call svg_icon icon='search' width=16 height=16 fill='currentColor'}
+                    													</span>
+                    												</span>
+                    											</button>
+                    										</div>
+                    										<div class="header-bottom-bar-alt-search__input-container">
+                    											<input class="header-bottom-bar-alt-search__input input-text input-text_size_s" name="query" placeholder="{$placeholder}" value="{$query|escape}" autocomplete="off" />
+                    											<span class="header-bottom-bar-alt-search__close-button">
+                    												{call svg_icon icon='cross' width=14 height=14 fill='currentColor'}
+                    											</span>
+                    										</div>
+                    									</form>
+                    								{/capture}
+
+                    								{if $is_install_searchpro}
+                    									{$wa->globals('market_searchpro_alt-search', true)}
+                    									{$searchpro_html = "{shopSearchproPluginViewHelper::field()}"}
+                    									{$query = $wa->param('query')}
+
+                    									{if $searchpro_html}
+                    										{capture assign='searchpro_html'}
+                    											<div class="header-bottom-bar-alt-search {if $query}header-bottom-bar-alt-search_open{/if}">
+                    												<div class="header-bottom-bar-alt-search__button-container">
+                    													<button class="button button_rect button_fill header-bottom-bar-alt-search__button">
+                    														<span class="icon-box">
+                    															<span class="icon-box__icon">
+                    																{call svg_icon icon='search' width=16 height=16 fill='currentColor'}
+                    															</span>
+                    														</span>
+                    													</button>
+                    												</div>
+                    												<div class="header-bottom-bar-alt-search__input-container">
+                    													<div class="searchpro-wrapper searchpro-wrapper_alt-search"
+                    													{$searchpro_html}
+                    													<span class="header-bottom-bar-alt-search__close-button">
+                    														{call svg_icon icon='cross' width=14 height=14 fill='currentColor'}
+                    													</span>
+                    												</div>
+                    											</div>
+                    										{/capture}
+
+                    										{$input_html = $searchpro_html}
+                    									{/if}
+                    								{/if}
+
+                    								{$input_html}
+                    							{* Header Bottom Bar Alt Search End *}
+                    						{/if}
+                    					</nav>
+                    				{elseif $wa->shop}
+                    					<div class="header-bottom-bar__container-search">
+                    						{call input_search size=null style='inverse'}
+                    					</div>
+                    				{/if}
+                    				{if $shop_links}
+                    					<div class="header-bottom-bar__container-shop-links">
+                    						{* Header Bottom Bar Shop Links Start *}
+                    							{* Variables *}
+                    							{$compare = $wa->shop->compare()|default:[]}
+                    							{$count_compare = count($compare)}
+                    							{$count_favorite = intval("{call favorite_count}")}
+                    							{$count_cart = $wa->shop->cart->count()}
+                    							{$cart_url = $wa->getUrl('shop/frontend/cart')}
+
+                    							{if method_exists($wa->shop, 'checkout')}
+                    								{$cart_url = $wa->shop->checkout()->cartUrl()}
+                    							{/if}
+
+                    							{* Template *}
+                    							<div class="header-bottom-bar-shop-links">
+                    								{if $theme_settings['header_compare_enabled']}
+                    									<div class="header-bottom-bar-shop-links__item-container">
+                    										<div class="header-bottom-bar-shop-links__item">
+                    											<a class="button button_rect button_fill header-bottom-bar-shop-links__link compare-link" href="{"{call get_compare_url}"|trim|escape}" title="[`Сравнение`]">
+                    												<span class="icon-box">
+                    													<span class="icon-box__icon">
+                    														<span class="image-box">
+                    															<span class="counter compare-counter {if $count_compare == 0}counter_empty{/if}">
+                    																{$count_compare}
+                    															</span>
+                    															{call svg_icon icon='compare' width=16 height=16 fill='none'}
+                    														</span>
+                    													</span>
+                    												</span>
+                    											</a>
+                    										</div>
+                    									</div>
+                    								{/if}
+                    								{if $theme_settings['header_favorite_enabled']}
+                    									<div class="header-bottom-bar-shop-links__item-container">
+                    										<div class="header-bottom-bar-shop-links__item">
+                    											<a class="button button_rect button_fill header-bottom-bar-shop-links__link" href="{$wa->getUrl('shop/frontend/search')|escape}?list=favorite" title="[`Избранное`]">
+                    												<span class="icon-box">
+                    													<span class="icon-box__icon">
+                    														<span class="image-box">
+                    															<span class="counter favorite-counter {if $count_favorite == 0}counter_empty{/if}">
+                    																{$count_favorite}
+                    															</span>
+                    															{call svg_icon icon='favorite' width=16 height=16 fill='none'}
+                    														</span>
+                    													</span>
+                    												</span>
+                    											</a>
+                    										</div>
+                    									</div>
+                    								{/if}
+                                                    <div class="header-bottom-bar-shop-links__item-container">
+                                                        <div class="header-bottom-bar-shop-links__item">
+                                                            {capture assign='cart_content'}
+                                                                <a class="button button_rect button_fill button_style_alt header-bottom-bar-shop-links__link-cart" href="{$cart_url|escape}">
+                    												<span class="icon-box icon-box_size_l">
+                                        <span class="icon-box__icon">
+                                            <span class="image-box">
+                                                <span class="counter cart-counter {if $count_cart == 0}counter_empty{/if}">
+                                                    {$count_cart}
+                                                </span>
+                                                {call svg_icon icon='cart' width=16 height=16 fill='none'}
+                                            </span>
+                                        </span>
+                                        <span class="icon-box__content">
+                                            [`Корзина`]
+                                        </span>
+                                    </span>
+                                                                </a>
+                                                            {/capture}
+
+                                                            {if $theme_settings['header_cart_dropdown_enabled']}
+                                                                <div class="cart-popup-container">
+                                                                    {$cart_content}
+                                                                    <div class="cart-popup-container__popup"></div>
+                                                                </div>
+                                                            {else}
+                                                                {$cart_content}
+                                                            {/if}
+                                                        </div>
+                                                    </div>
+                    							</div>
+                    						{* Header Bottom Bar Shop Links End *}
+                    					</div>
+                    				{/if}
+                    			</div>
+                    		</div>
+                    	</div>
+                    {/function}
+
+                    {call header_bottom_bar}
+
+                </div>
+            {/if}
+            <div class="header__dropdown-bar{if $theme_settings['header_variant'] == 4 || $theme_settings['header_variant'] == 5} header__dropdown-bar_compact{/if}">
+                {function header_dropdown_bar}
+                    {* Variables *}
+                    {$is_ajax = $wa->get('get_ajax_blocks') === 'hidden_links_block'}
+                    {$plugins = $wa->globals('plugins')}
+                    {$is_enabled_brands = ($plugins['shop_brand'] || $plugins['shop_productbrands']) && $theme_settings['header_horizontal_catalog_brands'] && $theme_settings['header_brands_dropdown']}
+
+                    {$brands = []}
+                    {$brands_url = ''}
+                    {if $plugins['shop_brand']}
+                        {if is_callable(['shopBrandViewHelper', 'getAllBrands'], false)}
+                            {$brands = shopBrandViewHelper::getAllBrands()}
+                        {/if}
+
+                        {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'brand'])|escape}
+                    {elseif $plugins['shop_productbrands']}
+                        {if is_callable(['shopProductbrandsPlugin', 'getBrands'], false)}
+                            {$_brands = shopProductbrandsPlugin::getBrands()}
+                            {foreach $_brands as $brand}
+                                {$brands[] = [
+                                    'name' => $brand.name,
+                                    'frontend_url' => $brand.url
+                                ]}
+                            {/foreach}
+                        {/if}
+
+                        {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'productbrands'])|escape}
+                    {/if}
+
+                    <div class="header-dropdown-bar">
+                        <div class="container header-dropdown-bar__container">
+                            {if $wa->globals('market.theme_exists.shop')}
+                                {* Theme Settings *}
+                                {$catalog_variant = $theme_settings['header_catalog_variant']}
+                                {$catalog_source = $theme_settings['header_catalog_source']}
+                                {$catalog_menu_id = $theme_settings['header_catalog_menu_id']}
+                                {$limit = max(-1, intval($theme_settings['header_catalog_limit']))}
+                                {$show_products_count = !!$theme_settings['header_catalog_count_enabled']}
+                                {$is_enabled_image = !!$theme_settings['header_catalog_logo_enabled']}
+                                {$count_columns = intval($theme_settings['header_catalog_columns_count'])}
+                                {$count_flat = intval($theme_settings['header_catalog_flat_count'])}
+                                {$limit_columns = intval($theme_settings['header_catalog_categories_limit'])}
+                                {$limit_flat = intval($theme_settings['header_catalog_categories_limit_flat'])}
+                                {$header_variant = intval($theme_settings['header_variant'])}
+                                {$show_first = in_array($header_variant, [4, 5])}
+                                {$show_name = !!$theme_settings['header_catalog_show_name']}
+                                {$break_avoid = !!$theme_settings['header_catalog_break_avoid']}
+
+                                {$tree_depth = ($theme_settings['header_catalog_max_depth'] - 1)}
+
+                                {if $header_variant == 4}
+                                    {$count_columns = 2}
+                                    {$catalog_variant = 'extend'}
+                                {/if}
+
+                                {if $header_variant == 1 && $catalog_variant === 'flat'}
+                                    {$catalog_variant = 'tree'}
+                                {/if}
+
+                                <div class="catalog-dropdown catalog-dropdown_{$catalog_variant}" data-is_overlay_enabled="{call bool2str value=!!$theme_settings['header_catalog_overlay_enabled']}" data-trigger_type="{$theme_settings['header_catalog_trigger']|escape}">
+                                    {* Catalog Start *}
+                                        {if $catalog_source === 'menu_app' && $catalog_menu_id}
+                                            {$_categories = $wa->menu->get($catalog_menu_id)}
+                                        {else}
+                                            {if $wa->globals('market.theme_exists.shop')}
+                                                {call get_catalog_categories args=['depth'=>$tree_depth]}
+                                                {$_categories = $wa->globals('market.return')|default:[]}
+                                            {else}
+                                                {$_categories = []}
+                                            {/if}
+                                        {/if}
+
+                                        {$categories = []}
+                                        {$hidden_categories = []}
+
+                                        {foreach $_categories as $i => $category}
+                                            {$is_hidden = $catalog_variant !== 'flat' && $limit != -1 && $limit < $category@iteration}
+
+                                            {if $is_hidden}
+                                                {$hidden_categories[$i] = $category}
+                                            {else}
+                                                {$categories[$i] = $category}
+                                            {/if}
+                                        {/foreach}
+
+                                        {if count($hidden_categories) > 0}
+                                            {$categories['-1'] = ['id' => '-1', 'name' => "{_wp("Ещё")}", 'childs' => $hidden_categories]}
+                                        {/if}
+
+                                        {* Template *}
+                                        {if $catalog_variant === 'tree'}
+                                            {call catalog_tree
+                                                categories=$categories
+                                                fixed_width=true
+                                                show_products_count=$show_products_count
+                                                max_depth=$tree_depth
+                                                is_enabled_image=$is_enabled_image
+                                                is_enabled_image_only_root=true
+                                            }
+                                        {elseif $catalog_variant === 'extend'}
+                                            {call catalog_extend
+                                                categories=$categories
+                                                fixed_width=true
+                                                show_products_count=$show_products_count
+                                                show_columns_title=$show_name
+                                                count_columns=$count_columns
+                                                limit_columns=$limit_columns
+                                                show_first=$show_first
+                                                is_enabled_image=$is_enabled_image
+                                                break_avoid=$break_avoid
+                                                is_open=true
+                                            }
+                                        {elseif $catalog_variant === 'flat'}
+                                            {call catalog_flat
+                                                categories=$categories
+                                                show_products_count=$show_products_count
+                                                count_flat=$count_flat
+                                                limit_flat=$limit_flat
+                                                is_enabled_image=$is_enabled_image
+                                                is_open=true
+                                            }
+                                        {/if}
+                                    {* Catalog End *}
+                                </div>
+                                {if in_array($theme_settings['header_horizontal_catalog_variant'], ['extend', 'disabled'])}
+                                    <div class="header-dropdown-bar__horizontal-catalog-container">
+                                        {function catalog_horizontal}
+                                            <div class="horizontal-catalog{if $theme_settings['header_variant'] == 5 && $theme_settings['header_variant_5_bottom_bar_transparent']} horizontal-catalog_wo-top-offset{/if}" data-is_overlay_enabled="{call bool2str value=$theme_settings['header_horizontal_overlay_enabled']}">
+                                                {if $theme_settings['header_bottom_bar_source'] == "menu_app"}
+                                                    {$horizontal_categories = $wa->menu->get($theme_settings["header_bottom_menu_app_id"])}
+                                                {else}
+                                                    {$horizontal_categories = $wa->globals('market.horizontal_categories')}
+                                                {/if}
+
+                                                {foreach $horizontal_categories as $category}
+                                                    {if count($category.childs) == 0 && $category.id != '-1'}
+                                                        {continue}
+                                                    {/if}
+                                                    <div class="horizontal-catalog__category" data-category_id="{$category.id|escape}">
+                                                        {$link = false}
+
+                                                        {$column_title = null}
+                                                        {if $theme_settings['header_horizontal_show_name']}
+                                                            {$column_title = $category.name}
+                                                        {/if}
+
+                                                        {if isset($category.url)}
+                                                            {$link = $category.url}
+                                                        {/if}
+
+                                                        {$classes = ''}
+                                                        {$data = []}
+
+                                                        {if $category.id == '-1'}
+                                                            {$column_title = null}
+                                                            {$link = false}
+                                                            {$classes = 'hide-links-menu-more-list'}
+                                                            {$data = [
+                                                                'more-id' => 'bottom-bar'
+                                                            ]}
+                                                        {/if}
+
+                                                        {call catalog_columns
+                                                            title=$column_title
+                                                            categories=$category.childs
+                                                            show_products_count=$theme_settings['header_horizontal_catalog_count_enabled']
+                                                            count_columns=$theme_settings['header_horizontal_columns_count']
+                                                            limit=$theme_settings['header_horizontal_columns_count']
+                                                            link=$link
+                                                            break_avoid=$theme_settings['header_horizontal_break_avoid']
+                                                            classes=$classes
+                                                            data=$data
+                                                        }
+                                                    </div>
+                                                {/foreach}
+                                            </div>
+                                        {/function}
+
+                                        {call catalog_horizontal}
+                                    </div>
+                                {/if}
+                            {/if}
+
+                            {if $is_enabled_brands}
+                                <div class="header-dropdown-bar_brands-container">
+                                    <div class="brands-dropdown">
+                                        {* Brands Catalog Start *}
+                                            {$limit = $theme_settings['header_brands_catalog_limit']}
+                                            {$is_structured = !!$theme_settings['header_brands_catalog_structure']}
+                                            {$brands_url = $wa->getUrl('shop/frontend/brands')|escape}
+
+                                            {if wa_is_int($limit) && $limit != -1}
+                                                {$brands = array_slice($brands, 0, $limit)}
+                                            {/if}
+
+                                            {$count_columns = $count_columns|default:4}
+                                            {$columns = array_fill(0, $count_columns, [])}
+                                            {$total_count = 0}
+
+                                            {foreach $brands as $brand}
+                                                {$total_count = $total_count + 1}
+                                            {/foreach}
+
+                                            {$columns = array_fill(0, $count_columns, [])}
+                                            {$current_count = 0}
+
+                                            {foreach $brands as $brand}
+                                                {$column = floor($current_count * $count_columns / $total_count)}
+                                                {$columns[$column][] = $brand}
+                                                {$current_count = $current_count + 1}
+                                            {/foreach}
+                                            {$prev_letter = null}
+
+                                            <div class="brands-catalog">
+                                                <div class="block">
+                                                    <div class="block__header">
+                                                        <div class="brands-catalog__header-container">
+                                                            <div class="brands-catalog__header-text-container">
+                                                                <span class="title title_h4">
+                                                                    {$theme_settings['header_brands_catalog_header']|escape}
+                                                                </span>
+                                                            </div>
+                                                            <div class="brands-catalog__link-container">
+                                                                <a class="brands-catalog__link link" href="{$brands_url}">[`Все бренды`]</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block__content">
+                                                        <div class="brands-catalog__columns">
+                                                            {foreach $columns as $brands}
+                                                                <div class="brands-catalog__column">
+                                                                    <div class="brands-catalog__brands">
+                                                                        {foreach $brands as $brand}
+                                                                            <div class="brands-catalog__brand">
+                                                                                {if $is_structured}
+                                                                                    {$letter = mb_substr($brand.name, 0, 1)}
+                                                                                    {if $letter != $prev_letter}
+                                                                                        {$prev_letter = $letter}
+                                                                                        <div class="brands-catalog__letter">
+                                                                                            {$letter}
+                                                                                        </div>
+                                                                                    {/if}
+                                                                                {/if}
+                                                                                <a class="link link_style_hover" href="{$brand.frontend_url|escape}">
+                                                                                    {$brand.name|escape}
+                                                                                </a>
+                                                                            </div>
+                                                                        {/foreach}
+                                                                    </div>
+                                                                </div>
+                                                            {/foreach}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {* Brands Catalog End *}
+                                    </div>
+                    			</div>
+                			{/if}
+                		</div>
+                	</div>
+                {/function}
+
+                {call header_dropdown_bar}
+
+            </div>
+
+            {if $theme_settings['header_floating_enabled']}
+                <div class="header__floating-bar">
+                    {function header_floating}
+                        {* Theme Settings *}
+                        {$is_enabled_compare = $theme_settings['header_compare_enabled']}
+                        {$is_enabled_favorite = $theme_settings['header_favorite_enabled']}
+                        {$is_enabled_cart_dropdown = $theme_settings['header_cart_dropdown_enabled']}
+                        {$catalog_variant = $theme_settings['header_catalog_variant']}
+                        {$logo_desc = {$theme_settings['logo_desc']|default: ''}}
+
+                        {* Variables *}
+                        {$logo_url = null}
+
+                        {if $theme_settings['logo']}
+                            {$logo_url = "{$wa_theme_url}{$theme_settings['logo']}"}
+                        {/if}
+
+                        {if $theme_settings['logo_alt_enabled'] && $theme_settings['logo_alt']}
+                            {$logo_url = "{$wa_theme_url}{$theme_settings['logo_alt']}"}
+                        {/if}
+
+                        {$icon_size = 24}
+
+                        {$compare = $wa->shop->compare()|default:[]}
+                        {$count_compare = count($compare)}
+                        {$count_favorite = intval("{call favorite_count}")}
+                        {$count_cart = $wa->shop->cart->count()}
+
+                        {$cart_url = $wa->getUrl('shop/frontend/cart')}
+                        {if method_exists($wa->shop, 'checkout')}
+                            {$cart_url = $wa->shop->checkout()->cartUrl()}
+                        {/if}
+
+                        <div class="header-floating" data-top-offset-block>
+                            <div class="container">
+                                <div class="header-floating__inner">
+                                    <div class="header-floating__logo {if !$logo_desc}header-floating__logo_padding-right{/if}">
+                                        {if $logo_url}
+                                            <a class="image-box image-box_contain" href="{$wa_url|escape}">
+                                                <img src="{$logo_url|escape}" alt="{$wa->accountName()|escape}" />
+                                            </a>
+                                        {/if}
+                                    </div>
+                                    {if $logo_desc}
+                                        <div class="header-floating__logo-desc">
+                                            {$logo_desc}
+                                        </div>
+                                    {/if}
+                                    {if $wa->globals('market.theme_exists.shop')}
+                                        <div class="header-floating__shop">
+                                            <div class="header-floating__catalog">
+                                                <span class="button header-floating__dropdown-btn" data-trigger_type="{$theme_settings['header_catalog_trigger']|escape}">
+                                                    <span class="icon-box icon-box_size_l">
+                                                        <span class="icon-box__icon">
+                                                            <div class="burger-icon" style="width:18px;height:12px">
+                                                                <div class="burger-icon__box">
+                                                                    <div class="burger-icon__inner"></div>
+                                                                </div>
+                                                            </div>
+                                                        </span>
+                                                        <span class="icon-box__content">
+                                                            {$theme_settings['header_catalog_name']|escape}
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <div class="header-floating__search">
+                                                {call input_search size='l'}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                    {if $wa->globals('market.theme_exists.shop')}
+                                        <div class="header-floating__shop-links">
+                                            {* Template *}
+                                            <div class="header-middle-bar-shop-links header-middle-bar-shop-links_size_s">
+                                                {if $wa->isAuthEnabled()}
+                                                    {$is_auth = $wa->user()->isAuth()}
+                                                    {$profile_link = ''}
+                                                    {$link_text = _wp("Войти")}
+                                                    {$photo = null}
+
+                                                    {if $is_auth}
+                                                        {$link_text = _wp("My profile")}
+                                                        {$profile_link = $wa->myUrl()}
+                                                        {if $wa->globals('market.theme_exists.shop')}
+                                                            {$profile_link = $wa->getUrl('shop/frontend/myProfile')}
+                                                        {/if}
+
+                                                        {$contact = $wa->user()}
+                                                        {if isset($contact.photo) && $contact.photo}
+                                                            {$photo = $contact->getPhoto(24)}
+                                                        {/if}
+                                                    {else}
+                                                        {$profile_link = $wa->loginUrl()}
+                                                    {/if}
+
+                                                    <div class="header-middle-bar-shop-links__item">
+                                                        <a class="link-box link-box_style_light{if !$is_auth} login-link{/if}" href="{$profile_link|escape}" title="[`My profile`]">
+                                                            <span class="icon-box icon-box_size_l icon-box_col">
+                                                                <span class="icon-box__icon">
+                                                                    <span class="header-middle-bar-shop-links__user-image image-box">
+                                                                        {if $photo}
+                                                                            <img class="link-box__icon" src="{$photo|escape}" alt="{$contact.name|escape}">
+                                                                        {else}
+                                                                            {call svg_icon classes='link-box__icon' icon='user' width=$icon_size height=$icon_size fill='none'}
+                                                                        {/if}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+
+                                                {if $is_enabled_compare}
+                                                    <div class="header-middle-bar-shop-links__item">
+                                                        <a class="link-box link-box_style_light compare-link" href="{"{call get_compare_url}"|trim|escape}" title="[`Сравнение`]">
+                                                            <span class="icon-box icon-box_size_l icon-box_col">
+                                                                <span class="icon-box__icon">
+                                                                    <span class="image-box">
+                                                                        <span class="counter compare-counter {if $count_compare == 0}counter_empty{/if}">
+                                                                            {$count_compare}
+                                                                        </span>
+                                                                        {call svg_icon classes='link-box__icon' icon='compare' width=$icon_size height=$icon_size fill='none' stroke_width=2}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+
+                                                {if $is_enabled_favorite}
+                                                    <div class="header-middle-bar-shop-links__item">
+                                                        <a class="link-box link-box_style_light" href="{$wa->getUrl('shop/frontend/search')|escape}?list=favorite" title="[`Избранное`]">
+                                                            <span class="icon-box icon-box_size_l icon-box_col">
+                                                                <span class="icon-box__icon">
+                                                                    <span class="image-box">
+                                                                        <span class="counter favorite-counter {if $count_favorite == 0}counter_empty{/if}">
+                                                                            {$count_favorite}
+                                                                        </span>
+                                                                        {call svg_icon classes='link-box__icon' icon='favorite' width=$icon_size height=$icon_size fill='none' stroke_width=2}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    </div>
+                                                {/if}
+                                                <div class="header-middle-bar-shop-links__item header-middle-bar-shop-links__item_cart">
+                                                    {capture assign='cart_content'}
+                                                        <a class="link-box link-box_style_light" href="{$cart_url|escape}">
+                                                            <span class="icon-box icon-box_size_l icon-box_col">
+                                                                <span class="icon-box__icon">
+                                                                    <span class="image-box">
+                                                                        <span class="counter cart-counter {if $count_cart == 0}counter_empty{/if}">
+                                                                            {$count_cart}
+                                                                        </span>
+                                                                        {call svg_icon classes='link-box__icon' icon='cart' width=$icon_size height=$icon_size fill='none'}
+                                                                    </span>
+                                                                </span>
+                                                            </span>
+                                                        </a>
+                                                    {/capture}
+
+                                                    {if $is_enabled_cart_dropdown}
+                                                        <div class="cart-popup-container">
+                                                            {$cart_content}
+                                                            <div class="cart-popup-container__popup"></div>
+                            							</div>
+                    								{else}
+                    									{$cart_content}
+                    								{/if}
+                    							</div>
+                    						</div>
+                    					</div>
+                    				{/if}
+                    			</div>
+                    		</div>
+                    		<div class="header-floating__dropdown{if $catalog_variant === 'extend' || $catalog_variant === 'flat'} header__dropdown-bar_compact{/if}">
+                    			<div class="header-dropdown-bar">
+                    				<div class="container header-dropdown-bar__container">
+                                        {if $wa->globals('market.theme_exists.shop')}
+                    						<div class="catalog-dropdown catalog-dropdown_{$catalog_variant}" data-is_overlay_enabled="{call bool2str value=!!$theme_settings['header_catalog_overlay_enabled']}" data-trigger_type="{$theme_settings['header_catalog_trigger']|escape}">
+                    						</div>
+                                        {/if}
+                    				</div>
+                    			</div>
+                    		</div>
+                    	</div>
+                    {/function}
+
+                    {call header_floating}
+
+                </div>
+            {/if}
+        {/if}
+    </div>
+{/strip}

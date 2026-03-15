@@ -1,0 +1,13 @@
+{strip}
+    {$_ = $wa->myNav(false)}
+    {$theme_settings = $wa->globals('theme_settings')}
+    {$wa_active_theme_path = $wa->globals('wa_active_theme_path')}
+    {$wa_parent_theme_path = $wa->globals('wa_parent_theme_path')}
+    {$wa_theme_url = $wa->globals('wa_theme_url')}
+    {$wa_parent_theme_url = $wa->globals('wa_parent_theme_url')}
+    {$wa_theme_version = $wa->globals('wa_theme_version')}
+
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+
+    {call blog_comment comment=$comment}
+{/strip}

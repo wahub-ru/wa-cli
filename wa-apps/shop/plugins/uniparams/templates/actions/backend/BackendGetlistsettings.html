@@ -1,0 +1,133 @@
+<div class="uniparams-oldlist dialog-content" style="display: none;">
+    <div class="dialog-content-indent">
+        <h1>Настройки списка</h1>
+        <form>
+            <div class="block form">
+                <div class="field-group">
+                    <div class="field">
+                        <div class="name">Название<br><span class="hint">title</span></div>
+                        <div class="value">
+                            <input type="text" class="bold" name="title" value="{$list.name|escape}"/>
+                            <input type="hidden" name="list_id" value="{$list.id}"/>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">Код вывода <br><span class="hint">id</span></div>
+                        <div class="value">{literal}{shopUniparamsPlugin::getList("{/literal}<input
+                                type="text" name="list_key" value="{$list.key_name|escape}"/>{literal}")}{/literal}
+                            <a class="uniparams-copy-to-cp">
+                                <span class="copy">
+                                    <i class="icon16 notebooks"></i>копировать
+                                </span>
+                                 <span class="copy-success">
+                                    <i class="icon16 yes"></i> скопировано 
+                                </span>
+                            </a>
+                            <em class="errormsg uniparams-err1"></em>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="name">Описание <br><span class="hint">description</span></div>
+                        <div class="value">
+                            <textarea name="ldescription">{$list.description|escape}</textarea>
+                        </div>
+                    </div>
+                    <br>
+                    <h6 class="heading">Доп. поля для списка</h6> 
+                    <div class="field-group uniparams-list-params">
+                        {if $params}
+                        <div class="field">
+                            <div class="uniparams-minitab field-head">Ключ</div>
+                            <div class="uniparams-minitab field-head">Тип</div>
+                            <div class="uniparams-minitab field-head">Cодержание</div>
+                        </div>
+                        {/if}
+
+                        {foreach $params as $param}
+                        <div class="field">
+                            <div class="uniparams-minitab">
+                                <input type="hidden" name="param_id[]" value="{$param.id}"/>
+                                <input type="text" placeholder="Keyname" name="lpkeyname[]" value="{$param.key_name|escape}"/>
+                            </div>
+                            <div class="uniparams-minitab">
+                                <select name="lptype[]">
+                                    <option {if $param.type=='text'}selected=""{/if} value="text">Однострочное текстовое поле (Input)</option>
+                                    <option {if $param.type=='textarea'}selected=""{/if} value="textarea">Многострочное текстовое поле (Textarea)</option>
+                                    <option {if $param.type=='image'}selected=""{/if} value="image">Изображение</option>
+                                </select>
+                            </div>
+                            <div class="uniparams-minitab">
+                                {if $param.type == 'text'}
+                                    <input type="text" placeholder="Value" name="lpparam[]" value="{$param.content|escape}"/>
+                                {elseif $param.type == 'textarea'}
+                                    <textarea name="lpparam[]">{$param.content|escape}</textarea>
+                                {elseif $param.type == 'image'}
+                                    <img class="uniparams-item-img" src="{if $param.content} {$param.content|escape}?{$wa->version()} {else}#{/if}" />
+                                    <input type="file" name="lpparam[]" accept="image/*" value="" />
+                                {/if}
+                            </div>
+                            <a href="#" class="uniparams-delete-list-param" title="Удалить поле">
+                                <i class="icon16 delete "></i>
+                            </a>
+                        </div>
+                        {/foreach}
+                    </div>
+                    <div class="buttons"><a href="#" class="button blue uniparams-add-list-param">Добавить поле</a></div>
+                </div>
+                <em class="errormsg uniparams-err3"></em>
+                <hr>
+                <h2>Настройка карточки</h2>
+                <h6 class="heading">Список полей для карточки</h6>
+                <div class="field-group uniparams-list-fields">
+                    {if $fields}
+                    <div class="field">
+                        <div class="uniparams-minitab field-head">Название</div>
+                        <div class="uniparams-minitab field-head">Ключ</div>
+                        <div class="uniparams-minitab field-head">Тип</div>
+                        <div class="uniparams-minitab field-head">Описание</div>
+                    </div>
+                    {/if}
+                    {foreach $fields as $field}
+                        <div class="field uniparams-selects" id="selects_{$field@iteration}">
+                            <div class="uniparams-minitab">
+                                <input type="hidden" name="field_id[]" value="{$field.id}"/>
+                                <input type="text" placeholder="Name" name="name[]" value="{$field.name|escape}"/>
+                            </div>
+                            <div class="uniparams-minitab">
+                                <input type="text" placeholder="Keyname" name="keyname[]" value="{$field.keyname|escape}"/>
+                            </div>
+                            <div class="uniparams-minitab">
+                                <!--suppress SyntaxError, SyntaxError -->
+                                             <select name="type[]">
+                                    <option {if $field.type == 'text'}selected="selected"{/if} value="text">Однострочное текстовое поле (Input)</option>
+                                    <option {if $field.type == 'textarea'}selected="selected"{/if} value="textarea">Многострочное текстовое поле (Textarea)</option>
+                                    <option {if $field.type == 'image'}selected="selected"{/if} value="image">Изображение</option>
+                                </select>
+                            </div>
+                            <div class="uniparams-minitab">
+                                <textarea placeholder="Description" name="description[]">{$field.description|escape}</textarea> 
+                            </div>
+                            <a href="#" class="uniparams-delete-list-field" title="Удалить поле">
+                                <i class="icon16 delete "></i>
+                            </a>
+                        </div>
+                    {/foreach}
+                </div>
+                <a href="#" class="button blue uniparams-add-list-field">Добавить поле</a>
+                <em class="errormsg uniparams-err2"></em>
+            </div>
+        </form>
+    </div>
+    <div class="dialog-buttons">
+        <input type="hidden" name="list_id" value="{$list.id}" />
+        <input type="submit" value="Сохранить" class="button green uniparams-save_list" />
+        <button class="button grey cancel">Закрыть</button>
+        <button class="button red uniparams-remove_list float-right">Удалить список</button>
+    </div>
+</div>
+
+<script>
+    $(function(){
+        $('.uniparams-wrapper input[type="checkbox"]').iButton({ labelOn : "", labelOff : "", className: 'mini' });
+    })
+</script>

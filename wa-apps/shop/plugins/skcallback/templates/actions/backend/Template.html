@@ -1,0 +1,84 @@
+<link rel="stylesheet" type="text/css" href="{$skcallback_params.shop_plugin_url}css/request.css" />
+<script src="{$skcallback_params.shop_plugin_url}js/shopSkCallbackRequest.js" ></script>
+<link rel="stylesheet" type="text/css" href="{$skcallback_params.shop_plugin_url}css/tooltipster.bundle.min.css" />
+<script src="{$skcallback_params.shop_plugin_url}js/tooltipster.bundle.min.js" ></script>
+
+<div class="shop-skcallback-request js-skcallback-request">
+    <div class="shop-skcallback-request__zag">
+        <span class="shop-skcallback-request__zag-name">Запросы</span>
+        <span class="shop-skcallback-request__zag-hint js-skcallback-request-count">{$skcallback_data.count}</span>
+    </div>
+    <div class="shop-skcallback-request__block">
+        <div class="shop-skcallback-filters js-skcallback-filters">
+            <form class="shop-skcallback-filters__form js-skcallback-filters-form">
+                <input type="hidden" name="page" class="js-skcallback-filters-page" value="1" />
+                <div class="shop-skcallback-filters__peroids">
+                    <input type="hidden" name="filter[period]" class="js-skcallback-filters-period-input" value="today" />
+                    <a href="javascript:void(0)" class="shop-skcallback-filters__period js-skcallback-filters-period _active" data-period="today">Сегодня</a>
+                    <a href="javascript:void(0)" class="shop-skcallback-filters__period js-skcallback-filters-period" data-period="yesterday">Вчера</a>
+                    <a href="javascript:void(0)" class="shop-skcallback-filters__period js-skcallback-filters-period" data-period="week">Неделя</a>
+                    <a href="javascript:void(0)" class="shop-skcallback-filters__period js-skcallback-filters-period" data-period="">Все время</a>
+                </div>
+                <div class="shop-skcallback-filters__indates">
+                    <input class="shop-skcallback-filters__indate js-skcallback-filters-indate" name="filter[date_from]" type="text" value="" />
+                    :
+                    <input class="shop-skcallback-filters__indate js-skcallback-filters-indate" name="filter[date_to]" type="text" value="" />
+                </div>
+                <div class="shop-skcallback-filters__statuses">
+                    <input type="hidden" name="filter[status]" class="js-skcallback-filters-status-input" value="" />
+                    <span>Статус:</span>&nbsp;
+                    <a href="javascript:void(0)" class="shop-skcallback-filters__status js-skcallback-filters-status _active" data-status-id="">Все</a>
+                    {foreach $skcallback_data.statuses as $status}
+                        <a href="javascript:void(0)" class="shop-skcallback-filters__status js-skcallback-filters-status" data-status-id="{$status.id}">{$status.title}</a>
+                    {/foreach}
+                </div>
+            </form>
+        </div>
+        <div class="shop-skcallback-reload js-skcallback-reload">
+        {include file='./TemplateTable.html'}
+        </div>
+    </div>
+
+    <div class="dialog shop-skcallback-dialog-cart js-skcallback-dialog-cart">
+        <div class="dialog-background"></div>
+        <div class="dialog-window" >
+            <div class="dialog-content">
+                <div class="dialog-content-indent js-skcallback-dialog-cart-indent">
+
+                </div>
+            </div>
+            <div class="dialog-buttons">
+                <div class="dialog-buttons-gradient">
+                    <input type="button" value="Закрыть" class="button gray js-skcallback-dialog-cart-close">
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<style>
+    {foreach $skcallback_data.statuses as $status}
+    .shop-skcallback-request__row[data-status-id='{$status.id}'] .shop-skcallback-request__marker{ldelim}
+        color: {$status.color};
+    {rdelim}
+    .shop-skcallback-request__row[data-status-id='{$status.id}'] .shop-skcallback-select{ldelim}
+        border-color: {$status.color};
+    {rdelim}
+    .shop-skcallback-request__row[data-status-id='{$status.id}'] .shop-skcallback-select__current{ldelim}
+            border-color: {$status.color};
+    {rdelim}
+    .shop-skcallback-request__row[data-status-id='{$status.id}'] .shop-skcallback-select__current-link{ldelim}
+        color: {$status.color};
+    {rdelim}
+    .shop-skcallback-request__row[data-status-id='{$status.id}'] .shop-skcallback-select__open{ldelim}
+        color: {$status.color};
+    {rdelim}
+    {/foreach}
+</style>
+
+<script>
+    var shopSkCallbackRequestInit = new shopSkCallbackRequest({$skcallback_params|json_encode});
+    $(".js-skcallback-filters-indate").datepicker();
+</script>

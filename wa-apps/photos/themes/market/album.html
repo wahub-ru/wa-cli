@@ -1,0 +1,76 @@
+{strip}
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+
+	{* Theme Settings *}
+	{$variant = $theme_settings['photos_variant']}
+	{$wa->globals('is_show_breadcrumbs', true)}
+	{$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $album.name])}
+	{$wa->globals('album', $album)}
+
+	{if $variant === 'sidebar'}
+		{$wa->globals('is_show_sidebar', true)}
+	{/if}
+
+	{$has_parent_album = !!$album.parent_id}
+	{$back_url = $wa_app_url}
+
+	{if $has_parent_album}
+		{$parts = explode('/', $album.full_url)}
+		{$_ = array_pop($parts)}
+		{$parent_album_full_url = implode('/', $parts)}
+		{$back_url = photosFrontendAlbum::getLink($parent_album_full_url)}
+	{/if}
+
+	<div class="photos-album-page">
+		<div class="block">
+			<div class="block__header">
+				<div class="photos-album-page__header-container">
+					<div class="photos-album-page__header-text-container">
+						<span class="title title_h1">
+							{$album.name|escape}
+						</span>
+					</div>
+					<div class="photos-album-page__back-button-container r-hidden-md">
+                        <a class="link-box link-box_style_gray" href="{$back_url|escape}">
+                            <span class="icon-box">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="dict-arrow-left" classes="link-box__icon" width=12 height=12}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="link-box__link">
+                                        [`Назад`]
+                                    </span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="block__content">
+                {if !empty($childcrumbs)}
+                    <div class="photos-album-page__childcrumbs-container">
+                        {include './albums.html' albums=$childcrumbs}
+                    </div>
+                {/if}
+
+                <div class="photos-album-page__info-container">
+
+                    {if $album.description}
+                        <div class="photos-album-page__description-container">
+                            <div class="content-decorator">
+                                {$album.description}
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+
+                {* @event frontend_collection.%plugin_id%.content *}
+                {foreach $frontend_collection as $item}{if !empty($item.content)}{$item.content}{/if}{/foreach}
+
+                <div class="photos-album-page__thumbs-container">
+                    {include './photos.html'}
+                </div>
+            </div>
+        </div>
+    </div>
+{/strip}

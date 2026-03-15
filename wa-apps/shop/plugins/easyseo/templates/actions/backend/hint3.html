@@ -1,0 +1,23 @@
+{literal}
+<pre style="position: relative">
+  <h3>шаблоны для интеграции в smarty</h3>
+  h1 для товара
+  <span class="select-all">
+  {$h1 = {(isset($h1) && $h1_forced) ? $h1 : $product.name}}
+  &lt;h1 itemprop=&quot;name&quot;&gt;{$h1|escape}&lt;/h1&gt;
+  </span>
+
+  h1 для категории
+  <span class="select-all">
+  {$h1 = {(isset($h1) && $h1_forced) ? $h1 : $category.name}}
+  &lt;h1 class=&quot;category-name&quot;&gt;{$h1|escape}&lt;/h1&gt;
+  </span>
+
+  h1 для бренда
+  <span class="select-all">
+  {$h1 = {(isset($h1) && $h1_forced_brand) ? $h1 : $brand.name}}
+  &lt;h1 itemprop="name"&gt;{$h1|escape}&lt;/h1&gt;
+  </span>
+
+</pre>
+{/literal}

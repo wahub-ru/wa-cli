@@ -1,0 +1,31 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {if $breadcrumbs_plugin.breadcrumbs}
+        {$breadcrumbs_data = [
+            breadcrumbs => $breadcrumbs_plugin.breadcrumbs,
+            current_page_item => $breadcrumbs_plugin.current_page_item,
+            show_subcategories => $breadcrumbs_plugin.show_subcategories,
+            show_subcategories_on_hover => $breadcrumbs_plugin.show_subcategories_on_hover
+        ]}
+
+        {$breadcrumbs = $breadcrumbs_plugin.breadcrumbs}
+        {$breadcrumbs[] = $breadcrumbs_plugin.current_page_item}
+
+        {$current_item_mode = 'show'}
+
+        {if $breadcrumbs_plugin.hide_current_item}
+            {$current_item_mode = 'hide'}
+        {elseif $breadcrumbs_plugin.show_current_item_link}
+            {$current_item_mode = 'show-link'}
+        {/if}
+
+        {$separator = $breadcrumbs_plugin.separator}
+
+        {if $separator === 'default'}
+            {$separator = null}
+        {/if}
+
+        {include './breadcrumbs.html' breadcrumbs=$breadcrumbs current_item_mode=$current_item_mode separator=$separator breadcrumbs_data=$breadcrumbs_data}
+    {/if}
+{/strip}

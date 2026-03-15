@@ -1,0 +1,45 @@
+{strip}
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+    {if $title === 'rate&gt;0'}
+        {$title = "{_wp("Избранное")}"}
+        {$wa->title("{_wp("Избранное")}")}
+    {/if}
+
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $title])}
+
+    <div class="photos-search-page">
+        <div class="block">
+            <div class="block__header">
+                <div class="photos-search-page__header-container">
+                    <div class="photos-search-page__header-text-container">
+                        <span class="title title_h1">
+                            {$title}
+                            {' '}
+                            {* @event frontend_collection.%plugin_id%.search_name *}
+                            {foreach $frontend_collection as $item}{if !empty($item.search_name)}{$item.search_name}{/if}{/foreach}
+                        </span>
+                    </div>
+                    <div class="photos-search-page__back-button-container">
+                        <a class="link-box link-box_style_gray" href="{$wa_app_url|escape}">
+                            <span class="icon-box">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="dict-arrow-left" classes="link-box__icon" width=12 height=12}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="link-box__link">
+                                        [`Назад`]
+                                    </span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="block__content">
+                {include './photos.html'}
+            </div>
+        </div>
+    </div>
+{/strip}

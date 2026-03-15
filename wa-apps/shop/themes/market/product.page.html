@@ -1,0 +1,50 @@
+{strip}
+
+    {include "./init.html" assign='_'}
+
+    {* Arguments *}
+    {$product = $args['product']|default:$product|default:null}
+
+    {* Variables *}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{$page.title|escape}"])}
+    {$wa->title(sprintf("%s - {$page.title|escape}", $product.name))}
+    {$page_url = $page.url}
+
+    {$tabs['overview'] = ['name' => "{_wp("Overview")}", 'show_title' => false, 'url' => {$wa->shop->productUrl($product)}]}
+
+    {if $reviews_total_count > 0}
+        {$reviews_tab_title = "{_wp("Отзывы")} <sup>{$reviews_total_count}</sup>"}
+    {else}
+        {$reviews_tab_title = "{_wp("Отзывы")}"}
+    {/if}
+
+    {$tabs['reviews'] = ['name' => $reviews_tab_title, 'show_title' => false, 'url' => {$wa->shop->productUrl($product, 'reviews')}]}
+
+    {foreach $product.pages as $_page}
+        {$slug = "page_{$_page.url|replace:'-':'_'}"}
+        {$tabs[$slug] = ['name' => $_page.name, 'show_title' => false, 'url' => {$wa->shop->productUrl($product, 'page', ['page_url' => $_page.url])}, 'page_url' => $_page.url] }
+    {/foreach}
+
+    <div class="content-wrapper__block">
+        <section class="product-subpage block">
+            <h1 class="block__header block__header_text product-page__header">
+                {$page.title|escape}
+            </h1>
+            <div class="content-tabs content-tabs_decorate">
+                {if count($tabs) > 1}
+                    <div class="content-tabs__tabs tabs">
+                        {foreach $tabs as $tab}
+                            {$is_selected = $page_url === $tab.page_url}
+                            <a class="tabs__tab {if $is_selected}tabs__tab_selected{/if}" href="{$tab.url}">{$tab.name}</a>
+                        {/foreach}
+                    </div>
+                {/if}
+            </div>
+            <div class="block__content">
+                {$page.content}
+            </div>
+        </section>
+    </div>
+
+{/strip}

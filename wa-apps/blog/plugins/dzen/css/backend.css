@@ -1,0 +1,559 @@
+#plugin-dzen-form.dzen-admin,
+#dzen-post-fields.dzen-post-card {
+    background: #f3f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    box-sizing: border-box;
+}
+
+#plugin-dzen-form.dzen-admin {
+    display: grid;
+    gap: 16px;
+}
+
+#plugin-dzen-form .dzen-admin__header,
+#dzen-post-fields .dzen-post-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+#plugin-dzen-form .dzen-admin__title,
+#dzen-post-fields .heading {
+    margin: 0 !important;
+    font-size: 32px !important;
+    line-height: 1.2 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+#plugin-dzen-form .dzen-admin__subtitle {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 16px;
+}
+
+#plugin-dzen-form .dzen-admin__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#plugin-dzen-form .dzen-card,
+#dzen-post-fields .dzen-post-section {
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 16px !important;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+}
+
+#plugin-dzen-form .dzen-card--success {
+    background: #f2fbf5 !important;
+}
+
+#plugin-dzen-form .dzen-card__title,
+#dzen-post-fields .dzen-post-section__title {
+    margin: 0 0 12px !important;
+    font-size: 26px !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+#plugin-dzen-form .dzen-status-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+#plugin-dzen-form .dzen-status-list li {
+    margin: 8px 0;
+    padding-left: 22px;
+    position: relative;
+}
+
+#plugin-dzen-form .dzen-status-list li:before {
+    content: "●";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #22a55a;
+}
+
+#plugin-dzen-form .dzen-status-list li.is-muted:before {
+    color: #94a3b8;
+}
+
+#plugin-dzen-form .dzen-field-grid,
+#dzen-post-fields .dzen-field-grid {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#plugin-dzen-form .dzen-field-grid--single {
+    grid-template-columns: 1fr;
+}
+
+#plugin-dzen-form .dzen-label,
+#dzen-post-fields .dzen-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #334155;
+}
+
+#plugin-dzen-form .dzen-choice {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+#plugin-dzen-form .dzen-checkbox-list {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+#plugin-dzen-form input[type="text"],
+#plugin-dzen-form input[type="number"],
+#plugin-dzen-form input[type="password"],
+#plugin-dzen-form select,
+#plugin-dzen-form textarea,
+#dzen-post-fields input[type="text"],
+#dzen-post-fields input[type="number"],
+#dzen-post-fields input[type="password"],
+#dzen-post-fields select,
+#dzen-post-fields textarea {
+    width: 100% !important;
+    box-sizing: border-box;
+    border: 1px solid #d5deea !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    padding: 10px 12px !important;
+    margin-top: 6px;
+    min-height: 40px;
+    max-width: none !important;
+}
+
+#dzen-post-fields textarea {
+    max-height: 200px;
+}
+
+#plugin-dzen-form .dzen-url-list {
+    display: grid;
+    gap: 8px;
+}
+
+#plugin-dzen-form .dzen-url-box,
+#plugin-dzen-form .dzen-upload-actions,
+#dzen-post-fields .dzen-upload-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    align-items: center;
+    margin-top: 6px;
+}
+
+#plugin-dzen-form .dzen-url-box .js-dzen-feed-url-input {
+    flex: 1 1 auto;
+}
+
+#plugin-dzen-form .dzen-icon,
+#dzen-post-fields .dzen-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+#plugin-dzen-form .button,
+#dzen-post-fields .button,
+#plugin-dzen-form button.button,
+#dzen-post-fields button.button,
+#plugin-dzen-form a.button,
+#dzen-post-fields a.button {
+    border-radius: 999px !important;
+    padding: 7px 14px !important;
+    min-height: 34px;
+    height: auto !important;
+    line-height: 18px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    font-family: 'Helvetica Neue', 'Liberation Sans', Arial, sans-serif !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    border: 1px solid #c7d3e5 !important;
+    background: #fff !important;
+    color: #1f2937 !important;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+#plugin-dzen-form .button.small,
+#dzen-post-fields .button.small,
+#plugin-dzen-form .js-dzen-default-upload-btn,
+#dzen-post-fields .js-dzen-default-upload-btn {
+    min-height: 0 !important;
+    height: 30px !important;
+    padding: 4px 10px !important;
+    line-height: 1 !important;
+    margin-top: 6px;
+}
+
+#plugin-dzen-form .button:hover,
+#dzen-post-fields .button:hover {
+    background: #f3f6fb !important;
+}
+
+#plugin-dzen-form .button.blue,
+#dzen-post-fields .button.blue {
+    background: #2f7de1 !important;
+    border-color: #2f7de1 !important;
+    color: #fff !important;
+}
+
+#plugin-dzen-form .button.light-gray,
+#dzen-post-fields .button.light-gray {
+    background: #eef2f7 !important;
+    border-color: #d6dfec !important;
+}
+
+#plugin-dzen-form .dzen-cover-preview,
+#dzen-post-fields .dzen-cover-preview {
+    margin-top: 10px;
+    max-width: 220px;
+    max-height: 140px;
+    border-radius: 8px;
+    border: 1px solid #d5deea;
+}
+
+#dzen-post-fields .dzen-post-card__body {
+    display: grid;
+    gap: 12px;
+}
+
+#dzen-post-fields .dzen-post-section__toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+#dzen-post-fields .dzen-post-section__arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    transition: transform .15s ease;
+}
+
+#dzen-post-fields .dzen-post-section.is-collapsed .dzen-post-section__arrow {
+    transform: rotate(-90deg);
+}
+
+#dzen-post-fields .dzen-post-section__body {
+    margin-top: 12px;
+}
+
+#dzen-post-fields.is-readonly .dzen-post-section {
+    opacity: 0.68;
+}
+
+#dzen-post-fields .dzen-counter {
+    margin-top: 6px;
+    text-align: right;
+    font-size: 12px;
+    color: #64748b;
+}
+
+#dzen-post-fields .dzen-rss-preview {
+    border: 1px dashed #c6d1e0;
+    border-radius: 10px;
+    background: #f8fbff;
+    padding: 12px;
+}
+
+#dzen-post-fields .dzen-rss-preview p {
+    margin: 0 0 8px;
+}
+
+#dzen-post-fields .dzen-rss-preview p:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 980px) {
+    #plugin-dzen-form .dzen-field-grid,
+    #dzen-post-fields .dzen-field-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #plugin-dzen-form .dzen-admin__header,
+    #dzen-post-fields .dzen-post-card__header,
+    #plugin-dzen-form .dzen-url-box,
+    #plugin-dzen-form .dzen-upload-actions,
+    #dzen-post-fields .dzen-upload-actions {
+        flex-wrap: wrap;
+    }
+}
+
+
+#plugin-dzen-form .dzen-field select,
+#dzen-post-fields .dzen-field select {
+    margin-top: 6px;
+}
+
+
+#dzen-post-fields .dzen-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+#dzen-post-fields .dzen-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#dzen-post-fields .dzen-switch__slider {
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background: #d1d5db;
+    position: relative;
+    transition: background-color .2s ease;
+    flex: 0 0 auto;
+}
+
+#dzen-post-fields .dzen-switch__slider:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    transition: transform .2s ease;
+}
+
+#dzen-post-fields .dzen-switch input:checked + .dzen-switch__slider {
+    background: #2f7de1;
+}
+
+#dzen-post-fields .dzen-switch input:checked + .dzen-switch__slider:after {
+    transform: translateX(20px);
+}
+
+#dzen-post-fields .dzen-switch__label {
+    font-size: 14px;
+    color: #334155;
+}
+
+/* wa-1.3.css conflict overrides */
+#plugin-dzen-form .dzen-url-box .js-dzen-copy-url,
+#plugin-dzen-form .dzen-url-box a.button.small {
+    width: 38px !important;
+    min-width: 38px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    background: #e9eef5 !important;
+}
+
+#plugin-dzen-form .js-dzen-default-upload-btn,
+#plugin-dzen-form .js-dzen-default-remove-btn,
+#dzen-post-fields .js-dzen-upload-btn,
+#dzen-post-fields .js-dzen-remove-cover {
+    min-height: 0 !important;
+    height: 30px !important;
+    padding: 4px 12px !important;
+    border-radius: 999px !important;
+    align-self: flex-start;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+
+#dzen-post-fields .dzen-post-section__toggle {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    border-radius: 10px !important;
+    box-shadow: none;
+}
+
+
+#plugin-dzen-form .js-dzen-save-btn {
+    cursor: pointer !important;
+}
+
+
+#plugin-dzen-form .dzen-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+#plugin-dzen-form .dzen-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#plugin-dzen-form .dzen-switch__slider {
+    width: 44px;
+    height: 24px;
+    border-radius: 999px;
+    background: #d1d5db;
+    position: relative;
+    transition: background-color .2s ease;
+    flex: 0 0 auto;
+}
+
+#plugin-dzen-form .dzen-switch__slider:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    transition: transform .2s ease;
+}
+
+#plugin-dzen-form .dzen-switch input:checked + .dzen-switch__slider {
+    background: #2f7de1;
+}
+
+#plugin-dzen-form .dzen-switch input:checked + .dzen-switch__slider:after {
+    transform: translateX(20px);
+}
+
+#plugin-dzen-form .dzen-switch__label {
+    font-size: 14px;
+    color: #334155;
+}
+
+#plugin-dzen-form .dzen-switch--sm .dzen-switch__slider {
+    width: 38px;
+    height: 22px;
+}
+
+#plugin-dzen-form .dzen-switch--sm .dzen-switch__slider:after {
+    width: 18px;
+    height: 18px;
+}
+
+#plugin-dzen-form .dzen-switch--sm input:checked + .dzen-switch__slider:after {
+    transform: translateX(16px);
+}
+
+#plugin-dzen-form .dzen-switch--with-label {
+    margin-bottom: 8px;
+}
+
+#dzen-post-fields .dzen-validate-list {
+    margin: 10px 0 0;
+    padding-left: 18px;
+}
+
+#dzen-post-fields .dzen-validate-list li {
+    margin: 6px 0;
+}
+
+#dzen-post-fields .dzen-validate-list.is-warning li {
+    color: #92400e;
+}
+
+#dzen-post-fields .js-dzen-validate-status.state-warning {
+    color: #92400e;
+}
+
+#dzen-post-fields .dzen-validate-list--checks li,
+#dzen-post-fields .dzen-validate-list--errors li,
+#dzen-post-fields .dzen-validate-list--warnings li {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+#dzen-post-fields .dzen-check-icon {
+    line-height: 1.2;
+}
+
+#dzen-post-fields .dzen-validate-list--checks li.is-success {
+    background: #ecfdf3;
+    color: #166534;
+}
+
+#dzen-post-fields .dzen-validate-list--checks li.is-warning,
+#dzen-post-fields .dzen-validate-list--warnings li {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+#dzen-post-fields .dzen-validate-list--checks li.is-error,
+#dzen-post-fields .dzen-validate-list--errors li {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+#plugin-dzen-form .dzen-feed-meta {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    border: 1px solid #d6dfec;
+    background: #f8fafc;
+}
+
+#plugin-dzen-form .dzen-feed-meta__count {
+    color: #334155;
+}
+
+#plugin-dzen-form .dzen-feed-meta__message {
+    margin-top: 4px;
+}
+
+#plugin-dzen-form .dzen-feed-meta.is-success {
+    background: #eefbf2;
+    border-color: #bde8c8;
+}
+
+#plugin-dzen-form .dzen-feed-meta.is-warning {
+    background: #fff8e8;
+    border-color: #f3d9a3;
+}
+
+#plugin-dzen-form .dzen-feed-meta.is-error {
+    background: #fff1f2;
+    border-color: #fecdd3;
+}

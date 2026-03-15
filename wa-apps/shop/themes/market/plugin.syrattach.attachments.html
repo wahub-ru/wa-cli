@@ -1,0 +1,16 @@
+{if $attachments}
+    <div class="syrattach">
+        <div class="syrattach__title">{_wp('Related files')}</div>
+        <ul class="syrattach__list">
+            {foreach $attachments as $file}
+                <li class="syrattach__item">
+                    <span class="syrattach__filename"><a class="link" href="{$file.url}" target="_blank">{$file.name|escape}</a></span>
+                    <span class="syrattach__filesize">({$file.size|wa_format_file_size})</span>
+                    {if $file.description}
+                         - <span class="syrattach__filedescription">{$file.description|escape}</span>
+                    {/if}
+                </li>
+            {/foreach}
+        </ul>
+    </div>
+{/if}

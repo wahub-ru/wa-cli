@@ -1,0 +1,184 @@
+{$settings_url='#/yandexmarket/'}
+<div class="js-campaigns">
+<div class="flexbox">
+    <div class="wide">
+        <a href="#/yandexmarket/reload/" class="button js-action small rounded light-gray"><i class="fas fa-sync-alt text-green"></i>&nbsp;Обновить кампании</a>
+    </div>
+    {if empty($error) && !empty($campaigns)}
+    <div>
+        <a href="../site/#/routing/" class="button nobutton rounded small"><i class="fas fa-cog text-dark-gray"></i>&nbsp;Настройки витрин</a>
+        <a href="?action=importexport#/yandexmarket:/" class="button nobutton rounded small"><i class="fas fa-exchange-alt text-dark-gray"></i>&nbsp;Профили экспорта</a>
+    </div>
+    {/if}
+</div>
+</div>
+    {if !empty($error)}
+        {include
+            file="../../includes/api.error.html"
+            message="Для отображения списка кампаний настройте <a href='?action=plugins#/yandexmarket/api/'>авторизацию партнерского API</a> и проверьте настройки кампаний в личном кабинете «Яндекс.Маркета»."
+        }
+    {else}
+        {if empty($campaigns)}
+            <div class="alert custom-mt-16 warning">
+                У пользователя «Яндекс.Маркета», для которого настроено <a href="?action=plugins#/yandexmarket/api/" class="inline">подключение к API</a>, не создано ни одной кампании либо
+                недостаточно прав доступа к кампаниям.<br/>
+                Если доступ к кампаниям «Яндекс.Маркета» имеет другой пользователь «Яндекса», то в настройках подключения к API нужно указать «<em>Авторизационный токен</em>»,
+                полученный после <a href="https://passport.yandex.ru/auth" class="inline">авторизации</a> с данными этого пользователя.
+            </div>
+        {else}
+            <table class="zebra" id="s-settings-plugin-yandexmarket">
+                <thead>
+                <tr>
+                    <th>ID/Домен</th>
+                    <th>Прайс-листы</th>
+                    <th>Состояние кампании</th>
+                    <th>Точки продаж</th>
+                </tr>
+                </thead>
+                <tbody>
+                {$_check_routing = false}
+                {foreach $campaigns as $campaign}
+                    {if empty($campaign.settlements)}
+                        {$_check_routing = true}
+                    {/if}
+                    <tr>
+                        <td>
+                            <a href="https://partner.market.yandex.ru/order.xml?id={$campaign.id|escape}" target="_blank" class="inline-link">{$campaign.id|escape}&nbsp;<i class="fas fa-external-link-alt fa-xs"></i></a>
+                            <h4 class="js-campaign-name custom-my-12 {if empty($campaign.settlements)}text-gray{/if}">{$campaign.domain|escape}</h4>
+                            {if !empty($campaign.settlements)}
+                                {foreach $campaign.settlements as $settlement}
+                                    <p class="hint nowrap">{$settlement|escape}</p>
+                                {/foreach}
+                            {else}
+                                <p class="hint nowrap"><i class="fas fa-exclamation-triangle text-yellow"></i> Для кампании не выбрана витрина интернет-магазина.</p>
+                                <a href="#/yandexmarket/settle/{$campaign.id|escape}/" class="js-action custom-mt-8 button small rounded light-gray"><i class="fas fa-plus text-blue"></i>&nbsp;выбрать витрину</a>
+                            {/if}
+                        </td>
+                        <td>
+                            {if !empty($campaign.feeds)}
+                                {foreach $campaign.feeds as $feed}
+                                    {if empty($feed.profile_id)}
+                                        <div class="state-caution small">
+                                            <i class="fas fa-exclamation-triangle text-yellow"></i>&nbsp;
+                                            Профиль для прайс-листа {$feed.id} не найден.
+                                            <br/>
+                                            Проверьте настройки плагина или обновите URL прайс-листа.
+                                            <br/>
+                                            Текущий URL: {$feed.url|escape}
+                                        </div>
+                                    {else}
+                                        <a href="?action=importexport#/yandexmarket:{$feed.profile_id}/" target="_blank" class="js-action inline-link"
+                                        title="{$feed.id}"><i class="fas fa-file-export fa-xs text-dark-gray"></i>&nbsp;{$feed.profile_info.name|escape}{if !empty($feed.path_mtime)}
+                                        <br/><span class="hint">{$feed.path_mtime|wa_datetime:'humandatetime'}</span>
+                                            {/if}&nbsp;<i class="fas fa-external-link-alt fa-xs"></i></a>
+                                    {/if}
+                                    {if !$feed@last}
+                                        <br/>
+                                    {/if}
+                                {/foreach}
+                            {elseif !empty($campaign.settlements)}
+                                Для кампании не найдено ни одного прайс-листа.
+                                <a href="?action=importexport#/yandexmarket:/">Создайте</a>
+                                или укажите один из существующих профилей экспорта прайс-листа в настройках размещения.
+                            {/if}
+                        </td>
+                        <td>
+                            {if !empty($campaign.stateIcon)}
+                                <span class="icon baseline custom-pr-4">{$wa->shop->getIcon($campaign.stateIcon)}</span>
+                            {/if}
+                            {$campaign.stateDescription|escape}
+                            {if isset($campaign.offers_count)}
+                                <span class="indicator" title="Количество опубликованных предложений">{$campaign.offers_count}</span>
+                            {/if}
+                            {if !empty($campaign.stateReasons)}
+                                <ul class="menu">
+                                    {foreach $campaign.stateReasons as $description}
+                                        <li class="hint nowrap">
+                                            <i class="fas fa-exclamation-triangle text-yellow"></i>&nbsp;{$description|escape}
+                                        </li>
+                                    {/foreach}
+                                </ul>
+                            {/if}
+                            {if !empty($campaign.balance)}
+                                <br/>
+                                <span class="hint nowrap" title="{$campaign.balance.balance|escape}">
+                                {if $campaign.balance.daysLeft<700}<i class="fas fa-exclamation-triangle text-yellow"></i>{else}<i class="fas fa-check text-green"></i>{/if}
+                                &nbsp;{$campaign.balance.balance_str}
+                            </span>
+                            {/if}
+                        </td>
+                        <td>
+                            <a href="{$settings_url}outlets/{$campaign.id}/" class="nowrap"><i class="fas fa-cog text-dark-gray"></i>&nbsp;Конфигурация</a>
+                        </td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
+            {if $_check_routing}
+            <p class="hint js-campaigns">
+                Если домен кампании на «Яндекс.Маркете» не определяется как настроенный в бекенде этого магазина (например, если это кирилличесий домен), создайте псевдоним для домена
+                кампании в приложении «<a href="{$wa_backend_url}site/">Сайт</a>», в котором используются буквы только латинского алфавита.</p>
+            {/if}
+        {/if}
+    {/if}
+
+<div id="s-settings-plugin-yandexmarket-content" class="fields form"></div>
+
+<div id="s-settings-plugin-yandexmarket-settle-dialog" class="dialog">
+    <div class="dialog-background"></div>
+    <div class="dialog-body">
+        <form action="?plugin=yandexmarket&module=settings&action=campaignSave" method="post">
+            <div class="dialog-header"><h1>Выбрать витрину для кампании</h1></div>
+            <div class="dialog-content">
+                <input type="hidden" name="section" value="settlements">
+                <div class="fields form">
+                    <div class="field-group">
+                        <div class="field">
+                            <div class="name">ID кампании</div>
+                            <div class="value">
+                                <input type="text" name="campaign_id" value="" readonly>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="name for-switch">Название кампании</div>
+                            <div class="value js-campaign-name"></div>
+                        </div>
+                        <div class="field">
+                            <div class="name for-switch">Витрина интернет-магазина</div>
+                            <div class="value">
+                                {foreach $settlements as $settlement}
+                                <div class="custom-mt-4">
+                                    <label>
+                                        <span class="wa-radio">
+                                            <input type="radio" name="campaign[domain]" value="{$settlement.original_domain|default:$settlement.domain|escape}">
+                                            <span></span>
+                                        </span>
+                                        <span>&nbsp;{$settlement.settlement|escape}</span>
+                                    </label>
+                                </div>
+                                {if !empty($settlement.alias)}<div class="hint custom-mt-4">{$settlement.alias|escape}</div>{/if}
+                                {/foreach}
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="value submit">
+                                <p class="small">
+                                    <i class="fas fa-info-circle text-dark-gray"></i>&nbsp;
+                                    Выберите витрину, которая соответствует кампании «<span class="js-campaign-name"></span>».
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <em class="state-error-hint"></em>
+                </div>
+            </div>
+            <div class="dialog-footer">
+                <div class="dialog-buttons">
+                    <input type="submit" class="button green" value="[`Сохранить`]">
+                    <button type="button" class="button light-gray js-close-dialog">[`Close`]</button>
+                </div>
+            </div>
+            {$wa->csrf()}
+        </form>
+    </div>
+</div>

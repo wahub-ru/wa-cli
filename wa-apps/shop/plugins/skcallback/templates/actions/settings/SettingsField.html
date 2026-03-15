@@ -1,0 +1,26 @@
+<tr class="shop-sk-generate-form__tr js-sk-generate-form-tr s-summary-row" data-row-id="{$control.id}">
+    <td class="shop-sk-generate-form__sort"><i class="icon16 sort"></i></td>
+    <td class="shop-sk-generate-form__name js-sk-generate-form-name">
+        <a href="javascript:void(0)" class="inline-link">{$control.title|escape}</a>
+        <input type="hidden" name="shop_skcallback_fields[{$control.id}][title]" value="{$control.title|escape}">
+        <span class="hint">(id: {$control.id})</span>
+    </td>
+    <td class="shop-sk-generate-form__value">
+        {if $control.is_additional}
+            <input type="text" name="shop_skcallback_fields[{$control.id}][additional]" value="{if $control.additional}{$control.additional|escape}{/if}" placeholder="{$control.placeholder}" />
+        {elseif $control.type_name == "slider"}
+            <input type="text" name="shop_skcallback_fields[{$control.id}][additional][]" value="{if isset($control.additional[0])}{$control.additional[0]}{/if}" class="shop-sk-generate-form__input-small" placeholder="9" >
+            :
+            <input type="text" name="shop_skcallback_fields[{$control.id}][additional][]" value="{if isset($control.additional[1])}{$control.additional[1]}{/if}" class="shop-sk-generate-form__input-small" placeholder="18" >
+        {/if}
+    </td>
+    <td class="shop-sk-generate-form__require">
+        {if $control.is_require}
+            <label><input type="checkbox" value="1" name="shop_skcallback_fields[{$control.id}][require]"  {if $control.require}checked="checked"{/if} />&nbsp;&nbsp;<span>Обязательное</span></label>
+        {/if}
+    </td>
+    <td>
+        <input type="hidden" name="shop_skcallback_fields[{$control.id}][type_id]" value="{$control.type_id}">
+        <a href="javascript:void(0)" class="gray inline-link js-sk-generate-form-delete" data-id="{$control.id}" title="Удалить поле"><i class="icon16 delete"></i></a>
+    </td>
+</tr>

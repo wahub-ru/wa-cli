@@ -1,0 +1,60 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: photos/plugins/link\n"
+"POT-Creation-Date: 2018-02-17 00:10+0300\n"
+"PO-Revision-Date: \n"
+"Last-Translator: photos/plugins/link\n"
+"Language-Team: photos/plugins/link\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: .\n"
+"Language: en_US\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+#: /wa-apps/photos/plugins/link/templates/controls/feedback.html:5
+msgid "QR code"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/controls/feedback.html:9
+msgid "Technical support for this plugin"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/hooks/backend_photo.bottom.html:2
+msgid "Link:&nbsp;"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/hooks/backend_photo.bottom.html:5
+msgid "&nbsp;open in&nbsp;"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/hooks/backend_photo.bottom.html:7
+msgid "new window"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/hooks/backend_photo.bottom.html:8
+msgid "self window"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/templates/hooks/backend_photo.bottom.html:10
+msgid "Save link"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/lib/config/settings.php:5
+msgid "Ask for technical support"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/lib/config/settings.php:6
+msgid "Click on the link to contact the developer."
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/lib/config/plugin.php:3
+msgid "Link for the photo"
+msgstr ""
+
+#: /wa-apps/photos/plugins/link/lib/config/plugin.php:4
+msgid "Adds a link to each photo."
+msgstr ""

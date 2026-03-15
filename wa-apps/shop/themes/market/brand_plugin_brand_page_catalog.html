@@ -1,0 +1,173 @@
+{strip}
+    {include "./init.html" assign='_' force=true}
+
+    {* Theme Settings *}
+    {$subcategories_variant = $theme_settings['shop_catalog_subcategories_variant']}
+    {$subcategories_show_logo = $theme_settings['shop_catalog_subcategories_logo_enabled']}
+    {$show_logo_mobile = $theme_settings['category_logo_enabled_adaptive']}
+    {$subcategories_show_count = $theme_settings['shop_catalog_subcategories_count_enabled']}
+    {$hide_subcategories_on_filtration = $theme_settings['shop_catalog_subcategories_hiding_on_filtration_enabled']}
+
+    {* Variables *}
+    {$wa->globals('market.main.only_content', true)}
+
+    {$is_enabled_filters = !empty($filters) && count($filters) > 0}
+
+    {call is_filtration_page filters=$filters is_seofilter_page=false}
+    {$is_filtration_page = $wa->globals('market.return')}
+    {$is_categories_block_shown = !($hide_subcategories_on_filtration && $is_filtration_page) && $subcategories_variant !== 'disabled'}
+
+    {$_brand_categories = $brand_categories}
+
+    {foreach $_brand_categories as $i => $category}
+        {$_brand_categories[$i].url = $category.frontend_url}
+        {$_brand_categories[$i].count = $category.product_count}
+    {/foreach}
+
+    {$brand_categories = shopBrandViewHelper::toTree($_brand_categories)}
+
+    {$wa->globals('brand_categories', $brand_categories)}
+
+    {if !!$theme_settings['shop_catalog_sidebar_enabled']}
+        {$sidebar = "{include "{$wa_active_theme_path}/sidebar.html" has_filters=$is_enabled_filters}"}
+    {else}
+        {$sidebar = null}
+    {/if}
+
+    {$wa->globals('is_show_sidebar', !empty($sidebar))}
+    {$sidebar_side = $wa->globals('sidebar_side')}
+
+    {* Template *}
+    <div class="brand-page">
+        <div class="container container_content">
+            <div class="content-container">
+                {capture assign='content'}
+                    <div class="content">
+                        <div class="content__breadcrumbs">
+                            {call get_breadcrumbs}
+                            {$breadcrumbs = $wa->globals('market.return')}
+
+                            {include './breadcrumbs.html' breadcrumbs=$breadcrumbs}
+                        </div>
+                        <div class="content__content">
+                            <div class="blocks">
+                                <div class="blocks__item">
+                                    <div class="block">
+                                        <div class="block__header brand-header__container">
+                                            {if $brand.image_url}
+                                            <div class="brand-page__image-container">
+                                                <div class="image-box image-box_contain">
+                                                    {call image
+                                                        src=$brand.image_url
+                                                        alt=$brand.name
+                                                    }
+                                                </div>
+                                            </div>
+                                            {/if}
+                                            <h1 class="title title_h1">
+                                                {$h1|escape}
+                                            </h1>
+                                        </div>
+                                        <div class="block__content">
+                                            <div class="brand-page__tabs-container">
+                                                {$pages_tabs}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {if $description && $wa->get('page', 1) == 1 && !waRequest::get()}
+                                        <div class="brand-page__description-container">
+                                            <div class="brand-page__description-text-container">
+                                                <div class="content-decorator">
+                                                    {$description}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {/if}
+                                    <div class="brand-page__categories-container-wrapper">
+                                        {if $is_categories_block_shown}
+                                            <div class="brand-page__categories-container">
+                                                <div class="block">
+                                                    <div class="block__content">
+                                                        {if !$wa->globals('is_mobile')}
+                                                            {if $subcategories_variant === 'thumbs'}
+                                                                {call categories_thumbs
+                                                                    categories=$brand_categories
+                                                                    show_logo=$subcategories_show_logo
+                                                                    show_products_count=$subcategories_show_count
+                                                                    show_real_count=true
+                                                                }
+                                                            {elseif $subcategories_variant === 'compact'}
+                                                                {call categories_extend
+                                                                    categories=$brand_categories
+                                                                    show_logo=$subcategories_show_logo
+                                                                    show_count=$subcategories_show_count
+                                                                    show_real_count=true
+                                                                }
+                                                            {elseif $subcategories_variant === 'mini'}
+                                                                {call categories_mini
+                                                                    categories=$brand_categories
+                                                                    show_count=$subcategories_show_count
+                                                                    show_real_count=true
+                                                                }
+                                                            {/if}
+                                                        {else}
+                                                            {call categories_r
+                                                                categories=$brand_categories
+                                                                classes="r-home-categories"
+                                                                limit=8
+                                                                show_logo=$show_logo_mobile
+                                                                show_countargs=$subcategories_show_count
+                                                            }
+                                                        {/if}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
+
+                                    <div class="brand-page__products-container">
+                                        {if (is_array($products) && count($products) > 0) || $is_enabled_filters}
+                                            <div class="brand-page__products">
+                                                {include './products.html' products=$products filters=$filters}
+                                            </div>
+                                        {elseif (is_array($category.subcategories) && count($category.subcategories) == 0)}
+                                            <div class="not-found-block">
+                                                <div class="not-found-block__header">
+                                                    [`В этой категории нет ни одного товара.`]
+                                                </div>
+                                            </div>
+                                        {/if}
+                                    </div>
+
+                                    {if $additional_description && $wa->get('page', 1) == 1 && !waRequest::get()}
+                                        <div class="brand-page__additional-description-container">
+                                            <div class="content-decorator">
+                                                {$additional_description}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/capture}
+
+                {if !empty($sidebar)}
+                    <div class="content-columns content-columns_sidebar-{$sidebar_side}">
+                        <section class="content-columns__content">
+                            {$content}
+                        </section>
+                        <aside class="content-columns__sidebar">
+                            {$sidebar}
+                        </aside>
+                    </div>
+                {else}
+                    <div class="blocks__item brand-page__content-block">
+                        {$content}
+                    </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+{/strip}

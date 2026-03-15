@@ -1,0 +1,493 @@
+{* Онлайн-консультант (Telegram) — единая страница настроек *}
+
+<style>
+{literal}
+  .tgc-inline{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  #tgc-photo-preview{max-height:46px;border-radius:4px;display:none}
+  .tgc-save-badge{display:inline-block}
+  .tgc-schedule{border-collapse:collapse;width:100%;max-width:560px;margin-top:10px}
+  .tgc-schedule th,.tgc-schedule td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+  .tgc-schedule th{background:#f7f7f7}
+  .tgc-grid{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:10px;max-width:560px}
+{/literal}
+</style>
+
+<div class="block double-padded">
+  <h1>Онлайн-консультант (Telegram)</h1>
+</div>
+
+<form id="tgc-settings-form"
+      method="post"
+      action="?plugin=tgconsult&module=backend&action=saveSettings"
+      enctype="multipart/form-data">
+  <input type="hidden" name="return_url" value="{$app_url}?plugin=tgconsult&action=settings">
+  {$wa->csrf()}
+
+  <div class="fields form">
+
+    <div class="field">
+      <div class="name">Включить плагин</div>
+      <div class="value">
+        <label>
+          <input type="checkbox" name="{$namespace}[enabled]" value="1" {if !empty($settings.enabled)}checked{/if}>
+          <span class="hint">Показывать виджет на сайте и принимать сообщения</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Токен Telegram-бота</div>
+      <div class="value">
+        <input type="text" class="long" name="{$namespace}[bot_token]" value="{$settings.bot_token|escape}">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">ID чата менеджера</div>
+      <div class="value">
+        <input type="text" class="long" name="{$namespace}[manager_chat_id]" value="{$settings.manager_chat_id|escape}">
+        <div class="hint">Личный, групповой или канал (может быть отрицательным, напр. <code>-1001234567890</code>)</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Приветственное сообщение</div>
+      <div class="value">
+        <input type="text" class="long" name="{$namespace}[welcome]" value="{$settings.welcome|default:'Здравствуйте! Чем помочь?'|escape}">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Имя менеджера</div>
+      <div class="value">
+        <input type="text" class="long" name="{$namespace}[manager_name]" value="{$settings.manager_name|default:'Менеджер'|escape}">
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Отображение имени в ответах</div>
+      <div class="value">
+        <select name="{$namespace}[manager_name_mode]">
+          <option value="settings" {if $settings.manager_name_mode != 'responder'}selected{/if}>Показывать имя из настройки «Имя менеджера»</option>
+          <option value="responder" {if $settings.manager_name_mode == 'responder'}selected{/if}>Показывать имя сотрудника, который ответил</option>
+        </select>
+        <div class="hint">Применяется к ответам, отправленным из админки.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Фото менеджера (URL)</div>
+      <div class="value">
+        <input type="text" class="long" id="tgc_manager_photo" name="{$namespace}[manager_photo]" value="{$settings.manager_photo|escape}">
+        <div class="tgc-inline">
+          <button type="button" class="button" id="tgc-btn-upload">Загрузить фото…</button>
+
+          {* превью *}
+          <img id="tgc-photo-preview" alt=""
+               {if !empty($settings.manager_photo)}style="display:inline"{else}style="display:none"{/if}
+               src="{$settings.manager_photo|escape}">
+
+          {* чекбокс удаления показываем только если фото есть *}
+          <span id="tgc-photo-del-wrap" {if empty($settings.manager_photo)}style="display:none"{/if}>
+            <label style="margin-left:8px;">
+              <input type="checkbox" name="{$namespace}[manager_photo_delete]" id="tgc-photo-del" value="1">
+              Удалить фото
+            </label>
+          </span>
+
+          <span class="hint" style="margin-left:8px;">Выберите файл — URL подставится автоматически.</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="field">
+  <div class="name">Скрыть иконку чата</div>
+  <div class="value">
+    <label>
+      <input type="checkbox" name="{$namespace}[hide_button]" value="1" {if !empty($settings.hide_button)}checked{/if}>
+      Не показывать круглую кнопку чата
+    </label>
+    <div class="hint">
+      Окно можно открыть из любого элемента сайта: добавьте атрибут <code>data-tgc-open</code>
+      или вызовите <code>window.TGConsult.open()</code>.
+    </div>
+  </div>
+</div>
+
+
+    <div class="field">
+      <div class="name">Позиция виджета</div>
+      <div class="value">
+        <div class="tgc-inline">
+          <label>
+            Сторона:
+            <select name="{$namespace}[widget_position]">
+              <option value="right" {if $settings.widget_position != 'left'}selected{/if}>Справа</option>
+              <option value="left" {if $settings.widget_position == 'left'}selected{/if}>Слева</option>
+            </select>
+          </label>
+        </div>
+        <div class="tgc-grid" style="margin-top:8px">
+          <label>
+            Отступ от края, px
+            <input type="number" min="0" max="500" step="1" name="{$namespace}[widget_offset_side]" value="{$settings.widget_offset_side|default:22|escape}">
+          </label>
+          <label>
+            Отступ снизу, px
+            <input type="number" min="0" max="500" step="1" name="{$namespace}[widget_offset_bottom]" value="{$settings.widget_offset_bottom|default:70|escape}">
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Цвет иконки чата</div>
+      <div class="value">
+        <input type="color" name="{$namespace}[icon_color]"
+               value="{$settings.icon_color|default:'#0D6EFD'|escape}"
+               style="height:36px;width:60px;padding:0;border:none;background:transparent;">
+        <span class="hint">Окрашивает круглую кнопку виджета.</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">График работы</div>
+      <div class="value">
+        <label>
+          <input type="checkbox" id="tgc-working-hours-enabled" name="{$namespace}[working_hours_enabled]" value="1" {if !empty($settings.working_hours_enabled)}checked{/if}>
+          Использовать график работы для автоответа вне рабочего времени
+        </label>
+
+        <div id="tgc-working-hours-block" style="margin-top:10px;{if empty($settings.working_hours_enabled)}display:none;{/if}">
+          <div class="tgc-inline">
+            <label>
+              Часовой пояс:
+              <select name="{$namespace}[working_timezone]">
+                {foreach $timezone_list as $tz}
+                  <option value="{$tz|escape}" {if $settings.working_timezone == $tz}selected{/if}>{$tz|escape}</option>
+                {/foreach}
+              </select>
+            </label>
+          </div>
+
+          <table class="tgc-schedule">
+            <thead>
+              <tr>
+                <th>День</th>
+                <th>Рабочий</th>
+                <th>С</th>
+                <th>До</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Понедельник</td>
+                <td><input type="checkbox" name="{$namespace}[work_mon_enabled]" value="1" {if !empty($settings.work_mon_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_mon_start]" value="{$settings.work_mon_start|default:'09:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_mon_end]" value="{$settings.work_mon_end|default:'18:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Вторник</td>
+                <td><input type="checkbox" name="{$namespace}[work_tue_enabled]" value="1" {if !empty($settings.work_tue_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_tue_start]" value="{$settings.work_tue_start|default:'09:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_tue_end]" value="{$settings.work_tue_end|default:'18:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Среда</td>
+                <td><input type="checkbox" name="{$namespace}[work_wed_enabled]" value="1" {if !empty($settings.work_wed_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_wed_start]" value="{$settings.work_wed_start|default:'09:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_wed_end]" value="{$settings.work_wed_end|default:'18:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Четверг</td>
+                <td><input type="checkbox" name="{$namespace}[work_thu_enabled]" value="1" {if !empty($settings.work_thu_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_thu_start]" value="{$settings.work_thu_start|default:'09:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_thu_end]" value="{$settings.work_thu_end|default:'18:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Пятница</td>
+                <td><input type="checkbox" name="{$namespace}[work_fri_enabled]" value="1" {if !empty($settings.work_fri_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_fri_start]" value="{$settings.work_fri_start|default:'09:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_fri_end]" value="{$settings.work_fri_end|default:'18:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Суббота</td>
+                <td><input type="checkbox" name="{$namespace}[work_sat_enabled]" value="1" {if !empty($settings.work_sat_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_sat_start]" value="{$settings.work_sat_start|default:'10:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_sat_end]" value="{$settings.work_sat_end|default:'16:00'|escape}"></td>
+              </tr>
+              <tr>
+                <td>Воскресенье</td>
+                <td><input type="checkbox" name="{$namespace}[work_sun_enabled]" value="1" {if !empty($settings.work_sun_enabled)}checked{/if}></td>
+                <td><input type="time" name="{$namespace}[work_sun_start]" value="{$settings.work_sun_start|default:'10:00'|escape}"></td>
+                <td><input type="time" name="{$namespace}[work_sun_end]" value="{$settings.work_sun_end|default:'16:00'|escape}"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top:10px">
+            <label style="display:block;margin-bottom:6px">Текст автоответа вне графика</label>
+            <textarea class="long" rows="3" name="{$namespace}[offhours_autoreply]">{$settings.offhours_autoreply|default:'Сейчас мы вне графика работы. Оставьте, пожалуйста, ваши контакты для связи, и мы ответим в рабочее время.'|escape}</textarea>
+            <div class="hint">Этот текст будет отправлен автоматически, когда посетитель пишет вне рабочего времени.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name">Webhook URL (необязательно)</div>
+      <div class="value">
+        <input type="text" class="long" id="tgc_webhook_url" name="{$namespace}[webhook_url]" value="{$settings.webhook_url|escape}">
+        <div class="hint">Если пусто, будет использован авто-URL: <code id="tgc-webhook-auto">{$tgc_webhook_auto|escape}</code></div>
+        <div class="tgc-inline">
+          <button type="button" class="button green" id="tgc-btn-set">Установить вебхук</button>
+          <button type="button" class="button" id="tgc-btn-info">Проверить</button>
+          <button type="button" class="button red" id="tgc-btn-del">Удалить</button>
+          <span id="tgc-webhook-resp" class="hint"></span>
+          <button type="button" class="button" id="tgc-btn-ping">Тест в Telegram</button>
+          <span id="tgc-ping-resp" class="hint"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="name"></div>
+      <div class="value">
+        <input type="submit" class="button green" value="Сохранить">
+      </div>
+    </div>
+
+  </div> {* /.fields form *}
+</form>
+
+{literal}
+<script>
+(function($){
+  var $form = $("#tgc-settings-form");
+
+  // CSRF из скрытого инпута
+  function csrf(){ return $form.find("input[name='_csrf']").val() || ''; }
+
+  // дублируем name=csrf для обратной совместимости
+  $(function(){
+    var v = csrf();
+    if (v && !$form.find("input[name='csrf']").length) {
+      $('<input type="hidden" name="csrf">').val(v).appendTo($form);
+    }
+  });
+
+  // мини-бейдж "Сохранено"
+  function flashSaved($btn){
+    $btn.siblings('.tgc-save-badge').remove();
+    var $badge = $('<span class="tgc-save-badge">Сохранено</span>').css({
+      marginLeft: '8px', color: '#16a34a', fontSize: '12px',
+      opacity: 0, transition: 'opacity .25s ease'
+    });
+    $btn.after($badge);
+    requestAnimationFrame(function(){ $badge.css('opacity', 1); });
+    setTimeout(function(){ $badge.css('opacity', 0); }, 1800);
+    setTimeout(function(){ $badge.remove(); }, 2300);
+  }
+
+  function setFlatMirror(name, value) {
+    var $field = $form.find('input[type="hidden"][name="'+name+'"]');
+    if (!$field.length) {
+      $field = $('<input type="hidden">').attr('name', name).appendTo($form);
+    }
+    $field.val(value == null ? '' : String(value));
+  }
+
+  function syncPositionMirrors() {
+    var pos = $form.find('select[name$="[widget_position]"]').val() || 'right';
+    var side = $form.find('input[name$="[widget_offset_side]"]').val() || '22';
+    var bottom = $form.find('input[name$="[widget_offset_bottom]"]').val() || '70';
+
+    setFlatMirror('widget_position', pos);
+    setFlatMirror('widget_offset_side', side);
+    setFlatMirror('widget_offset_bottom', bottom);
+    setFlatMirror('position', pos);
+    setFlatMirror('offset_side', side);
+    setFlatMirror('offset_bottom', bottom);
+  }
+
+  // --- Сохранение через AJAX ---
+  $form.on('submit', function(e){
+    e.preventDefault();
+    syncPositionMirrors();
+    var $btn = $form.find('input[type="submit"],button[type="submit"]').first().prop('disabled', true);
+    var data = $form.serialize();
+
+    $.post('?plugin=tgconsult&module=backend&action=saveSettings', data, function(r){
+      if (r && (r.ok || r.status === 'ok' || (r.data && r.data.ok))) {
+        var payload = (r && r.data) ? r.data : r;
+        if (payload && payload.saved) {
+          if (window.console && console.info) {
+            console.info('tgconsult saved settings', payload.saved);
+          }
+        }
+        flashSaved($btn);
+      } else {
+        alert('Не удалось сохранить настройки');
+      }
+    }, 'json').fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      msg += xhr.responseText ? (' — ' + xhr.responseText.slice(0,200)) : '';
+      alert('Сохранение: ' + msg);
+    }).always(function(){
+      $btn.prop('disabled', false);
+    });
+  });
+
+  /* === Загрузка фото === */
+  var $file = $('<input type="file" accept="image/*" style="display:none">').appendTo(document.body);
+  $("#tgc-btn-upload").on('click', function(){ $file.trigger('click'); });
+
+  $file.on('change', function(){
+    var f = this.files && this.files[0]; if (!f) return;
+    var fd = new FormData();
+    fd.append('file', f);
+    fd.append('_csrf', csrf());
+    fd.append('csrf',  csrf());
+
+    $.ajax({
+      url: '?plugin=tgconsult&module=backend&action=uploadPhoto',
+      type: 'POST',
+      data: fd,
+      processData: false,
+      contentType: false,
+      dataType: 'json'
+    }).done(function(r){
+      var payload = (r && r.data) ? r.data : r;
+      var ok  = payload && payload.ok;
+      var url = payload && payload.url;
+      var err = (payload && payload.error) || (r && r.errors && r.errors[0]);
+
+      if (ok && url) {
+        $("#tgc_manager_photo").val(url).trigger('input');
+        $("#tgc-photo-preview").attr('src', url).css('display','inline');
+        $("#tgc-photo-del").prop('checked', false);
+      } else {
+        alert('Ошибка загрузки' + (err ? (': ' + err) : ''));
+      }
+    }).fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      try {
+        if (xhr.responseJSON) {
+          msg += ' — ' + (xhr.responseJSON.message || JSON.stringify(xhr.responseJSON).slice(0,200));
+        } else if (xhr.responseText) {
+          msg += ' — ' + xhr.responseText.slice(0,200);
+        }
+      } catch(e){}
+      alert('Ошибка загрузки: ' + msg);
+    }).always(function(){
+      $file.val('');
+    });
+  });
+
+  /* === Webhook === */
+  function say(t, ok){ $("#tgc-webhook-resp").text(t).css('color', ok ? '#16a34a' : '#dc2626'); }
+  function currentUrl(){
+    var u = ($("#tgc_webhook_url").val() || '').trim();
+    return u || $("#tgc-webhook-auto").text();
+  }
+
+  $("#tgc-btn-set").on('click', function(){
+    $.post('?plugin=tgconsult&module=backend&action=webhookSet',
+      { url: currentUrl(), _csrf: csrf(), csrf: csrf() },
+      function(r){
+        var payload = (r && r.data) ? r.data : r;
+        if (payload && payload.ok) say('Вебхук установлен', true);
+        else say('Ошибка: ' + (payload && payload.result && (payload.result.description || payload.result.error_code) || 'unknown'), false);
+      }, 'json'
+    ).fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      msg += xhr.responseText ? (' — ' + xhr.responseText.slice(0,200)) : '';
+      say('Сеть/сервер недоступен: ' + msg, false);
+    });
+  });
+
+  $("#tgc-btn-info").on('click', function(){
+    $.post('?plugin=tgconsult&module=backend&action=webhookInfo',
+      { _csrf: csrf(), csrf: csrf() },
+      function(r){
+        var payload = (r && r.data) ? r.data : r;
+        if (payload && payload.result) {
+          var i = payload.result.result || {};
+          say('Текущий: ' + (i.url || '(не установлен)') +
+              (typeof i.pending_update_count!=='undefined' ? ' • pending=' + i.pending_update_count : '') +
+              (i.last_error_message ? ' • err=' + i.last_error_message : ''), true);
+        } else { say('Не удалось получить информацию', false); }
+      }, 'json'
+    ).fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      msg += xhr.responseText ? (' — ' + xhr.responseText.slice(0,200)) : '';
+      say('Сеть/сервер недоступен: ' + msg, false);
+    });
+  });
+
+  $("#tgc-btn-ping").on('click', function(){
+    $.post('?plugin=tgconsult&module=backend&action=pingManager',
+      { _csrf: csrf(), csrf: csrf() },
+      function(r){
+        var p = r && r.data ? r.data : r;
+        $("#tgc-ping-resp").text(p && p.ok ? 'Отправлено' : 'Ошибка: ' + (p && p.result && p.result.description || 'unknown'));
+      }, 'json'
+    ).fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      msg += xhr.responseText ? (' — ' + xhr.responseText.slice(0,200)) : '';
+      $("#tgc-ping-resp").text('Сеть/сервер недоступен: ' + msg);
+    });
+  });
+
+  $("#tgc-btn-del").on('click', function(){
+    if (!confirm('Удалить вебхук?')) return;
+    $.post('?plugin=tgconsult&module=backend&action=webhookDelete',
+      { _csrf: csrf(), csrf: csrf() },
+      function(r){
+        var payload = (r && r.data) ? r.data : r;
+        if (payload && payload.ok) say('Вебхук удалён', true);
+        else say('Ошибка удаления', false);
+      }, 'json'
+    ).fail(function(xhr){
+      var msg = 'HTTP ' + (xhr.status || 0);
+      msg += xhr.responseText ? (' — ' + xhr.responseText.slice(0,200)) : '';
+      say('Сеть/сервер недоступен: ' + msg, false);
+    });
+  });
+
+  // ====== Управление превью/удалением фото (показывать чекбокс только если фото есть) ======
+  var $url   = $("#tgc_manager_photo");
+  var $prev  = $("#tgc-photo-preview");
+  var $wrap  = $("#tgc-photo-del-wrap");
+  var $del   = $("#tgc-photo-del");
+
+  function syncPhotoUI() {
+    var v = ($url.val() || "").trim();
+    var has = !!v;
+    $prev.toggle(has).attr("src", has ? v : "");
+    $wrap.toggle(has);
+    if (!has) { $del.prop("checked", false); }
+  }
+
+  $url.on("input change", syncPhotoUI);
+
+  $del.on("change", function(){
+    if (this.checked) {
+      $url.val("");
+      syncPhotoUI();
+    }
+  });
+
+  function syncWorkingHoursUI() {
+    var on = $("#tgc-working-hours-enabled").is(":checked");
+    $("#tgc-working-hours-block").toggle(on);
+  }
+  $("#tgc-working-hours-enabled").on("change", syncWorkingHoursUI);
+
+  syncPhotoUI();
+  syncWorkingHoursUI();
+  syncPositionMirrors();
+
+})(jQuery);
+</script>
+{/literal}

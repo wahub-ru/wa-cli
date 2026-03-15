@@ -1,0 +1,591 @@
+/* ===== Mobile Toolbar (bottom) ===== */
+.shop-mobiletoolbar{
+  position:fixed; left:0; right:0; bottom:0;
+  z-index:100003; /* всегда поверх сайта */
+  background:#fff;
+  border-top:1px solid rgba(0,0,0,.06);
+  box-shadow:0 -6px 18px rgba(0,0,0,.08);
+  padding:8px 4px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  font-family:inherit;
+}
+.shop-mobiletoolbar__nav{display:flex; align-items:center; justify-content:space-around}
+
+/* Кнопки */
+.shop-mobiletoolbar__item{
+  position:relative; flex:1 1 20%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:4px; padding:4px 0;
+  color:#111827; text-decoration:none;
+  font-size:11px; line-height:1.3; font-weight:500;
+  transition:color .2s ease;
+}
+.shop-mobiletoolbar__item:hover,.shop-mobiletoolbar__item:focus{color:#111827}
+.shop-mobiletoolbar__item.is-active{color:#e11d48}
+
+.shop-mobiletoolbar__icon{position:relative; width:24px; height:24px; display:flex; align-items:center; justify-content:center}
+.shop-mobiletoolbar__icon svg{display:block; width:22px; height:22px; fill:currentColor}
+.shop-mobiletoolbar__label{display:block}
+
+/* Бейдж корзины (красный кружок над иконкой) */
+.shop-mobiletoolbar__badge{
+  position:absolute; top:-6px; right:-10px;
+  min-width:18px; height:18px; padding:0 5px; border-radius:999px;
+  background:#ef4444; color:#fff; font-weight:700; font-size:11px; line-height:18px; text-align:center;
+  box-shadow:0 0 0 2px #fff;
+}
+
+/* ===== Overlays order ===== */
+.shop-mobiletoolbar__backdrop{z-index:100001}
+.shop-mobiletoolbar__catalog,
+.shop-mobiletoolbar__search{z-index:100002}
+
+/* Backdrop (тёмный фон) */
+.shop-mobiletoolbar__backdrop{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.35);
+}
+.shop-mobiletoolbar__catalog[hidden],
+.shop-mobiletoolbar__search[hidden],
+.shop-mobiletoolbar__backdrop[hidden]{display:none!important}
+
+/* ===== Catalog sheet (правый шит) ===== */
+.shop-mobiletoolbar__catalog{
+  position:fixed; inset:0;
+  display:flex; justify-content:flex-end;
+}
+.shop-mobiletoolbar__catalog-inner{
+  width:min(420px,100%); height:100%;
+  background:#fff; display:flex; flex-direction:column;
+  box-shadow:-4px 0 16px rgba(0,0,0,.15);
+}
+.shop-mobiletoolbar__catalog-title{
+  padding:20px 24px 12px; font-size:18px; font-weight:700;
+  position:relative;
+}
+.shop-mobiletoolbar__close{
+  position:absolute; top:12px; right:12px; width:32px; height:32px;
+  border:none; background:rgba(243,244,246,.8); border-radius:50%; cursor:pointer;
+}
+.shop-mobiletoolbar__close::before,
+.shop-mobiletoolbar__close::after{
+  content:''; position:absolute; top:50%; left:50%;
+  width:14px; height:2px; background:#111827;
+  transform:translate(-50%,-50%) rotate(45deg);
+}
+.shop-mobiletoolbar__close::after{ transform:translate(-50%,-50%) rotate(-45deg) }
+
+/* Прокрутка содержимого шита; отступ снизу под нижнюю панель */
+.shop-mobiletoolbar__catalog-scroll{
+  flex:1; overflow:auto; padding:0 16px calc(var(--mtb-h, 64px) + 12px);
+}
+
+/* Список категорий */
+.shop-mobiletoolbar__catalog-list{list-style:none; margin:0; padding:0}
+.shop-mobiletoolbar__catalog-item{position:relative; border-bottom:1px solid rgba(17,24,39,.08)}
+.shop-mobiletoolbar__catalog-link{display:block; padding:12px 32px 12px 8px; color:#111827; text-decoration:none; font-size:15px}
+.shop-mobiletoolbar__catalog-link:hover,.shop-mobiletoolbar__catalog-link:focus{color:#d22b2b}
+
+/* Переключатель дочерних */
+.shop-mobiletoolbar__catalog-toggle{
+  position:absolute; top:50%; right:0; transform:translateY(-50%);
+  width:32px; height:32px; border:none; background:none; cursor:pointer;
+}
+.shop-mobiletoolbar__catalog-toggle::before,
+.shop-mobiletoolbar__catalog-toggle::after{
+  content:''; position:absolute; top:50%; left:50%;
+  width:12px; height:2px; background:currentColor; transform:translate(-50%,-50%);
+}
+.shop-mobiletoolbar__catalog-toggle::after{ transform:translate(-50%,-50%) rotate(90deg) }
+.shop-mobiletoolbar__catalog-item_open > .shop-mobiletoolbar__catalog-toggle::after{ transform:translate(-50%,-50%) rotate(0deg) }
+
+/* Дочерний контейнер: скрыт по умолчанию, показываем при _open */
+.shop-mobiletoolbar__catalog-children{display:none; padding-left:12px}
+.shop-mobiletoolbar__catalog-item_open > .shop-mobiletoolbar__catalog-children{display:block}
+
+/* Визуальная вложенность глубже */
+.shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-link{padding-left:28px}
+.shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-link{padding-left:44px}
+
+/* ===== Search bar (верхняя строка поиска) ===== */
+.shop-mobiletoolbar__search{
+  position:fixed; top:0; left:0; right:0;
+  padding:calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
+  background:#fff; box-shadow:0 6px 18px rgba(0,0,0,.12);
+}
+.shop-mobiletoolbar__search-form{position:relative; display:flex; align-items:center; gap:8px}
+.shop-mobiletoolbar__search-input{
+  flex:1; padding:10px 12px; border:1px solid rgba(17,24,39,.15); border-radius:12px; font-size:16px
+}
+.shop-mobiletoolbar__search-submit{
+  padding:10px 16px; border:0; border-radius:12px; background:#111827; color:#fff; font-size:14px; cursor:pointer
+}
+.shop-mobiletoolbar__search-close{
+  position:absolute; top:-52px; right:0; width:32px; height:32px; border:none;
+  background:rgba(243,244,246,.8); border-radius:50%; cursor:pointer;
+}
+.shop-mobiletoolbar__search-close::before,
+.shop-mobiletoolbar__search-close::after{
+  content:''; position:absolute; top:50%; left:50%;
+  width:14px; height:2px; background:#111827;
+  transform:translate(-50%,-50%) rotate(45deg);
+}
+.shop-mobiletoolbar__search-close::after{ transform:translate(-50%,-50%) rotate(-45deg) }
+
+/* Доступность */
+.visually-hidden{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0}
+
+/* Блокировка скролла документа (ставим и html, и body) */
+html.shop-mobiletoolbar--locked,
+body.shop-mobiletoolbar--locked{ overflow:hidden }
+
+/* На десктопе скрыть */
+@media (min-width:1025px){
+  .shop-mobiletoolbar,
+  .shop-mobiletoolbar__backdrop,
+  .shop-mobiletoolbar__catalog,
+  .shop-mobiletoolbar__search{display:none!important}
+}
+
+/* Базовая обнулёнка для списка */
+.shop-mobiletoolbar__catalog-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Элемент каталога одной строки */
+.shop-mobiletoolbar__catalog-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+/* Ссылка категории */
+.shop-mobiletoolbar__catalog-link {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-decoration: none;
+}
+
+/* Обёртка для детей (вложенный список) */
+.shop-mobiletoolbar__catalog-children {
+  width: 100%;
+  margin: 6px 0 0 0;
+  padding-left: 12px;
+  border-left: 1px solid rgba(0,0,0,.08);
+}
+
+/* Визуальный отступ уровней — нарастающий padding для читаемости */
+.shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-link { padding-left: 8px; }
+.shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-link { padding-left: 16px; }
+.shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-children .shop-mobiletoolbar__catalog-link { padding-left: 24px; }
+
+/* Кнопка-стрелка раскрытия */
+.shop-mobiletoolbar__catalog-toggle {
+  inline-size: 32px;
+  block-size: 32px;
+  flex: none;
+  margin-left: 6px;
+  border: 0;
+  background: none;
+  position: relative;
+  cursor: pointer;
+}
+
+/* Примитивная стрелка (▸ / ▾) без картинок — чтобы сразу работало */
+.shop-mobiletoolbar__catalog-toggle::before {
+  content: "▸";
+  display: inline-block;
+  line-height: 32px;
+  font-size: 14px;
+}
+.shop-mobiletoolbar__catalog-item.is-open > .shop-mobiletoolbar__catalog-toggle::before {
+  content: "▾";
+}
+
+/* Ссылка «Посмотреть товары этой категории» над подкатегориями активного */
+.shop-mobiletoolbar__catalog-all {
+  display: block;
+  margin: 4px 0 8px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 12px 36px 12px 12px;
+  font-size: 15px;
+}
+
+
+
+/* ===== Drilldown header ===== */
+.shop-mobiletoolbar__catalog-header{
+  position: relative;
+  padding: 12px 44px;
+  background:#fafafa;
+}
+.shop-mobiletoolbar__catalog-title{ font-size:18px; font-weight:700; text-align:center; padding: 8px 0;    color: #666; }
+.shop-mobiletoolbar__back{
+  position:absolute; left:8px; top:8px; width:32px; height:32px; border:none; border-radius:50%;
+  background:rgba(243,244,246,.8); cursor:pointer;
+}
+ /* keep pseudo elements */
+
+/* Drilldown list items */
+.shop-mobiletoolbar__catalog-item{
+  position:relative;
+}
+.shop-mobiletoolbar__catalog-link{
+  display:block; padding:12px 36px 12px 12px; text-decoration:none;
+}
+.shop-mobiletoolbar__catalog-item_has-children > .shop-mobiletoolbar__catalog-link::after{
+  content:'›'; position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  opacity:.6;
+}
+/* Ensure nested UL is not used in drilldown mode */
+.shop-mobiletoolbar__catalog-children{ display:none !important; }
+
+
+/* Back button as chevron */
+.shop-mobiletoolbar__back{
+  position:absolute; left:8px; top:8px; width:32px; height:32px; border:none; border-radius:50%;
+  background:rgba(243,244,246,.8); cursor:pointer;
+}
+.shop-mobiletoolbar__back::after{
+  content:''; position:absolute; top:50%; left:50%;
+  width:8px; height:8px;
+  border:2px solid #111827;
+  border-right:0; border-top:0;
+  transform: translate(-2px,-50%) rotate(45deg);
+}
+
+
+/* Hide back and "show all" on root level */
+.shop-mobiletoolbar__catalog[data-root="1"] .shop-mobiletoolbar__back{ display:none !important; }
+.shop-mobiletoolbar__catalog[data-root="1"] [data-mtb-all]{ display:none !important; }
+
+
+/* No left padding for title on root (no back button) */
+.shop-mobiletoolbar__catalog[data-root="1"] .shop-mobiletoolbar__catalog-header{
+  padding-left: 16px !important;
+}
+
+/* Поиск во всю ширину окна */
+.shop-mobiletoolbar__search {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  width: 100vw !important;
+  max-width: none !important;
+  margin: 0;
+  z-index: 10010;
+  background: #fff;
+  padding-top: env(safe-area-inset-top);
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+}
+/* если поиск рендерится внутри панели – всё равно прижимаем к краям экрана */
+.mtb-panel .shop-mobiletoolbar__search {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important;
+  width: 100vw !important; max-width: none !important;
+}
+
+/* Внутри — флекс, поле растягивается */
+.shop-mobiletoolbar__search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 0;
+}
+.shop-mobiletoolbar__search-label {
+  flex: 1 1 auto;
+  min-width: 0;        /* позволяет инпуту сжиматься */
+  display: block;
+}
+.shop-mobiletoolbar__search-input {
+  width: 100% !important;
+  min-width: 0;
+  display: block;
+}
+.shop-mobiletoolbar__search-submit {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+/* --- Поиск поверх оверлея --- */
+.mtb-overlay,
+.shop-mobiletoolbar__overlay {
+  z-index: 10000 !important;   /* затемнение */
+}
+
+.mtb-panel,
+.shop-mobiletoolbar__search {
+  z-index: 10001 !important;   /* панель/поиск выше затемнения */
+}
+
+/* растягиваем поиск на всю ширину */
+.shop-mobiletoolbar__search {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  width: 100vw !important;
+  max-width: none !important;
+  margin: 0;
+  background: #fff;
+  box-shadow: 0 6px 24px rgba(0,0,0,.12);
+}
+
+/* внутри — флекс, инпут тянется */
+.shop-mobiletoolbar__search-form{display:flex;align-items:center;gap:12px;padding:12px 16px;margin:0}
+.shop-mobiletoolbar__search-label{flex:1 1 auto;min-width:0;display:block}
+.shop-mobiletoolbar__search-input{width:100% !important;min-width:0;display:block}
+.shop-mobiletoolbar__search-submit{flex:0 0 auto;white-space:nowrap}
+
+/* --- SEARCH BAR --- */
+.mtb-searchbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483646;           /* выше любых оверлеев */
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  padding: 12px 16px;
+  -webkit-backface-visibility: hidden;
+}
+
+.mtb-searchbar__form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.mtb-searchbar__back,
+.mtb-searchbar__submit {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #e63a2f;                /* стрелка как на примере; при желании поменяйте */
+}
+
+.mtb-searchbar__submit { color: #111; }
+
+.mtb-searchbar__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
+}
+
+.mtb-searchbar__input {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid #ececec;
+  background: #f6f6f7;
+  padding: 0 12px;
+  font-size: 16px;
+  line-height: 42px;
+}
+
+.mtb-searchbar__input:focus {
+  outline: none;
+  border-color: #d0d0d0;
+  background: #fff;
+}
+
+/* На всякий случай — оверлей для каталога ниже поиска */
+.mtb-overlay,
+.shop-mobiletoolbar__overlay { z-index: 2147483645 !important; }
+
+mtb-searchbar__submit {
+padding:0;
+}
+/* Видимость и размеры кнопок в шапке поиска */
+.mtb-searchbar__back,
+.mtb-searchbar__submit {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f2f3f5;          /* светлая подложка — сразу видно */
+  color: #111;                  /* тёмная иконка */
+  opacity: 1 !important;        /* на случай глобальных стилей темы */
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding:0;
+}
+
+.mtb-searchbar__back svg,
+.mtb-searchbar__submit svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+/* чтобы поле не «съедало» кнопки по клику */
+.mtb-searchbar__field { min-width: 0; }
+.mtb-searchbar__form  { gap: 10px; }
+
+/* Убираем кнопку "назад/закрыть" */
+.mtb-searchbar__back,
+.shop-mobiletoolbar__search-close {
+  display: none !important;
+}
+
+/* Лейаут: инпут на всю ширину + кнопка поиска справа */
+.shop-mobiletoolbar__search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.shop-mobiletoolbar__search-label { flex: 1 1 auto; }
+.shop-mobiletoolbar__search-input { width: 100%; }
+
+/* Кнопка поиска справа (иконка-лупа) */
+.shop-mobiletoolbar__search-submit {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+}
+.shop-mobiletoolbar--locked { overflow: hidden; }
+
+/* === ПоискПРО в шапке мобильного поиска === */
+.mtb-searchbar__form--searchpro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+.mtb-searchbar__form--searchpro .mtb-searchbar__field {
+  flex: 1;
+  position: relative;       /* чтобы выпадашка позиционировалась от поля */
+  min-width: 0;
+}
+
+/* приятный отступ у плейсхолдера / текста */
+.mtb-searchbar__form--searchpro .mtb-searchbar__field input[type="search"],
+.mtb-searchbar__form--searchpro .mtb-searchbar__field input[type="text"],
+.mtb-searchbar__form--searchpro .mtb-searchbar__field input {
+  width: 100%;
+  padding: 10px 40px 10px 14px;  /* <-- левый внутренний отступ */
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.mtb-searchbar__form--searchpro .mtb-searchbar__field input::placeholder {
+  opacity: .6;
+}
+
+/* выпадающее окно подсказок — не уезжает влево, ровно по ширине поля */
+.mtb-searchbar .ui-autocomplete,
+.mtb-searchbar .autocomplete-suggestions,
+.mtb-searchbar .sp-suggest,
+.mtb-searchbar .sp-dropdown,
+.mtb-searchbar .searchpro-suggest {
+  position: absolute !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: none !important;
+  margin: 4px 0 0 0 !important;
+  box-sizing: border-box;
+  z-index: 100000; /* поверх затемнения */
+}
+
+/* — вернуть фиксированную шапку поиска наверх — */
+.mtb-searchbar {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 100000;           /* поверх контента и бэкдропа */
+  overflow: visible !important; /* чтобы выпадашка не обрезалась */
+}
+
+/* выпадающее окно SearchPRO — привязываем к полю, не уезжает влево */
+.mtb-searchbar__form--searchpro .mtb-searchbar__field { position: relative; }
+.mtb-searchbar .ui-autocomplete,
+.mtb-searchbar .autocomplete-suggestions,
+.mtb-searchbar .sp-suggest,
+.mtb-searchbar .sp-dropdown,
+.mtb-searchbar .searchpro-suggest {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  right: auto !important;
+  width: 100% !important;
+  max-width: none !important;
+  transform: none !important;
+  margin-top: 4px !important;
+}
+/* Панель всегда по ширине экрана */
+.shop-mobiletoolbar{
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  width: 100vw;               /* исключает влияние возможной ширины документа */
+  max-width: 100%;
+  transform: translateZ(0);
+  box-sizing: border-box;
+}
+
+/* Когда открыт поиск — не даём горизонтальному оверфлоу «толкать» контент */
+html.mtb-no-scroll-x, body.mtb-no-scroll-x { overflow-x: hidden !important; }
+@supports (overflow-x: clip){
+  html.mtb-no-scroll-x, body.mtb-no-scroll-x { overflow-x: clip !important; }
+}
+
+/* Подсказки/выпадашка — строго в пределах поля, не шире 100% */
+.mtb-searchbar__form--searchpro .mtb-searchbar__field{ position:relative; }
+.mtb-searchbar .ui-autocomplete,
+.mtb-searchbar .autocomplete-suggestions,
+.mtb-searchbar .sp-suggest,
+.mtb-searchbar .searchpro-suggest{
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;      /* = ширина родителя */
+  width: auto !important;
+  max-width: 100% !important;
+  transform: none !important;
+}
+
+/* Фикс уезжания выпадашки ПоискПРО при открытом мобильном поиске */
+@media (max-width: 1199px) {
+  /* затемнение */
+  html.mtb-no-scroll-x .c-page_searchpro .js-searchpro__dropdown:before,
+  html.mtb-no-scroll-x .c-page_searchpro .js-searchpro__helper:before {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+  }
+
+  /* сама выпадашка */
+  html.mtb-no-scroll-x .c-page_searchpro .searchpro__dropdown {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    margin-left: 0 !important;
+  }
+}
+/* Выравниваем только сам дропдаун под ширину строки поиска */
+@media (max-width: 1199px) {
+  html.mtb-no-scroll-x .c-page_searchpro .searchpro__dropdown {
+    left: var(--mtb-s-left, 0) !important;
+    width: var(--mtb-s-width, 100vw) !important;
+    right: auto !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Затемнение оставляем как в теме (ничего не двигаем) */
+  html.mtb-no-scroll-x .c-page_searchpro .js-searchpro__dropdown:before,
+  html.mtb-no-scroll-x .c-page_searchpro .js-searchpro__helper:before {
+    /* важно: не переопределяем left здесь */
+  }
+}

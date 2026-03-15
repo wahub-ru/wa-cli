@@ -1,0 +1,8 @@
+f9958d4e0dcb6a25fffe3fd1c6ed327a *img/logo16.png
+a1751e1f10a3b96b05d0401c97e72008 *lib/.htaccess
+baf9d95fb8c4a68ea3ed0fce5157c3e8 *lib/actions/blogStekblg1PluginBackendRemove.controller.php
+ef0f600ca92457e6ef0b5dcbc59b711a *lib/actions/blogStekblg1PluginBackendSettings.action.php
+4985dc829224a5d27d676deb611ee153 *lib/blogStekblg1Plugin.class.php
+c5f5e77973fb95efa97c112f82d42975 *lib/config/plugin.php
+a1751e1f10a3b96b05d0401c97e72008 *templates/.htaccess
+47b70f6c0da03a1d5638440e1976c2d0 *templates/actions/backend/BackendSettings.html

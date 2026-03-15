@@ -1,0 +1,113 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Регистрация")}"])}
+
+    {capture assign="auth_adapters_block"}
+        {$auth_adapters = $wa->authAdapters(true)}
+        {if count($auth_adapters) > 0}
+            <div class="auth-adapters">
+                {foreach $auth_adapters as $adapter_id => $adapter}
+                    {$custom_icons_adapters = [
+                        'facebook',
+                        'google',
+                        'twitter',
+                        'vkontakte',
+                        'yandex',
+                        'mailru'
+                    ]}
+
+                    {$styles = null}
+                    {if !in_array($adapter_id, $custom_icons_adapters)}
+                        {$adapter_icon = $adapter->getIcon()}
+                        {$styles = 'style="background-image: url('|cat:{$adapter_icon}|cat:')"'}
+                    {/if}
+
+                    <div class="auth-adapters__item">
+                        
+                        <a class="auth-adapter auth-adapter_{$adapter_id}" href="{$adapter->getUrl()}" {$styles}></a>
+                    </div>
+                {/foreach}
+            </div>
+        {/if}
+
+    {/capture}
+
+    {$is_modal = !!$wa->get('modal', false)}
+
+    {$is_confirm = !empty($confirmed_email)}
+    {$is_success = !empty($contact)}
+    {$has_confirm_hash = !empty($email_confirmation_hash)}
+
+    {$header = "{_wp("Регистрация")}"}
+
+    {if $is_confirm || $is_success}
+        {$header = "{_wp("Спасибо")}!"}
+    {/if}
+
+    {if $is_modal}
+        <div class="signup-page signup-modal">
+            <div class="modal__header signup-modal__header">
+                {$header}
+            </div>
+            {if $is_confirm}
+                <div class="content-decorator">
+                    <p>[`Вы успешно подтвердили ваш`] email-[`адрес.`]</p>
+            {elseif $is_success}
+                <div class="content-decorator">
+                    <p>[`Регистрация завершена успешно.`]</p>
+
+                    {if $has_confirm_hash}
+                        <p>[`Ссылка на подтверждение регистрации была отправлена вам по электронной почте.`] [`Пожалуйста`], [`щелкните по этой ссылке`], [`чтобы подтвердить регистрацию и авторизоваться на сайте.`]</p>
+                    {/if}
+                </div>
+            {else}
+                {if $auth_adapters_block}
+                    <div class="signup-page__auth-adapters signup-modal__auth-adapters">
+                        {$auth_adapters_block}
+                    </div>
+                {/if}
+
+                <div class="signup-page__form form-decorator" data-form_size="s" data-field_size="s">
+                    {$wa->signupForm($errors, ['include_css' => false])}
+                    <div class="form-decorator__trigger"></div>
+                </div>
+            {/if}
+            <div class="signup-page__trigger"></div>
+        </div>
+    {else}
+        <div class="signup-page block">
+            <h1 class="block__header block__header_text">
+                {$header}
+            </h1>
+
+            {if $is_confirm}
+                <div class="block__content content-decorator">
+                    <p>[`Вы успешно подтвердили ваш`] email-[`адрес.`]</p>
+                </div>
+            {elseif $is_success}
+                <div class="block__content content-decorator">
+                    <p>[`Регистрация завершена успешно.`]</p>
+
+                    {if $has_confirm_hash}
+                        <p>[`Ссылка на подтверждение регистрации была отправлена вам по электронной почте.`] [`Пожалуйста`], [`щелкните по этой ссылке`], [`чтобы подтвердить регистрацию и авторизоваться на сайте.`]</p>
+                    {/if}
+                </div>
+            {else}
+                <div class="block__content">
+                    {if $auth_adapters_block}
+                        <div class="signup-page__auth-adapters">
+                            {$auth_adapters_block}
+                        </div>
+                    {/if}
+
+                    <div class="signup-page__form form-decorator" data-form_size="s" data-field_size="s">
+                        {$wa->signupForm($errors, ['include_css' => false])}
+                        <div class="form-decorator__trigger"></div>
+                    </div>
+                </div>
+            {/if}
+            <div class="signup-page__trigger"></div>
+        </div>
+    {/if}
+{/strip}

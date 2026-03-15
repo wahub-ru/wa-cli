@@ -1,0 +1,232 @@
+<div class="block double-padded" id="cr-settings">
+    <h1>Простой обратный звонок — Настройки</h1>
+
+    <form id="cr-settings-form" method="post" action="?plugin=callrequest&module=settings&action=save">
+        {$wa->csrf()}
+
+        <div class="fields form" style="float:none;">
+
+            <!-- Существующие поля -->
+            <div class="field">
+                <div class="name">Статус</div>
+                <div class="value">
+                    <label>
+                        <input type="checkbox" name="enabled" value="1" {if !isset($enabled) || $enabled}checked{/if}>
+                        Включить плагин
+                    </label>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">CSS-класс триггера</div>
+                <div class="value">
+                    <input type="text" name="trigger_class" value="{$trigger_class|escape}">
+                    <p class="hint">Класс элемента, по которому открывается окно (например, <code>callrequest-open</code>).</p>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Email для заявок</div>
+                <div class="value">
+                    <input type="text" name="email_to" value="{$email_to|default:''|escape}">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Включить политику</div>
+                <div class="value">
+                    <label class="nowrap">
+                        <input type="checkbox" name="policy_enabled" value="1" {if $policy_enabled}checked{/if}>
+                    </label>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Текст (HTML)</div>
+                <div class="value">
+                    <textarea name="policy_html" rows="6" class="width-90">{$policy_html|escape}</textarea>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Цвет кнопки</div>
+                <div class="value">
+                    <input type="color" name="btn_color" value="{$btn_color|escape}" style="width:48px;height:32px;padding:0;border:none;background:transparent;">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Цвет текста кнопки</div>
+                <div class="value">
+                    <input type="color" name="btn_text_color" value="{$btn_text_color|escape}" style="width:48px;height:32px;padding:0;border:none;background:transparent;">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Текст успешной отправки</div>
+                <div class="value">
+                    <input type="text" name="success_text" value="{$success_text|escape}" class="width-90">
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="name">Маска телефона</div>
+                <div class="value">
+                    <input type="text" name="phone_mask" value="{$phone_mask|escape}">
+                    <p class="hint">Например: <code>+7 (999) 999-99-99</code></p>
+                </div>
+            </div>
+
+            <!-- ===== Таблица прайс-данных ===== -->
+            <div class="field">
+                <div class="name">Таблица расчётов</div>
+                <div class="value">
+
+                    <table id="cr-price-table" class="small margins">
+                        <thead>
+                        <tr>
+                            <th>Тип пакета</th>
+                            <th>Размер</th>
+                            <th>Толщина</th>
+                            <th>Печать</th>
+                            <th>Кол-во шт.</th>
+                            <th>Цена за шт.</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {if isset($prices) && $prices}
+                            {foreach $prices as $row}
+                                <tr data-id="{$row.id}">
+                                    <td><input type="text" name="prices[{$row.id}][type]" value="{$row.type|escape}"></td>
+                                    <td><input type="text" name="prices[{$row.id}][size]" value="{$row.size|escape}"></td>
+                                    <td><input type="number" name="prices[{$row.id}][thickness]" value="{$row.thickness}"></td>
+                                    <td><input type="text" name="prices[{$row.id}][print]" value="{$row.print|escape}"></td>
+                                    <td><input type="number" name="prices[{$row.id}][qty]" value="{$row.qty}"></td>
+                                    <td><input type="text" name="prices[{$row.id}][price]" value="{$row.price|escape}"></td>
+                                    <td><button type="button" class="remove-row">Удалить</button></td>
+                                </tr>
+                            {/foreach}
+                        {/if}
+                        </tbody>
+                    </table>
+
+                    <button type="button" class="button" id="cr-add-price">Добавить строку</button>
+
+                </div>
+            </div>
+
+
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="actions" style="margin-top:16px;">
+            <button type="submit" class="button green" id="cr-save-btn">Сохранить</button>
+            <span class="js-cr-status" style="margin-left:8px; display:none;">Сохранено</span>
+        </div>
+    </form>
+</div>
+
+{literal}
+    <style>
+        /* ===== Стили таблицы прайс-данных ===== */
+        #cr-price-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+        #cr-price-table th,
+        #cr-price-table td {
+            border: 1px solid #d5d5d5;
+            padding: 6px 8px;
+            font-size: 14px;
+        }
+        #cr-price-table th {
+            background: #f7f7f7;
+            font-weight: bold;
+        }
+        #cr-price-table input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 3px 6px;
+            font-size: 14px;
+        }
+        #cr-price-table .remove-row {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #cr-price-table .remove-row:hover {
+            background: #c0392b;
+        }
+        #cr-price-table tbody tr:nth-child(even) {
+            background-color: #e5e5e5;
+        }
+    </style>
+
+    <script>
+        (function($) {
+            var $form = $('#cr-settings-form');
+            var $btn  = $('#cr-save-btn');
+            var $msg  = $('.js-cr-status');
+
+            var newPriceIndex = 0;
+
+            $('#cr-add-price').on('click', function(){
+                var i = newPriceIndex++;
+                var row = '<tr>' +
+                    '<td><input type="text" name="newPrices['+i+'][type]"></td>' +
+                    '<td><input type="text" name="newPrices['+i+'][size]"></td>' +
+                    '<td><input type="number" name="newPrices['+i+'][thickness]"></td>' +
+                    '<td><input type="text" name="newPrices['+i+'][print]"></td>' +
+                    '<td><input type="number" name="newPrices['+i+'][qty]"></td>' +
+                    '<td><input type="text" name="newPrices['+i+'][price]"></td>' +
+                    '<td><button type="button" class="remove-row">Удалить</button></td>' +
+                    '</tr>';
+                $('#cr-price-table tbody').append(row);
+            });
+
+            $('#cr-price-table').on('click', '.remove-row', function(){
+                var $tr = $(this).closest('tr');
+                var id = $tr.data('id');
+
+                if (id) {
+                    // помечаем на удаление
+                    $('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'deleted[]')
+                        .val(id)
+                        .appendTo('#cr-settings-form');
+                }
+
+                // удаляем строку из DOM
+                $tr.remove();
+            });
+
+
+            // Сохранение настроек
+            $form.on('submit', function(e) {
+                e.preventDefault();
+                $btn.prop('disabled', true);
+                $msg.hide();
+
+                $.post($form.attr('action'), $form.serialize(), function(resp) {
+                    if (resp && resp.status === 'ok') {
+                        $msg.text('Сохранено').show();
+                    } else {
+                        alert('Не удалось сохранить настройки');
+                    }
+                }, 'json').fail(function(xhr) {
+                    alert('Ошибка сохранения: ' + (xhr.responseText || xhr.status));
+                }).always(function() {
+                    $btn.prop('disabled', false);
+                });
+            });
+
+        })(jQuery);
+    </script>
+{/literal}

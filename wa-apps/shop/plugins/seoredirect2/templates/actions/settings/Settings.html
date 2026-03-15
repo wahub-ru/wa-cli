@@ -1,0 +1,22 @@
+<script>
+	window.shop_seoredirect2 = {
+		resource_base_url: {"{$wa_app_static_url}plugins/seoredirect2/assets/"|json_encode},
+        ui_version: {$ui_version|json_encode},
+        plugin_version: {$plugin_version|json_encode},
+	};
+
+	var Seoredirect2;
+	(function (Seoredirect2) {
+		Seoredirect2.domains = [
+				{foreach $domains as $domain}
+					'{$domain}',
+				{/foreach}
+		];
+	})(Seoredirect2 || (Seoredirect2 = {literal}{}{/literal}));
+</script>
+<div id="seoredirect2-settings-app"></div>
+
+<link rel="stylesheet" href="{$wa_static_url}wa-content/js/redactor/redactor.css" />
+<script src="{$wa_static_url}wa-content/js/redactor/redactor.min.js"></script>
+<link rel="stylesheet" href="{$wa_app_static_url}plugins/seoredirect2/assets/settings.css?v={$version}" />
+<script src="{$wa_app_static_url}plugins/seoredirect2/assets/settings.js?v={$version}"></script>

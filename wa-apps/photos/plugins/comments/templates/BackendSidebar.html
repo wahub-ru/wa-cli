@@ -1,0 +1,48 @@
+{if $wa->whichUi() == '1.3'}
+<a href="#/comments/">
+  <i class="icon16 comments"></i>[`Comments`]
+  {if $comments_count_new}<strong class="small highlighted" id="new-comments-count">+{$comments_count_new}</strong>{/if}
+</a>
+{else}
+  <a href="#/comments/">
+    <i class="fas fa-comments"></i><span>[`Comments`]</span>
+    {if $comments_count_new}<span class="count bold highlighted" id="new-comments-count">+{$comments_count_new}</span>{/if}
+    <span class="count" id="comments-count">{$comments_count}</span>
+  </a>
+{/if}
+<script>
+    $(function() {
+        $.photos.commentsAction = function () {
+            $.photos.initClearance();
+            const url = '?plugin=comments&module=backend&action=list';
+            $.photos.load(url, function () {
+                let offset = null;
+                $(window).lazyLoad({
+                    container: '#comment-list',
+                    load: function () {
+                        offset = offset || $('#comment-list li').length;
+                        $(window).lazyLoad('sleep');
+                        $.post(url, {
+                            offset: offset
+                            },
+                            function (html) {
+                                const div = $('<div><' + '/div>').append(html),
+                                    comment_list = div.find('#comment-list li');
+
+                                if (!comment_list.length) {
+                                    $(window).lazyLoad('stop');
+                                    return;
+                                }
+                                $('#comment-list').append(comment_list);
+                                offset += comment_list.length;
+                                $(window).lazyLoad('wake');
+                                div.remove();
+                            },
+                            'html'
+                        );
+                    }
+                });
+            });
+        }
+    });
+</script>

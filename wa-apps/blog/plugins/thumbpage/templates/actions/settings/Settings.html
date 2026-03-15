@@ -1,0 +1,77 @@
+<link rel="stylesheet" href="/wa-content/css/wa/design.css?1.3.0">
+<style>
+    #wa .CodeMirror{
+        border: 1px solid #ccc;
+        padding: 2px;
+    }
+    .CodeMirror-scroll {
+        height: auto;
+        overflow-y: hidden;
+        overflow-x: auto;
+    }
+    .tab {
+        display: none
+    }
+    ul.menu-h.wa-theme-globalnav { margin: -10px -20px 0 -20px; padding: 0 20px; overflow: hidden; }
+    .wa-theme-globalnav-switch H1 { margin-top: 16px; font-size: 1.5em; line-height: 0.9em; }
+    .wa-theme-globalnav-switch IMG { float: left; padding: 10px 5px 0 0 }
+    .wa-theme-globalnav li.wa-theme-globalnav-switch {
+        min-width: 350px;
+        max-width: 400px;
+    }
+    .plugin-info {
+        margin-top: 40px;
+        display: block;
+        border: 1px solid #ddd;
+        color: #555;
+        padding: 15px;
+    }
+</style>
+
+
+<ul class="menu-h dropdown wa-theme-globalnav">
+    <li class="wa-theme-globalnav-switch">
+        <img src="{$wa_url}wa-apps/blog/plugins/thumbpage/img/logo_48x48.png">
+        <h1>Изображение для страницы<br /><span class="hint">WA-PA</span></h1>
+    </li>
+    <li class="float-right"><a href="http://www.webasyst.ru/store/vendor/1046725/" target="_blank" class="wa-theme-preview" title="Сайт"><i class="icon48 preview"></i><span>Разработчик</span></a></li>
+</ul>
+<br />
+
+<form action="?module=plugins&id=thumbpage&action=save" method="post" id="plugins-settings-form">
+    <div class="tab" id="general" style="display: block">
+
+        <div class="field">
+            <div class="name">
+                Плагин включен
+            </div>
+            <div class="value">
+                <input type="checkbox" name="blog_thumbpage[status]" {if $settings.status}checked{/if} value="1" />
+                <br>
+                <span class="hint">Если разрешено, то активируется вставка картинки для страницы</span>
+                <br>
+            </div>
+        </div>
+
+    </div>
+
+
+<div class="field">
+    <div class="value submit">
+        <input type="submit" class="button green" value="Сохранить">
+    <span id="plugins-settings-form-status" style="display:none">
+        <i style="vertical-align:middle" class="icon16 yes"></i> [`Saved`]
+    </span>
+    </div>
+</div>
+
+</form>
+
+<div class="plugin-info">
+    <p>Для вывода изображения необходимо в нужном месте в шаблоне вставить код хелпера:<br>
+    <b>{literal}{blogThumbpagePlugin::getImgUrl($page.id)}{/literal}</b> ,<br>
+    где $page.id - переменная, в которой содержится идентификатор страницы.</p>
+    
+    <p><i>Пример:</i><br>
+    {literal}&lt;img src=&quot;{blogThumbpagePlugin::getImgUrl($page.id)}&quot;&gt;{/literal}</p>
+</div>

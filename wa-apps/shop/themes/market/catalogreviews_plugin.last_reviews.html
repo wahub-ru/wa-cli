@@ -1,0 +1,61 @@
+{if count($last_reviews) > 0}
+    {* Variables *}
+    {$reviews = $last_reviews}
+    {$type = 'list'}
+
+    {* Template *}
+    {function name="catalogreviews_last_slider_block"}
+        <div class="block slider-block {$block_classes|default:''}">
+            <div class="block__header">
+                <div class="slider-block__header-container">
+                    <div class="slider-block__header-text-container">
+                        Последние отзывы
+                    </div>
+                    <div class="slider-block__buttons-container">
+                        {call slider_arrows}
+                    </div>
+                </div>
+            </div>
+            <div class="block__content">
+                {call reviews_thumbs reviews=$reviews is_slider=true size='s' is_sidebar=$wa->globals('is_show_sidebar')}
+            </div>
+            <div class="block__footer">
+                <a class="button button_style_inverse button_size_l" href="{shopCatalogreviewsViewHelper::getReviewsUrl($category)}">
+                    <span class="icon-box">
+                        <span class="icon-box__content">
+                            [`Читать все`]
+                        </span>
+                        <span class="icon-box__icon">
+                            {call svg_icon icon='dict-arrow-right' width=12 height=12 fill='currentColor'}
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </div>
+    {/function}
+
+    {if $type === 'slider' || $wa->globals('is_mobile')}
+        {call catalogreviews_last_slider_block}
+    {elseif $type === 'list'}
+        <div class="block r-hidden-md">
+            <div class="block__header block__header_text">
+                Последние отзывы
+            </div>
+            <div class="block__content">
+                {call reviews_thumbs reviews=$reviews size='s' is_sidebar=$wa->globals('is_show_sidebar')}
+            </div>
+            <div class="block__footer">
+                <a class="button button_style_inverse button_size_l" href="{shopCatalogreviewsViewHelper::getReviewsUrl($category)}">
+                    <span class="icon-box">
+                        <span class="icon-box__content">
+                            [`Читать все`]
+                        </span>
+                        <span class="icon-box__icon">
+                            {call svg_icon icon='dict-arrow-right' width=12 height=12 fill='currentColor'}
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </div>
+    {/if}
+{/if}

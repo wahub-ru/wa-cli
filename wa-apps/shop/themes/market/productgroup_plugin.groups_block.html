@@ -1,0 +1,11 @@
+{$groups_block_html = ''}
+{foreach $groups as $group}
+    {$template_path = $block_templates_path[$group.group.markup_template_id]|default:''}
+    {$groups_block_html = $groups_block_html|cat:"{include file=$template_path group=$group inline}"}
+{/foreach}
+
+{if !empty($groups_block_html)}
+    <div class="product-groups">
+        {$groups_block_html}
+    </div>
+{/if}

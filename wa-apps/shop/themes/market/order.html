@@ -1,0 +1,217 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {* Variables *}
+    {$vars = $wa->shop->checkout()->cartVars()}
+    {$plugins = $wa->globals('plugins')}
+
+    {foreach $vars as $name => $var}
+        {${$name} = $var}
+    {/foreach}
+
+    {if !empty($affiliate)}
+        {foreach $affiliate as $name => $var}
+            {${$name} = $var}
+        {/foreach}
+    {/if}
+
+    {* Template *}
+    {* Cart Order Page Start *}
+
+        {* Theme Settings *}
+        {$is_enabled_related = $theme_settings['shop_checkout_cart_related_enabled']}
+        {$is_enabled_refresh_shapes = $theme_settings['shop_checkout_cart_refresh_shapes_enabled']}
+        {$is_enabled_cartlinks = $theme_settings['shop_checkout_cart_cartlinks_enabled']}
+
+        {* Variables *}
+        {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Корзина")}"])}
+        {$wa->globals('is_checkout', true)}
+
+        {$has_items = count($cart.items) > 0}
+        {$has_affiliate_bonus = shopAffiliate::isEnabled() && $affiliate_bonus > 0}
+        {$has_coupon = !empty($coupon_code)}
+        {$is_invalid_coupon = $has_coupon && empty($coupon_discount) && empty($coupon_free_shipping)}
+
+        {$cart_items = []}
+        {foreach $cart.items as $cart_item}
+            {$item_product = $cart_item.product}
+            {$step = $cart_item['order_count_step']|default:1|floatval}
+
+            {$cart_items[$cart_item.id] = ['price_html' => shop_currency_html($item_product.price)]}
+            {if $wa->globals('market.has_premium') && !empty($formatted_units[$item_product["stock_unit_id"]])}
+                {$cart_items[$cart_item.id]['stock_unit'] = $formatted_units[$item_product["stock_unit_id"]]}
+                {$cart_items[$cart_item.id]['step'] = $step}
+
+                {if !empty($formatted_units[$item_product["base_unit_id"]]) && ($item_product["stock_unit_id"] !== $item_product["base_unit_id"]) && !empty($item_product["stock_base_ratio"])}
+                    {$base_unit_ratio = $wa->shop->numberFormat($cart_item["stock_base_ratio"])|default:1}
+                    {$base_unit_price = ($item_product.price/$base_unit_ratio)}
+
+                    {$cart_items[$cart_item.id]['unit_fields']['base']['unit'] = $formatted_units[$item_product["base_unit_id"]]}
+                    {$cart_items[$cart_item.id]['unit_fields']['base']['ratio'] = $base_unit_ratio}
+                    {$cart_items[$cart_item.id]['unit_fields']['base']['price_html'] = shop_currency_html($base_unit_price)}
+                    {$cart_items[$cart_item.id]['unit_fields']['base']['step'] = $step * $base_unit_ratio}
+                {/if}
+            {/if}
+        {/foreach}
+
+        {* Template *}
+        <div class="order-page" data-is_enabled_refresh_shapes="{call bool2str value=$is_enabled_refresh_shapes}">
+            <div class="order-page__container">
+                {if $has_items}
+                    <div class="order-page__cart-container">
+                        <div class="block hover-block">
+                            <div class="block__header">
+                                <span class="title title_h2">
+                                    [`Корзина`]
+                                </span>
+                                <div class="order-page__clear-button" style="float: right">
+                                    <span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link cart-page__clear-button">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon="trash" classes="pseudo-link-box__icon" fill="currentColor" width=14 height=18}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                <span class="pseudo-link-box__link">
+                                                    {_wp("Очистить корзину")}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </span>
+                                </div>
+                                {if $plugins['shop_cartlinks'] && $is_enabled_cartlinks}
+                                    {shopCartlinksViewHelper::renderButton()}
+                                {/if}
+                            </div>
+                            <div class="block__content">
+                                <div class="order-ui-decorator order-cart-decorator">
+                                    <input type="hidden" name="cart_items_data" value="{json_encode($cart_items)|escape}">
+                                    {$cart_html = $wa->shop->checkout()->cart([
+                                        'wrapper' => '#js-order-cart'
+                                    ])}
+                                    {$cart_html = $cart_html|replace:"{$wa_url}wa-content/css/jquery-ui/jquery-ui-1.7.2.custom.css?v={$wa->version(true)}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$cart_html = $cart_html|replace:"{$wa_app_static_url}css/frontend/order/ui.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$cart_html = $cart_html|replace:"{$wa_app_static_url}css/frontend/order/cart.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$cart_html = $cart_html|replace:"{$wa_app_static_url}js/frontend/order/jquery-ui/jquery-ui.min.js?v={$wa->version()}":"{$wa_theme_url}js/market.empty.js?v={$wa_theme_version}"}
+                                    {$cart_html = $cart_html|replace:"{$wa_app_static_url}js/frontend/order/jquery-ui/jquery-ui.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    <div id="js-order-cart">
+                                        {$cart_html}
+                                    </div>
+                                    <div class="order-cart-decorator__trigger"></div>
+                                    <div class="order-cart-decorator__loading">
+                                        <span class="spinner">
+                                            <span class="image-box">
+                                                {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                                            </span>
+                                        </span>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {if !empty($frontend_order['discount4review-plugin'])}
+                            <div class="discount4review-decorator discount4review-decorator_order-page">
+                                {$frontend_order['discount4review-plugin']}
+                            </div>
+                        {/if}
+
+                        {if !empty($frontend_order['freedelivery-plugin'])}
+                            <div class="freedelivery-decorator freedelivery-decorator_order-page products-slider-decorator">
+                            </div>
+                        {/if}
+
+                        {$related_products = $wa->shop->crossSelling($cart.items, 'product_id')}
+
+                        {if $is_enabled_related && count($related_products) > 0}
+                            <div class="blocks__item">
+                                <div class="block hover-block">
+                                    <div class="block__header">
+                                        <span class="title title_h2">
+                                            [`Рекомендуем`]
+                                        </span>
+                                    </div>
+                                    <div class="block__content slider-block slider-block_compact">
+                                        <div class="slider-block__buttons-container">
+                                            <div class="slider-block__prev-button">
+                                                {call svg_icon
+                                                icon='arrow-left' width=16 height=26 fill='currentColor'}
+                                            </div>
+                                            <div class="slider-block__next-button">
+                                                {call svg_icon
+                                                icon='arrow-right' width=16 height=26 fill='currentColor'}
+                                            </div>
+                                        </div>
+                                        {call products_thumbs_mini products=$related_products is_slider=true}
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                    <div class="order-page__form-container">
+                        <div class="block block_secondary hover-block">
+                            <div class="block__header block__header_text">
+                                [`Оформление заказа`]
+                            </div>
+                            <div class="block__content">
+                                <div class="order-ui-decorator order-form-decorator">
+                                    {$form_html = $wa->shop->checkout()->form([
+                                        'wrapper' => '#js-order-form'
+                                    ])}
+                                    {$form_html = $form_html|replace:"{$wa_url}wa-content/css/jquery-ui/jquery-ui-1.7.2.custom.css?v={$wa->version(true)}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$form_html = $form_html|replace:"{$wa_app_static_url}css/frontend/order/ui.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$form_html = $form_html|replace:"{$wa_app_static_url}css/frontend/order/form.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$form_html = $form_html|replace:"{$wa_app_static_url}js/frontend/order/jquery-ui/jquery-ui.min.js?v={$wa->version()}":"{$wa_theme_url}js/market.empty.js?v={$wa_theme_version}"}
+                                    {$form_html = $form_html|replace:"{$wa_app_static_url}js/frontend/order/jquery-ui/jquery-ui.css?v={$wa->version()}":"{$wa_theme_url}css/market.empty.css?v={$wa_theme_version}"}
+                                    {$form_html = $form_html|replace:"loadJS(source).then(onLoad, onError)":'$(document).ready(function () {loadJS(source).then(onLoad, onError)});'}
+                                    <div id="js-order-form">
+                                        {$form_html}
+                                    </div>
+                                    <div class="order-form-decorator__trigger"></div>
+                                    <div class="order-form-decorator__loading">
+                                        <span class="spinner">
+                                            <span class="image-box">
+                                                {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                                            </span>
+                                        </span>
+
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+                {else}
+                    <div class="order-page__not-found-container">
+                        <div class="not-found-block">
+                            <div class="not-found-block__header">
+                                {$config.cart.empty_text|default:"{_wp("Корзина пуста.")}"}
+                            </div>
+                            <div class="not-found-block__content">
+                                [`Для добавления товаров в корзину`] <a class="link" href="{$wa_url|escape}">[`перейдите на главную.`]</a>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+            </div>
+
+            {capture assign='frontend_order_content'}
+                {foreach $frontend_order as $plugin => $_}
+                    {if in_array($plugin, ['discount4review-plugin'])}
+                        {continue}
+                    {/if}
+
+                    {$_}
+                {/foreach}
+            {/capture}
+
+            {if !empty($frontend_order_content)}
+                <div class="order-page__plugins">
+                    <!-- plugin hook: 'frontend_order' -->
+                    {* @event frontend_order.%plugin_id% *}
+                    {$frontend_order_content}
+                </div>
+            {/if}
+        </div>
+    {* Cart Order Page End *}
+{/strip}

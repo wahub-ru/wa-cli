@@ -1,0 +1,72 @@
+# Корневые каталоги и файлы
+/backup/
+/python/
+/download/
+/wa-builder/
+/wa-config/
+/wa-content/
+/wa-plugins/
+/wa-system/
+/wa-widgets/
+/wa-cache/
+/wa-data/
+/wa-log/
+/upload/
+
+# wa-installer должен быть в репозитории
+# поэтому НЕ игнорируем /wa-installer/
+
+/.htaccess
+/.fw_compatible
+/.files.md5
+/.idea/
+/.user.ini
+/favicon.ico
+/screenlog.*
+
+# Разрешённые корневые php-файлы
+!/index.php
+!/wa.php
+!/api.php
+!/cli.php
+
+# Запрещённые корневые файлы
+/build.php
+/config.codekit
+/install.php
+
+# Исключаем .html только в корне
+/*.html
+
+# assets: всё игнорируем, кроме install.php
+/assets/*
+!/assets/
+!/assets/install.php
+
+# По умолчанию игнорируем все приложения внутри wa-apps
+/wa-apps/*
+
+# Разрешаем только нужные приложения
+!/wa-apps/site/
+!/wa-apps/blog/
+!/wa-apps/shop/
+!/wa-apps/photos/
+!/wa-apps/crm/
+!/wa-apps/mailer/
+!/wa-apps/team/
+!/wa-apps/logs/
+!/wa-apps/apiexplorer/
+
+# Исключаем sandbox-темы из разрешённых приложений
+/wa-apps/shop/themes/sandbox/
+/wa-apps/shop/themes/sandbox_dev/
+/wa-apps/blog/themes/sandbox/
+/wa-apps/blog/themes/sandbox_dev/
+/wa-apps/site/themes/sandbox/
+
+# Архивы
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7zip

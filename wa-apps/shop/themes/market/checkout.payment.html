@@ -1,0 +1,86 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_delpayfilter = $plugins['shop_delpayfilter']}
+
+    {$has_global_error = !empty($error)}
+
+    {if $is_enabled_delpayfilter}
+        {$checkout_payment_methods = shopDelpayfilterPlugin::filterPaymentMethods($checkout_payment_methods)}
+    {/if}
+
+    <div class="checkout-payment checkout-step step-payment">
+        <div class="checkout-payment__methods">
+            {foreach $checkout_payment_methods as $payment}
+                <div class="checkout-payment__method">
+                    {* Checkout Payment Method Start *}
+                        {$has_logo = !empty($payment.logo)}
+                        {$has_error = !empty($payment.error)}
+                        {$has_description = !empty($payment.description)}
+                        {$has_custom_html = !empty($payment.custom_html)}
+                        {$is_disabled = $has_error}
+                        {$is_checked = !$is_disabled && $payment.id == $payment_id}
+
+                        <div class="checkout-payment-method {if $is_disabled}checkout-payment-method_disabled{/if} {if $is_checked}checkout-payment-method_checked{/if}">
+                            <label class="checkout-payment-method__label">
+                                <input class="checkout-payment-method__control" type="radio" name="payment_id" value="{$payment.id}" {if $is_checked}checked="checked"{/if} {if $is_disabled}disabled="disabled"{/if}>
+                                <span class="checkout-payment-method__state-container">
+                                    <span class="checkout-payment-method__state image-box image-box_fill">
+                                        {call svg_icon classes='checkout-payment-method__state-icon' icon='available' width=16 height=16 fill='currentColor'}
+                                    </span>
+                                </span>
+                                {if $has_logo}
+                                    <span class="checkout-payment-method__logo-container">
+                                        <span class="image-box">
+                                            <img src="{$payment.logo|escape}" alt="{$payment.name|escape}" />
+                                        </span>
+                                    </span>
+                                {/if}
+                                <span class="checkout-payment-method__name-container">
+                                    <span class="title title_h4">{$payment.name|escape}</span>
+                                </span>
+                            </label>
+                            {if $has_description}
+                                <div class="checkout-payment-method__description-container">
+                                    <div class="content-decorator">
+                                        {$payment.description}
+                                    </div>
+                                </div>
+                            {/if}
+                            {if $has_error}
+                                <div class="checkout-payment-method__error-container">
+                                    {$payment.error|escape}
+                                </div>
+                            {/if}
+
+                            {if $has_custom_html}
+                                <div class="checkout-payment-method__content-container">
+                                    <div class="content-decorator form-decorator" data-form_size="s" data-field_size="s">
+                                        {$payment.custom_html}
+                                        <div class="form-decorator__trigger"></div>
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    {* Checkout Payment Method End *}
+                </div>
+            {/foreach}
+        </div>
+
+        {if $has_global_error}
+            <div class="checkout-payment__error-container">
+                <div class="error">{$error}</div>
+            </div>
+        {/if}
+    </div>
+
+    <script>
+        $(function () {
+            window.market.Update($('.checkout-payment').parent());
+        });
+    </script>
+
+    {* @event frontend_checkout.%plugin_id% *}
+    {foreach $frontend_checkout as $_}{$_}{/foreach}
+{/strip}

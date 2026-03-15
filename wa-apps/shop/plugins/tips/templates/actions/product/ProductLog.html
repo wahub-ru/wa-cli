@@ -1,0 +1,24 @@
+<div class="block">
+    <h2>[`Edit History`] <i class="icon16 loading"></i></h2>
+
+    <div id="s-tips-actions-log-container">
+        <div id="s-tips-actions-log">
+            <table class="light s-tips-actions">
+                <tbody>
+                {foreach $actions as $a}
+                    <tr>
+                        <td>{$a.datetime_human}</td>
+                        <td>{$a.contact_name}</td>
+                        <td>{$a.action_name}</td>
+                    </tr>
+                {/foreach}
+                </tbody>
+            </table>
+            <div class="block pagination"{if $pagination.total_pages < 2}style="display: none" {/if}>
+                {if $pagination.total_pages < 2}<ul class="menu-h"><li class="selected"><a href="?plugin=tips&module=product&action=log&product_id={$product_id}">1</a></li></ul>{/if}
+                {wa_pagination total=$pagination.total_pages page=$pagination.page attrs=['class'=>'menu-h']}
+            </div>
+        </div>
+    </div>
+
+</div>

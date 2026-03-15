@@ -1,0 +1,30 @@
+<style>
+    .field .name { width: 145px }
+    .field .value.float { float: left; margin-left: 20px; width: 35%}
+    .field .value2 { float: left; margin-left: 20px; width: 35%}
+    .clear { clear: both }
+    .field .value input[type="text"] { width: 100%; color: #333; min-width: 100px}
+    .field .value textarea { width: 100%; color: #333; min-width: 100px; height: 30px}
+    .code { color: #808080; background-color: #F7F7F9; border: 1px solid #E1E1E8; padding: 5px 10px; line-height: 1.3em }
+    .code B { color: #333}
+    .greencode { color: #339900 }
+    h4 { color: #8f1811 }
+</style>
+<h1>Bnp Comments</h1>
+<div class="gray">Комментарии к заказам</div>
+<form id="plugins-settings-form" method="post" action="?module=plugins&id=bnpcomments&action=save">
+    <div class="field">
+        <div class="name">
+            Включить/Выключить
+        </div>
+        <div class="value">
+            {$state_checkbox}
+        </div>
+    </div>
+    <div class="field">
+        <input class="button green" value="Сохранить" type="submit">
+        <span id="plugins-settings-form-status" style="display:none">
+            <i style="vertical-align:middle" class="icon16 yes"></i> Saved
+        </span>
+    </div>
+</form>

@@ -1,0 +1,32 @@
+{if $input=='table'}
+<table class="zebra">
+    <thead>
+    <tr>
+        <th>Название региона</th>
+        <th>Код региона</th>
+        <th>ISO код</th>
+    </tr>
+    </thead>
+    <tbody>
+    {foreach $regions as $region}
+        <tr>
+            <td>{$region.name}</td>
+            <td>{$region.code}</td>
+            <td><input class="i-settings__iso_region" value="{$region.iso|default:''|escape}" data-code="{$region.code|escape}" type="text"></td>
+        </tr>
+    {/foreach}
+    </tbody>
+</table>
+<br>
+<button type="button" class="button green i-settings__save_regions">Сохранить</button>
+{else}
+    {if !empty($regions)}
+    <select name="current[default_region]" class="i-settings__region_input">
+        {foreach $regions as $region}
+            <option value="{$region.code|escape}">{$region.name|escape}</option>
+        {/foreach}
+    </select>
+    {else}
+        <input type="text" name="current[default_region]" class="i-settings__region_input">
+    {/if}
+{/if}

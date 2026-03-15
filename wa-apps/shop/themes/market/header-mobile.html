@@ -1,0 +1,789 @@
+{strip}
+    {* Responsive Header Start *}
+    {* Theme Settings *}
+    {$logo_adaptive = $theme_settings['logo_adaptive']}
+    {$is_enabled_regions = $theme_settings['header_regions_enabled'] === 'regions'}
+    {$is_enabled_cityselect = $theme_settings['header_regions_enabled'] === 'cityselect'}
+    {$contacts_variant =  $theme_settings['phone_adaptive_contacts']}
+    {$phone = "{eval var=$theme_settings['phone_adaptive']}"|default:null}
+    {$filter_pages = $theme_settings['menu_pages_adaptive']}
+    {$source = $theme_settings['menu_source_adaptive']}
+    {$header_auth = $theme_settings['header_auth_adaptive_enabled']}
+    {$is_mobile_menu_catalog = $theme_settings['main_menu_source_adaptive'] === 'catalog'}
+    {$mobile_catalog_source = $theme_settings['catalog_menu_adaptive_source']}
+    {$mobile_catalog_menu_id = $theme_settings['catalog_menu_adaptive_menu_id']}
+
+    {if $wa->globals('market.theme_exists.shop')}
+        {if $mobile_catalog_source === 'menu_app' && $mobile_catalog_menu_id}
+            {$r_categories = $wa->menu->get($mobile_catalog_menu_id)}
+        {else}
+            {call get_catalog_categories}
+            {$r_categories = $wa->globals('market.return')}
+            {$products_count = "{call products_count_all}"|intval}
+        {/if}
+    {else}
+        {$r_categories = []}
+        {$products_count = 0}
+    {/if}
+    {$placeholder = "{include "string:{$theme_settings['search-phrase']}"}"}
+
+    {* Variables *}
+    {$plugins = $wa->globals('plugins')}
+    {$is_install_searchpro = $plugins['shop_searchpro']}
+    {$is_enabled_ordercall = $plugins['shop_ordercall']}
+    {$is_install_regions = $plugins['shop_regions']}
+    {$is_install_cityselect = $plugins['shop_cityselect']}
+    {$is_enabled_regions = $is_install_regions && $is_enabled_regions}
+    {$is_enabled_cityselect = $is_enabled_cityselect && $is_install_cityselect}
+    {$is_auth = $wa->user()->isAuth()}
+    {$is_enabled_auth = $wa->isAuthEnabled()}
+    {$is_enabled_brands = ($plugins['shop_brand'] || $plugins['shop_productbrands']) && $theme_settings['menu_catalog_brands']}
+
+    {if $wa->globals('market.theme_exists.shop')}
+        {$compare = $wa->shop->compare()|default:[]}
+    {else}
+        {$compare = []}
+    {/if}
+
+    {$count_compare = count($compare)}
+    {$count_favorite = intval("{call favorite_count}")}
+    {$count_recently_viewed = intval("{call recently_viewed_count}")}
+    {$is_enabled_recently_viewed = $count_recently_viewed > 0}
+
+    {$cart_url = $wa->getUrl('shop/frontend/cart')}
+
+    {if method_exists($wa->shop, 'checkout')}
+        {$cart_url = $wa->shop->checkout()->cartUrl()}
+    {/if}
+
+    {$logo_url = null}
+
+    {if $theme_settings['logo']}
+        {$logo_url = "{$wa_theme_url}{$theme_settings['logo']}"}
+    {/if}
+
+    {if $theme_settings['logo_alt_enabled'] && $theme_settings['logo_alt']}
+        {$logo_url = "{$wa_theme_url}{$theme_settings['logo_alt']}"}
+    {/if}
+
+    {if $theme_settings['logo_adaptive']}
+        {$logo_url = "{$wa_theme_url}{$theme_settings['logo_adaptive']}"}
+    {/if}
+
+    {$brands = []}
+    {$brands_url = ''}
+    {if $plugins['shop_brand']}
+        {if is_callable(['shopBrandViewHelper', 'getAllBrands'], false)}
+            {$brands = shopBrandViewHelper::getAllBrands()}
+        {/if}
+
+        {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'brand'])|escape}
+    {elseif $plugins['shop_productbrands']}
+        {if is_callable(['shopProductbrandsPlugin', 'getBrands'], false)}
+            {$_brands = shopProductbrandsPlugin::getBrands()}
+            {foreach $_brands as $brand}
+                {$brands[] = [
+                'name' => $brand.name,
+                'frontend_url' => $brand.url
+                ]}
+            {/foreach}
+        {/if}
+
+        {$brands_url = $wa->getUrl('shop/frontend/brands', ['plugin' => 'productbrands'])|escape}
+    {/if}
+
+    {* Template *}
+    {function menu_item}
+        {$style = $style|default:''}
+        {$item_content = $item_content|default:''}
+        {if $item_content}
+            <li class="r-header-menu__dropdown-list list-rows{if $style} list-rows_{$style}{/if}{if $has_childs} js-r-header-links__toggle{/if}" {if $has_childs}data-id="{$link.id}"{/if}>
+                {$item_content}
+            </li>
+        {/if}
+    {/function}
+
+    {capture assign='menu_item_auth'}
+        {if $is_enabled_auth}
+            {if $is_auth}
+                {$auth_name = '[`My account`]'}
+                {$auth_link = $wa->myUrl()}
+            {else}
+                {$auth_name = "{_wp("Вход на сайт")}"}
+                {$auth_link = $wa->loginUrl()}
+            {/if}
+
+            {call list_rows_item text=$auth_name
+                args=[
+                    link => $auth_link,
+                    has_arrow => true,
+                    is_hidden => false,
+                    icon => [
+                        'name' => 'user',
+                        'width' => 16,
+                        'height' => 16,
+                        'color' => 'none'
+                    ]
+                ]
+                assign = "item_content"
+            }
+            {menu_item item_content=$item_content style="multicolor"}
+        {/if}
+    {/capture}
+    {capture assign="menu_item_logout"}
+        {if $is_auth}
+            {call list_rows_item text='[s`Log out`]'
+                args=[
+                    link => '?logout',
+                    is_hidden => false,
+                    icon => [
+                        'name' => 'logout',
+                        'width' => 16,
+                        'height' => 16,
+                        'color' => 'currentColor'
+                    ]
+                ]
+                assign = "item_content"
+            }
+            {menu_item item_content=$item_content style="multicolor"}
+        {/if}
+    {/capture}
+    {capture assign="menu_item_catalog"}
+        {call list_rows_item text=$theme_settings['header_catalog_name']
+            args=[
+                list_rows_classes => 'js-r-header-catalog__toggle',
+                has_arrow => true,
+                is_hidden => false,
+                icon => [
+                    'name' => 'blocks',
+                    'width' => 16,
+                    'height' => 16,
+                    'color' => 'currentColor'
+                ]
+            ]
+            assign = "item_content"
+        }
+        {menu_item item_content=$item_content style="multicolor"}
+    {/capture}
+    {capture assign="menu_item_brands"}
+        {call list_rows_item text='Бренды'
+            args=[
+                list_rows_classes => 'js-r-header-brands__toggle',
+                has_arrow => true,
+                is_hidden => false,
+                icon => [
+                    'name' => 'brands',
+                    'width' => 16,
+                    'height' => 16,
+                    'color' => 'currentColor'
+                ],
+                link => $brands_url
+            ]
+            assign = "item_content"
+        }
+        {menu_item item_content=$item_content style="multicolor"}
+    {/capture}
+    {capture assign="menu_item_compare"}
+        {call list_rows_item text="{_wp("Сравнение")}"
+            args=[
+                link => "`$wa->getUrl('shop/frontend/compare')|escape`",
+                icon => [
+                    'name' => 'compare',
+                    'width' => 16,
+                    'height' => 16,
+                    'color' => 'none'
+                ],
+                is_hidden => false,
+                informer => [
+                    'count' => $count_compare,
+                    'name' => 'compare'
+                ]
+            ]
+            assign = "item_content"
+        }
+        {menu_item item_content=$item_content style="multicolor"}
+    {/capture}
+    {capture assign="menu_item_favorites"}
+        {call list_rows_item text='[`Favorites`]'
+            args=[
+                link => "`$wa->getUrl('shop/frontend/search')|escape`?list=favorite",
+                icon => [
+                    'name' => 'favorite',
+                    'width' => 16,
+                    'height' => 16,
+                    'color' => 'none'
+                ],
+                is_hidden => false,
+                informer => [
+                'count' => $count_favorite,
+                'name' => 'favorite'
+                ]
+            ]
+            assign = "item_content"
+        }
+        {menu_item item_content=$item_content style="multicolor"}
+    {/capture}
+    {capture assign="menu_item_recently_viewed"}
+        {call list_rows_item text='[`Просмотренные товары`]'
+            args=[
+                link => "`$wa->getUrl('shop/frontend/search')|escape`?list=recently-viewed",
+                icon => [
+                    'name' => 'watch',
+                    'width' => 18,
+                    'height' => 18,
+                    'color' => 'currentColor'
+                ],
+                is_hidden => false,
+                informer => [
+                    'count' => $count_recently_viewed,
+                    'name' => 'recently-viewed'
+                ]
+            ]
+            assign = "item_content"
+        }
+        {menu_item item_content=$item_content style="multicolor"}
+    {/capture}
+
+    {function name="menu_item_info"}
+        {$text = $text|default:''}
+        {$link_url = $link.url|default:''}
+        {$has_childs = $has_childs|default:false}
+        {call list_rows_item text=$text args=[link => $link_url, is_hidden => false, has_arrow => $has_childs] assign="item_content"}
+        {menu_item item_content=$item_content style="monochrome" has_childs=$has_childs link=$link}
+    {/function}
+
+    {capture assign="search_form_tpl"}
+        <form class="input-search r-search-form js-r-search-form" action="{$wa->getUrl('shop/frontend/search')|escape}"{if $theme_settings['header_search_autocomplete_adaptive_enabled']} data-autocomplete="1"{/if}>
+            <div class="r-search-form__close js-r-search-form__close">
+                {call svg_icon icon='arrow-left' width=10 height=16 fill='currentColor'}
+            </div>
+            <div class="r-search-form__input-container">
+                <input class="input-search__input r-search-form__input" name="query" placeholder="{$placeholder}" value="" />
+            </div>
+            <div class="r-search-form__button-container">
+                <button class="r-search-form__button">
+                    {call svg_icon icon='search' width=18 height=18 fill='currentColor'}
+                </button>
+            </div>
+        </form>
+    {/capture}
+
+    {if $is_install_searchpro}
+        {$wa->globals('market_searchpro_alt-search', true)}
+        {$searchpro_html = "{shopSearchproPluginViewHelper::field()}"}
+        {$query = $wa->param('query')}
+
+        {if $searchpro_html}
+            {capture assign="search_form_tpl"}
+                <div class="r-search-form js-r-search-form">
+                    <div class="r-search-form__close js-r-search-form__close">
+                        {call svg_icon icon='arrow-left' width=10 height=16 fill='currentColor'}
+                    </div>
+                    <div class="r-search-form__input-container">
+                        <div class="searchpro-wrapper searchpro-wrapper_responsive">
+                            {$searchpro_html}
+                        </div>
+                    </div>
+                    <div class="r-search-form__button-container">
+                        <button class="r-search-form__button">
+                            {call svg_icon icon='search' width=18 height=18 fill='currentColor'}
+                        </button>
+                    </div>
+                </div>
+            {/capture}
+        {/if}
+    {/if}
+
+    <div class="r-header js-r-header r-container r-hidden-desktop" data-top-offset-block>
+        <div class="r-header__list r-header__list_left">
+            <div class="r-header__list-item">
+                <div class="r-header__list-item-link r-header-menu js-r-header-menu{if $is_mobile_menu_catalog} js-r-header-menu_catalog{/if}">
+                    <div class="r-header-menu__tiggle js-r-header-menu__tiggle">
+                        {call svg_icon icon='burger' width=20 height=14 fill='currentColor'}
+                    </div>
+                    <div class="r-header-menu__dropdown js-r-header-menu__dropdown{if $is_mobile_menu_catalog} r-header-menu__dropdown_catalog{/if}">
+                        <div class="r-header-menu__dropdown-header">
+                            <a href="javascript://" class="r-header-menu__dropdown-close js-r-header-menu__dropdown-close">
+                                {call svg_icon icon='cross' width=14 height=14 fill='currentColor'}
+                            </a>
+                        </div>
+                        {capture assign="header_hooks"}
+                            {if isset($frontend_header)}
+                                <!-- plugin hook: 'frontend_header' -->
+                                {* @event frontend_header.%plugin_id% *}
+                                {foreach $frontend_header as $plugin => $_}
+                                    {if $plugin === 'cityselect-plugin'}{continue}{/if}
+                                    <!-- frontend_header.{$plugin} -->
+                                    {$_}
+                                {/foreach}
+                            {/if}
+
+                            {if isset($frontend_layout)}
+                                {* @event frontend_layout.%plugin_id%.header *}
+                                {foreach $frontend_layout as $item}
+                                    {if !empty($item.header)}{$item.header}{/if}
+                                {/foreach}
+                            {/if}
+                        {/capture}
+                        {if !empty($header_hooks)}
+                            <span class="link-decorator">
+                                {$header_hooks}
+                            </span>
+                        {/if}
+                        <div class="r-header-menu__dropdown-main">
+
+                            {if $wa->globals('market.theme_exists.shop')}
+                                <ul class="r-header-menu__list list-rows">
+                                    {$menu_item_catalog}
+
+                                    {if $is_enabled_brands && !empty($brands)}
+                                        {$menu_item_brands}
+                                    {/if}
+                                </ul>
+                            {/if}
+
+                            {if !$is_mobile_menu_catalog || !$wa->globals('market.theme_exists.shop')}
+                                <ul class="r-header-menu__list list-rows">
+                                    {if $is_enabled_regions}
+
+                                        {capture assign="item_content"}
+                                            {call list_rows_item text="{shopRegionsViewHelper::parseTemplate('{region_name}')}"
+                                                args=[
+                                                list_rows_classes => 'r-region-button',
+                                                has_arrow => true,
+                                                is_hidden => false,
+                                                icon => [
+                                                'name' => 'map',
+                                                'width' => 16,
+                                                'height' => 16,
+                                                'color' => 'currentColor'
+                                                ]
+                                                ]
+                                            }
+
+                                            <div class="r-regions-decorator">
+                                                {shopRegionsViewHelper::getWindow()}
+                                            </div>
+                                        {/capture}
+                                        {menu_item item_content=$item_content style="multicolor"}
+                                    {elseif $is_enabled_cityselect}
+
+                                        <li class="r-header-menu__dropdown-list list-rows list-rows_multicolor r-cityselect-block">
+                                            <div class="list-rows__item">
+                                                <span class="list-rows__item-icon">
+                                                    {call svg_icon icon='map' width=16 height=16 fill='currentColor'}
+                                                </span>
+                                                {shopCityselectPlugin::showCity('0')}
+                                            </div>
+                                        </li>
+                                    {/if}
+                                    {$menu_item_auth}
+                                </ul>
+
+                                {if $wa->globals('market.theme_exists.shop') && ($theme_settings['header_compare_enabled'] || $theme_settings['header_favorite_enabled'] || $is_enabled_recently_viewed)}
+                                    <ul class="r-header-menu__list list-rows">
+                                        {if $theme_settings['header_compare_enabled']}
+                                            {$menu_item_compare}
+                                        {/if}
+                                        {if $theme_settings['header_favorite_enabled']}
+                                            {$menu_item_favorites}
+                                        {/if}
+                                        {if $is_enabled_recently_viewed}
+                                            {$menu_item_recently_viewed}
+                                        {/if}
+                                    </ul>
+                                {/if}
+
+                                {if $source === 'wa_apps'}
+                                    {$links = $wa->apps()}
+                                {elseif $source === 'shop_pages'}
+                                    {if $wa->globals('market.theme_exists.shop')}
+                                        {call get_shop_pages}
+                                        {$pages = $wa->globals('market.return')}
+                                    {else}
+                                        {$pages = []}
+                                    {/if}
+
+                                    {if $filter_pages}
+                                        {$pages_urls = explode(',', $filter_pages)}
+                                        {$pages_by_url = []}
+
+                                        {foreach $pages as $page}
+                                            {$pages_by_url[$page.full_url] = $page}
+                                        {/foreach}
+
+                                        {foreach $pages_urls as $page_url}
+                                            {if isset($pages_by_url[$page_url])}
+                                                {$links[] = $pages_by_url[$page_url]}
+                                            {/if}
+                                        {/foreach}
+                                    {else}
+                                        {$links = $pages}
+                                    {/if}
+                                {elseif $source == "menu_app" && $wa->menu}
+                                    {$menu_id = $theme_settings["menu_menu_id_adaptive"]}
+                                    {$links = $wa->menu->get($menu_id)}
+                                {/if}
+
+                                {if !empty($links)}
+                                    <ul class="r-header-menu__list list-rows">
+                                        {foreach $links as $link}
+                                            {menu_item_info text=$link.name link=$link has_childs=is_countable($link.childs) && count($link.childs) > 0}
+                                        {/foreach}
+                                    </ul>
+                                {/if}
+                                {if $is_auth}
+                                    <ul class="r-header-menu__list list-rows">
+                                        {$menu_item_logout}
+                                    </ul>
+                                {/if}
+                            {/if}
+                        </div>
+
+                        {function header_subdropdown_r}
+                            {* Arguments *}
+                            {$r_parent_category = $r_parent_category|default:[]}
+                            {$r_categories = $r_categories|default:[]}
+                            {$header_title = $header_title|default:$r_parent_category.name|default:"{_wp("Каталог товаров")}"}
+                            {$subdropdown_classes = $subdropdown_classes|default:''}
+                            {$show_parent_as_item = $show_parent_as_item|default:false}
+                            {$_style = $_style|default:null}
+                            {$is_brands = $is_brands|default:false}
+                            {$is_links = $is_links|default:false}
+                            {$data_id = $data_id|default:false}
+
+                            {* Theme Settings *}
+                            {$show_count = $theme_settings['burger_menu_catalog_count_enabled_adaptive']}
+                            {$parent_as_item = $theme_settings['menu_catalog_parent_as_item_adaptive']}
+                            {$is_mobile_menu_catalog = $theme_settings['main_menu_source_adaptive'] === 'catalog'}
+                            {$show_logo = $theme_settings['burger_menu_category_logo_enabled_adaptive']}
+
+                            {* Template *}
+                            <div class="r-subdropdown r-header-menu__subdropdown js-r-header-menu__subdropdown r-hidden-desktop {$subdropdown_classes}{if $is_mobile_menu_catalog} r-subdropdown_catalog{/if}" {if $data_id}data-id="{$data_id}"{/if}>
+                                <div class="r-subdropdown__header">
+                                    <a href="javascript://" class="r-subdropdown__header-action r-subdropdown__header-back js-r-subdropdown__header-back{if $is_mobile_menu_catalog} r-subdropdown__header-back_hide{/if}">
+                                        {call svg_icon icon='arrow-left' width=10 height=16 fill='currentColor'}
+                                    </a>
+                                    <div class="r-subdropdown__header-title">
+                                        {$header_title}
+                                    </div>
+                                    {if !$is_mobile_menu_catalog}
+                                        <a href="javascript://" class="r-subdropdown__header-action r-subdropdown__header-close js-r-subdropdown__header-close">
+                                            {call svg_icon icon='cross' width=14 height=14 fill='currentColor'}
+                                        </a>
+                                    {/if}
+                                </div>
+                                <div class="r-subdropdown__main">
+                                    {function name="r_catalog_list"}
+                                        {$_r_categories = $_categories}
+                                        {$is_childs = $is_childs|default:false}
+                                        <ul class="list-rows{if $is_childs} list-rows_children{/if} list-rows_multicolor list-rows_separated" data-category-id="{$category_id}">
+                                            {if $category_id === 0 && $parent_as_item}
+                                                {$text = "[`Посмотреть все товары`]"}
+                                                <li  class="r-header-menu__dropdown-list r-header-menu__dropdown-list_parent list-rows{if $_style} list-rows_{$_style}{/if}">
+                                                    {call list_rows_item text=$text
+                                                    args=[
+                                                    link => 'javascript://',
+                                                    is_hidden => false,
+                                                    is_highlighted => true
+                                                    ]
+                                                    }
+                                                </li>
+                                            {/if}
+                                            {foreach $_r_categories as $r_category}
+                                                {$counter = null}
+
+                                                {$is_parent = $r_parent_category && $r_category.id == $r_parent_category.id}
+
+                                                {if $show_count}
+                                                    {$counter = [
+                                                    'count' => "{call products_count category=$r_category}"
+                                                    ]}
+                                                {/if}
+
+                                                {$has_childs = $r_category.childs|default:false && !$is_parent}
+                                                {$data = []}
+                                                {if $has_childs}
+                                                    {$data = [
+                                                    'name' => 'category_id',
+                                                    'content' => $r_category.id
+                                                    ]}
+                                                {/if}
+                                                {$text = $r_category.name}
+
+                                                {$link = $r_category.url}
+                                                {if isset($r_category.frontend_url) && !empty($r_category.frontend_url)}
+                                                    {$link = $r_category.frontend_url}
+                                                {/if}
+
+                                                <li  class="r-header-menu__dropdown-list list-rows{if $_style} list-rows_{$_style}{/if}">
+                                                    {call list_rows_item text=$text
+                                                    args=[
+                                                    link => $link,
+                                                    item_category => $r_category,
+                                                    is_hidden => false,
+                                                    counter => $counter,
+                                                    data => $data,
+                                                    has_arrow => !$is_links && $has_childs,
+                                                    is_highlighted => $is_parent,
+                                                    show_logo => $show_logo,
+                                                    is_brand => $is_brands
+                                                    ]
+                                                    }
+                                                    {if !$is_links && $has_childs}
+                                                        {r_catalog_list _categories=$r_category.childs is_childs=true category_id=$r_category.id}
+                                                    {/if}
+                                                </li>
+                                            {/foreach}
+                                        </ul>
+                                    {/function}
+
+                                    {if $r_categories && is_array($r_categories)}
+                                        {r_catalog_list _categories=$r_categories category_id=0}
+                                    {/if}
+                                </div>
+                            </div>
+                        {/function}
+
+
+                        {call header_subdropdown_r r_categories=$r_categories subdropdown_classes='js-r-header-menu__catalog'}
+
+                        {if $is_enabled_brands && !empty($brands)}
+                            {call header_subdropdown_r r_categories=$brands header_title='Бренды' subdropdown_classes='js-r-header-menu__brands' is_brands=true}
+                        {/if}
+
+                        {foreach $links as $link}
+                            {if is_countable($link.childs) && count($link.childs)}
+                                {call header_subdropdown_r r_categories=$link.childs header_title=$link.name subdropdown_classes='js-r-header-menu__links' data_id=$link.id is_links=true}
+                            {/if}
+                        {/foreach}
+                    </div>
+                </div>
+            </div>
+            <div class="r-header__list-item r-header__list-item_logo">
+                {if $logo_url}
+                    <a href="{$wa_url}" class="r-header__list-item-link r-header-logo">
+                        <img src="{$logo_url|default:''|escape}" class="r-header-logo__image" alt="{$wa->accountName()|escape}" />
+                    </a>
+                {/if}
+            </div>
+        </div>
+        <div class="r-header__list r-header__list_right">
+            {if $phone}
+                <div class="r-header__list-item">
+                    {if $contacts_variant === 'ordercall' && $is_enabled_ordercall}
+                        <span class="r-header__list-item-link r-header__list-item-link_phone ordercall-button call-back-button">
+                            {call svg_icon icon='call3' width='24' height='24' fill='currentColor'}
+                        </span>
+                    {elseif $contacts_variant === 'contacts'}
+                        <span class="r-header__list-item-link r-header__list-item-link_phone r-header-contacts-btn">
+                            <span class="icon-box icon-box_size_s">
+                                <span class="icon-box__content">
+                                    {call svg_icon icon='call3' width='24' height='24' fill='currentColor'}
+                                </span>
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon='arrow-bottom' classes='link-box__icon' width=10 height=6  fill='currentColor'}
+                                </span>
+                            </span>
+                        </span>
+                    {else}
+                        <a class="r-header__list-item-link r-header__list-item-link_phone" href="tel:{call clean_phone phone=$phone}">
+                            {call svg_icon icon='call3' width='24' height='24' fill='currentColor'}
+                        </a>
+                    {/if}
+                </div>
+            {/if}
+            {if $wa->globals('market.theme_exists.shop') && $header_auth}
+                {if $is_enabled_auth}
+                    {if $is_auth}
+                        {$auth_link = $wa->myUrl()}
+                    {else}
+                        {$auth_link = $wa->loginUrl()}
+                    {/if}
+                    <div class="r-header__list-item">
+                        <a href="{$auth_link}" class="r-header__list-item-link link-box"">
+                        {call svg_icon icon='account' width='18px' height='18px' fill='currentColor'}
+                        </a>
+                    </div>
+                {/if}
+            {/if}
+            {if $wa->globals('market.theme_exists.shop')}
+                <div class="r-header__list-item">
+                    <a href="javascript://" class="r-header__list-item-link r-header__list-item-link_search js-r-header__list-item-link_search-toggle" data-search-form-tpl="{$search_form_tpl|strip|escape}">
+                        {call svg_icon icon='search' width='18px' height='18px' fill='currentColor'}
+                    </a>
+                </div>
+            {/if}
+
+            {if $wa->globals('market.theme_exists.shop')}
+                <div class="r-header__list-item">
+                    {$count_cart = $wa->shop->cart->count()}
+                    <a class="r-header__list-item-link" href="{$cart_url|escape}">
+                        <span class="counter cart-counter{if $count_cart == 0} counter_empty{/if}">
+                            {$count_cart}
+                        </span>
+                        {call svg_icon icon='cart' width='18px' height='18px' fill='none'}
+                    </a>
+                </div>
+            {/if}
+        </div>
+        {if $contacts_variant === 'contacts'}
+            <div class="r-header-contacts">
+                {$phone_1 = "{eval var=$theme_settings['phone_1']}"|escape}
+                {$phone_2 = "{eval var=$theme_settings['phone_2']}"|escape}
+                {$phone_1_hint = "{eval var=$theme_settings['phone_1_hint']}"|escape}
+                {$phone_2_hint = "{eval var=$theme_settings['phone_2_hint']}"|escape}
+                {$address = "{eval var=$theme_settings['address']}"|nl2br}
+                {$schedule = "{call generate_work_schedule}"}
+                {$email = "{eval var=$theme_settings['email']}"|nl2br}
+                {$map_link = ''}
+
+                {if $theme_settings['coordinates_link_adaptive']}
+                    {$address_url = $theme_settings['coordinates_link_adaptive']}
+
+                    {$coordinates = json_decode($theme_settings['coordinates_link_adaptive'])}
+                    {if is_array($coordinates) && is_float($coordinates[0]) && is_float($coordinates[1])}
+                        {$address_url = "{$coordinates[0]},{$coordinates[1]}"}
+                    {/if}
+
+                    {if $theme_settings['map_link_source'] == 'yandex'}
+                        {$map_link = "https://maps.yandex.ru/?rtext={$address_url|escape:'url'}"}
+                    {else}
+                        {$map_link = "https://www.google.com/maps/place/{$address_url|replace:' ':'+'|escape:'url'}"}
+                    {/if}
+                {/if}
+
+                {$whatsapp = "{eval var=$theme_settings['whatsapp']}"}
+                {$telegram = "{eval var=$theme_settings['telegram']}"}
+                {$vk_link = $theme_settings['vk_link']}
+
+
+                <div class="r-header-contacts__container">
+                    <div class="r-header-contacts__blocks">
+                        {if $phone_1}
+                            <a class="r-header-contacts__block" href="tel:{call clean_phone phone=$phone_1}">
+                                <span class="r-header-contacts__phone r-header-contacts__name">
+                                    {$phone_1}
+                                </span>
+                                {if $phone_1_hint}
+                                    <span class="r-header-contacts__hint">
+                                        {$phone_1_hint}
+                                    </span>
+                                {/if}
+                            </a>
+                        {/if}
+                        {if $phone_2}
+                            <a class="r-header-contacts__block" href="tel:{call clean_phone phone=$phone_2}">
+                                <span class="r-header-contacts__phone r-header-contacts__name">
+                                    {$phone_2}
+                                </span>
+                                {if $phone_2_hint}
+                                    <span class="r-header-contacts__hint">
+                                        {$phone_2_hint}
+                                    </span>
+                                {/if}
+                            </a>
+                        {/if}
+                        {if !empty($whatsapp)}
+                            <a class="button button_style_transparent_gray" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                <span class="icon-box">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon='whatsapp' width=24 height=24}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        [`Написать в`] Whatsapp
+                                    </span>
+                                </span>
+                            </a>
+                        {/if}
+                        {if !empty($telegram)}
+                            <a class="button button_style_transparent_gray" href="https://t.me/{$telegram|replace:' ':''|escape}" target="_blank" data-analytic-click="telegram">
+                                <span class="icon-box">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon='telegram' width=24 height=24}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        [`Написать в`] Telegram
+                                    </span>
+                                </span>
+                            </a>
+                        {/if}
+                        {if $is_enabled_ordercall}
+                            <div class="button button_style_transparent_gray  ordercall-button call-back-button">
+                                <span class="pseudo-link pseudo-link_style_alt-gray">
+                                    [`Заказать звонок`]
+                                </span>
+                            </div>
+                        {/if}
+                        {if !empty($address) || !empty($schedule)}
+                            <div class="r-header-contacts__block">
+                                {if !empty($address)}
+                                    <div>
+                                        <div class="r-header-contacts__name">
+                                            [`Адрес`]:
+                                        </div>
+                                        <div>
+                                            {$address}
+                                        </div>
+                                    </div>
+                                {/if}
+                                {if !empty($schedule)}
+                                    <div>
+                                        <span class="r-header-contacts__name">[`Режим работы`]:</span><span class="r-header-contacts__schedule">{$schedule}</span>
+                                    </div>
+                                {/if}
+
+                                {if !empty($map_link)}
+                                    <a class="r-header-contacts__navigator button button_size_xs button_style_light button_fill" href="{$map_link}" target="_blank">
+                                        [`Проложить маршрут`]
+                                    </a>
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+
+                    {if $email}
+                        <div class="r-header-contacts__email">
+                            <span class="r-header-contacts__name">[`Email`]:</span> <a class="link link_style_gray" href="mailto:{eval var=$theme_settings['email']|nl2br}">{$email}</a>
+                        </div>
+                    {/if}
+
+                    {if !empty($whatsapp) || !empty($telegram) || !empty($vk_link)}
+                        <div class="r-header-contacts__messengers">
+                            <div class="r-header-contacts__name">
+                                [`Соцсети`] [`и`] [`мессенджеры`]:
+                            </div>
+                            <div class="messengers">
+                                {if !empty($whatsapp)}
+                                    <div class="messengers__messenger">
+                                        <a class="image-box" href="https://wa.me/{$whatsapp|regex_replace:'/[^0-9]/':''|escape}" target="_blank" data-analytic-click="whatsapp">
+                                            {call svg_icon icon='whatsapp' width=24 height=24}
+                                        </a>
+                                    </div>
+                                {/if}
+                                {if !empty($telegram)}
+                                    <div class="messengers__messenger">
+                                        <a class="image-box" href="https://t.me/{$telegram|replace:' ':''|escape}" data-analytic-click="telegram">
+                                            {call svg_icon icon='telegram' width=24 height=24}
+                                        </a>
+                                    </div>
+                                {/if}
+                                {if !empty($vk_link)}
+                                    <div class="messengers__messenger">
+                                        <a class="image-box" href="{$vk_link|escape}" target="_blank">
+                                            {call svg_icon icon='vk' width=24 height=24}
+                                        </a>
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/if}
+    </div>
+
+    {if $wa->globals('market.promo_banner_hash')}
+        {call panel_banner hash=$wa->globals('market.promo_banner_hash')}
+    {/if}
+{/strip}

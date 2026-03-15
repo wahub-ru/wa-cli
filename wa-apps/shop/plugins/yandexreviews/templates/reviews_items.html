@@ -1,0 +1,38 @@
+{strip}
+{foreach $reviews as $r}
+  <div class="yreviews__item" data-review-id="{$r.yandex_review_id|escape}">
+    <div class="yreviews__head">
+      <div class="yreviews__avatar">
+        {if $r.author_avatar}
+          <img src="{$r.author_avatar|escape}" alt="{$r.author_name|default:'Пользователь'|escape}">
+        {else}
+          <span class="yreviews__avatar-ph" aria-hidden="true">☺</span>
+        {/if}
+      </div>
+      <div class="yreviews__meta">
+        <div class="yreviews__author">{$r.author_name|default:'Пользователь'|escape}</div>
+        <div class="yreviews__rating" title="Оценка: {$r.rating|default:'—'}">
+          {if $r.rating}{section name=s loop=$r.rating}★{/section}{/if}
+        </div>
+        {if $r.review_datetime && $r.review_datetime > '2000-01-01 00:00:00'}
+          <div class="yreviews__date">{$r.review_datetime|date_format:"%d.%m.%Y"}</div>
+        {/if}
+      </div>
+    </div>
+
+    {if !empty($r.photos)}
+      <div class="yreviews__photos">
+        {foreach $r.photos as $p}
+          <a class="yreviews__photo" href="{$p|escape}" data-fancybox="yreviews-{$r.yandex_review_id|escape}" data-caption="Фото из отзыва" rel="nofollow">
+            <img src="{$p|escape}" alt="">
+          </a>
+        {/foreach}
+      </div>
+    {/if}
+    {if $r.text}
+      <div class="yreviews__text js-ytext" data-clamp="8" data-minwords="50">{$r.text|escape|nl2br}</div>
+      <div class="yreviews__morelnk js-ymore" hidden="hidden">Показать полностью</div>
+    {/if}
+  </div>
+{/foreach}
+{/strip}

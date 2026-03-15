@@ -1,0 +1,47 @@
+{strip}
+	{$photos = $photos|default:[]}
+	{$classes = $classes|default:''}
+	{$size = '350x215'}
+	{$is_name_enabled = !!$theme_settings['photos_photo_title_enabled']}
+	{$is_description_enabled = !!$theme_settings['photos_photo_description_enabled']}
+
+	{if count($photos) > 0}
+		{foreach $wa->photos->photos(array_keys($photos), $size) as $i => $_photo}
+            {$width = $_photo["thumb_{$size}"].size.width}
+            {$height = $_photo["thumb_{$size}"].size.height}
+			{$photos[$i]["thumb_{$size}"] = $_photo["thumb_{$size}"]}
+		{/foreach}
+	{/if}
+
+	<div class="photos-thumbs {$classes}">
+		{foreach $photos as $photo}
+			<div class="photos-thumbs__item">
+				<a class="photos-photo-thumb" href="{$photo.frontend_link|escape}">
+					<div class="photos-photo-thumb__left-top">
+                        {* @event prepare_photos_frontend.top_left.%plugin_id% *}
+                        {foreach $photo.hooks.top_left as $plugin => $output}{$output}{/foreach}
+                    </div>
+                    <div class="photos-photo-thumb__right-top">
+                        {* @event prepare_photos_frontend.top_left.%plugin_id% *}
+                        {foreach $photo.hooks.top_right as $plugin => $output}{$output}{/foreach}
+                    </div>
+                    <div class="photos-photo-thumb__image-container" style="background-image: url({photosPhoto::getPhotoUrl($photo, '970')|escape});">
+                        <span class="image-box">
+                            <img src="{photosPhoto::getPhotoUrl($photo, '350x215')|escape}" alt="{$photo.name|escape}" />
+                        </span>
+                    </div>
+                    {if $is_name_enabled && !empty($photo.name)}
+                        <div class="photos-photo-thumb__text-container">
+                            {$photo.name}
+                        </div>
+                    {/if}
+                    {if $is_description_enabled && !empty($photo.description)}
+                        <div class="photos-photo-thumb__description-container">
+                            {$photo.description}
+                        </div>
+                    {/if}
+                </a>
+            </div>
+        {/foreach}
+    </div>
+{/strip}

@@ -1,0 +1,248 @@
+.city-api--5a4733 {
+	margin-bottom: 10px;
+}
+
+.city-api--5a4733:last-child {
+	margin-bottom: 0;
+}
+
+.city-api__header--5d6105 {
+	font-size: 1.35em;
+	line-height: 1.2em;
+	margin-bottom: .3em;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.city-api--5a4733.city-api--disabled--63a7fb .city-api__header--5d6105 {
+	color: #999;
+}
+
+.city-api--5a4733.city-api--disabled--63a7fb .city-api__content--ad75bf {
+	display: none;
+}
+.fas-icon--f40198 {
+  margin-right: 4px;
+}.select--7c7d47 {
+    box-sizing: border-box;
+    padding: 2px;
+    max-width: 300px;
+    font-size: 14px;
+}
+
+.select_fill--44b899 {
+    width: 100%;
+}.input-text--74b88c {
+    padding: 3px;
+    box-sizing: border-box;
+    width: 49.5%;
+    max-width: 100%;
+}.main-header--3131fc {
+    line-height: 1.2em;
+    margin-bottom: .3em;
+    font-family: 'Helvetica Neue', 'Liberation Sans', Arial, sans-serif;
+    font-size: 1.8em;
+    font-weight: bold;
+}.link--ce9ba5 {
+  display: flex;
+  align-items: center;
+}
+
+.link--ce9ba5,
+.link--ce9ba5:visited,
+.link__text--197281 {
+  color: #03c;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.link--ce9ba5:hover,
+.link--ce9ba5:hover .link__text--197281 {
+  color: #f00 !important
+}
+
+.link_extended--df194c,
+.link_extended--df194c:visited,
+.link_extended--df194c:hover,
+.link_extended--df194c:active {
+  color: inherit !important;
+}
+
+.link__icon--39d19e,
+.link__text--197281 {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.is-wa2 {
+  .link--ce9ba5,
+  .link--ce9ba5:visited,
+  .link__text--197281 {
+    color: var(--text-color-link);
+  }
+
+  .link--ce9ba5:hover,
+  .link--ce9ba5:hover .link__text--197281 {
+    color: var(--text-color-link-hover);
+  }
+}.list--0b5831 {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list_horizontal--1e6471 {
+
+}
+
+.list_horizontal--1e6471.list_align_right--9b327c {
+  text-align: right;
+}
+
+.list__item--e74210 {
+  margin: 5px 0;
+}
+
+.list_horizontal--1e6471 .list__item--e74210 {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 10px 0 0;
+}
+
+.list_horizontal--1e6471.list_align_right--9b327c .list__item--e74210 {
+  margin: 0 0 0 10px;
+}.header-bar--09f9f1:after {
+  content: '';
+  display: inline-block;
+  clear: both;
+  margin-bottom: 25px;
+}
+
+.header-bar__info--fdaafe {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 0 0 15px 0;
+}
+
+.header__plugin-version--a23e87 {
+  font-size: 13px;
+  color: #888888;
+  margin: 0 0 0 10px;
+}
+
+.dev-block--dd94e6 {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dev-block__item--8cb746 {
+  display: flex;
+  align-items: center;
+}
+
+.dev-block__item--8cb746:last-child {
+  margin: 0;
+}
+
+.dev-block__label--dba4cf {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0;
+  margin: 0 10px 0 0;
+}
+
+.dev-block__icon--675d00 {
+  margin: 0 10px 0 0;
+}
+
+.dev-block__icon_last--929a85 {
+  margin: 0;
+}
+
+.dev-block__label--dba4cf {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0;
+  margin: 0 10px 0 0;
+}
+
+.dev-block__icon--675d00 {
+  margin: 0 10px 0 0;
+}
+
+.dev-block__icon_last--929a85 {
+  margin: 0;
+}
+
+.link-bar--fa45e1 {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 5px;
+  background: #EFF9FC;
+}
+
+.link-bar__list--24eb00 li {
+  padding: 13px 16px 16px 16px;
+}
+
+.link-bar__link--8c4a3d {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0;
+}
+
+.icon16--41d2b7 {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 10px;
+}
+
+.icon16--41d2b7 {
+  width: 16px;
+  height: 16px;
+}
+
+.icon24--f1aa6d {
+  width: 24px;
+  height: 24px;
+}
+
+.help-icon--e21a49 {
+  background: url(help.bundle.svg);
+}
+
+.support-icon--b18f60 {
+  background: url(support.bundle.svg);
+}
+
+.bulb-icon--9260dd {
+  background: url(bulb.bundle.svg);
+}
+
+.review-icon--7349ac {
+  background: url(review.bundle.svg);
+}
+
+.bodysite-logo--f0aca1 {
+  width: 150px;
+}
+
+.is-wa2 {
+  .header__plugin-version--a23e87 {
+    color: var(--text-color-hint-strong);
+  }
+}
+
+html[data-theme='dark'] {
+  .link-bar--fa45e1 {
+    background: var(--highlighted-blue);
+  }
+}

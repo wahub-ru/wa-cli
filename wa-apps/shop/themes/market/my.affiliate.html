@@ -1,0 +1,105 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_my', true)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Партнёрская программа")}"])}
+    <div class="block block_secondary my-affiliate">
+        <div class="block__header block__header_text">
+            [`Партнёрская программа`]
+        </div>
+        <div class="block__sub-header">
+            <span class="block__sub-header-text">
+                {$balance = round($customer.affiliate_bonus, 2)|wa_format_number:false}
+                {$is_positive = false}
+
+                {if $customer.affiliate_bonus >= 0}
+                    {$balance = '+'|cat:$balance}
+                    {$is_positive = true}
+                {/if}
+
+                <span class="my-affiliate__balance-text">[`Ваш текущий партнерский бонус`]:
+                    <span class="my-affiliate__balance {if $is_positive}my-affiliate__balance_positive{/if}">{$balance|escape}</span>
+                </span>
+            </span>
+        </div>
+        <div class="block__content">
+            <!-- plugin hook: 'frontend_my_affiliate' -->
+            {foreach $frontend_my_affiliate as $plugin => $_}
+                <!-- frontend_my_affiliate.{$plugin} -->
+                {$_}
+            {/foreach}
+
+            {if !empty($affiliate_history)}
+                <div class="my-affiliate__table table table_responsive">
+                    <div class="my-affiliate__table-head table__head">
+                        <div class="my-affiliate__item table__row">
+                            <div class="my-affiliate__column-date table__head-cell">[`Дата`]</div>
+                            <div class="my-affiliate__column-info table__head-cell">[`Описание`]</div>
+                            <div class="my-affiliate__column-amount table__head-cell">[`Credit`]</div>
+                            <div class="my-affiliate__column-amount table__head-cell">[`Debit`]</div>
+                            <div class="my-affiliate__column-balance table__head-cell">[`Balance`]</div>
+                        </div>
+                    </div>
+                    <div class="table__body">
+                        {foreach $affiliate_history as $history}
+                            {$has_order = $history.order_id && !empty($history.order_url)}
+                            <div class="my-affiliate__item table__row">
+                                <div class="my-affiliate__column-date table__cell">
+                                    <div class="table__label-text">
+                                        [`Дата`]
+                                    </div>
+                                    {$history.create_datetime|wa_datetime:'d.m.Y H:i'}
+                                </div>
+                                <div class="my-affiliate__column-info table__cell">
+                                    <div class="table__label-text">
+                                        [`Описание`]
+                                    </div>
+                                    {if $has_order}
+                                        <a class="link"
+                                                href="{$history.order_url|escape}">{$wa->shop->orderId($history.order_id)|escape}</a>
+                                        {if $history.comment}<br>{/if}
+                                    {/if}
+                                    {if $history.comment}
+                                        {$history.comment|escape}
+                                    {/if}
+                                </div>
+                                <div class="my-affiliate__column-amount table__cell">
+                                    <div class="table__label-text">
+                                        [`Credit`]
+                                    </div>
+                                    <span class="my-affiliate__amount">
+                                        {if $history.amount > 0}
+                                            {round($history.amount,2)|wa_format_number:false}
+                                        {else}
+                                            —
+                                        {/if}
+                                    </span>
+                                </div>
+                                <div class="my-affiliate__column-amount table__cell">
+                                    <div class="table__label-text">
+                                        [`Debit`]
+                                    </div>
+                                    <span class="my-affiliate__amount">
+                                        {if $history.amount < 0}
+                                            {round(abs($history.amount),2)|wa_format_number:false}
+                                        {else}
+                                            —
+                                        {/if}
+                                    </span>
+                                </div>
+                                <div class="my-affiliate__column-balance table__cell">
+                                    <div class="table__label-text">
+                                        [`Balance`]
+                                    </div>
+                                    <span class="my-affiliate__history-balance">
+                                        {round($history.balance,2)|wa_format_number:false}
+                                    </span>
+                                </div>
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
+            {/if}
+        </div>
+    </div>
+{/strip}

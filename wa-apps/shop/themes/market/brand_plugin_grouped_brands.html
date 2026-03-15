@@ -1,0 +1,37 @@
+{strip}
+<div class="brand-alphabet">
+    <div class="container">
+        <ul class="brand-alphabet__list brand-alphabet-list">
+            <li class="brand-alphabet-list__item brand-alphabet-list__item_title">
+                [`Бренды`]:
+            </li>
+            <li class="brand-alphabet-list__item">
+                <ul class="brand-alphabet-list brand-alphabet-list_letters">
+                    {foreach $groups as $letter => $group}
+                        <li class="brand-alphabet-list__item brand-alphabet-list__item_letter">
+                            <span class="brand-plugin-alphabet-list__letter link">{$letter}</span>
+                            <div class="brand-alphabet-list__brands container">
+                                <div class="brand-alphabet-brands">
+                                    <div class="brand-alphabet-brands__title">
+                                        {$letter}
+                                    </div>
+                                    <ul class="brand-alphabet-brands__list{if count($group.brands) > 4} brand-alphabet-brands__list_columns{/if}">
+                                        {foreach $group.brands as $brand}
+                                            <li class="brand-alphabet-brands__item">
+                                                <a class="link" href="{$brand.url}">{$brand.name}</a>
+                                            </li>
+                                        {/foreach}
+                                    </ul>
+                                </div>
+                            </div>
+                        </li>
+                    {/foreach}
+                </ul>
+            </li>
+            <li class="brand-alphabet-list__item brand-alphabet-list__item_show-all">
+                <a class="link" href="{$wa->getUrl('shop/frontend/brands')|escape}">[`Все бренды`]</a>
+            </li>
+        </ul>
+    </div>
+</div>
+{/strip}

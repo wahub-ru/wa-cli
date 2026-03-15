@@ -1,0 +1,34 @@
+{strip}
+    {$limit = $limit|default:-1}
+    {$has_hidden = false}
+
+    <div class="blog-comments">
+        <div class="blog-comments__comments-container">
+            {foreach $comments as $comment}
+                {$is_hidden = $limit != -1 && $comment@iteration > $limit}
+
+                {if $is_hidden}
+                    {$has_hidden = true}
+                {/if}
+
+                <div class="blog-comments__item {if $is_hidden}blog-comments__item_hidden{/if}">
+                    {call blog_comment comment=$comment}
+                </div>
+            {/foreach}
+        </div>
+        {if $has_hidden}
+            <div class="blog-comments__more-button-container">
+                <button class="blog-comments__more-button button button_style_inverse button_size_l button_wide" type="button">
+                    <span class="icon-box">
+                        <span class="icon-box__content">
+                            {_wp("Показать ещё")}
+                        </span>
+                        <span class="icon-box__icon">
+                            {call svg_icon icon="dict-arrow-bottom" classes="button__icon" width=12 height=12}
+                        </span>
+                    </span>
+                </button>
+            </div>
+        {/if}
+    </div>
+{/strip}

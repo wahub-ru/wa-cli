@@ -1,0 +1,28 @@
+{strip}
+    {$wa->globals('market_checkout_is_success', true)}
+    {$wa->globals('is_checkout', true)}
+
+    <div class="checkout-success-block">
+        <div class="checkout-success-block__header">
+            [`Ваш заказ успешно оформлен`]!
+        </div>
+        <div class="checkout-success-block__sub-header">
+            [`Номер вашего заказа`]: <span class="checkout-success-block__order-id">{$order.id}</span>
+        </div>
+        <div class="checkout-success-block__content" data-shipping_id="{$order.params.shipping_id|default:''|escape}" data-payment_id="{$order.params.payment_id|default:''|escape}">
+            {if !empty($payment_success)}
+                <span class="highlighted">[`Your payment has been successfully accepted. We will process your order and contact you shortly.`]</span>
+            {elseif !empty($payment)}
+                <div class="button-decorator">
+                    {$payment}
+                </div>
+            {else}
+                <a class="button" href="{$wa_app_url|escape}">[`Вернуться в магазин`]</a>
+            {/if}
+
+            <!-- plugin hook: 'frontend_checkout' -->
+            {* @event frontend_checkout.%plugin_id% *}
+            {foreach $frontend_checkout as $_}{$_}{/foreach}
+        </div>
+    </div>
+{/strip}

@@ -1,0 +1,44 @@
+{literal}
+<pre style="position: relative">
+  <h3>Метаданные</h3>
+  <span class="select-all">{$store_info.name}</span> - название магазина
+  <span class="select-all">{$store_info.phone}</span> - телефон магазина
+  <span class="select-all">{$storefront.name}</span> - название витрины
+  <span class="select-all">{$host}</span> - текущий домен
+  <span class="select-all">{$wa_app_url}</span> – ссылка на витрину
+  
+  <h3>Категории</h3>
+  <span class="select-all">{$category.name}</span> - название категории
+  <span class="select-all">{$category.seo_name}</span> - SEO-название категории
+  <span class="select-all">{$root_category.name}</span> - название корневой категории
+  <span class="select-all">{$parent_category.name}</span> - название родительской категории
+  <span class="select-all">{$parent_categories}</span> - массив родительских категорий
+  <span class="select-all">{$parent_categories_names|sep:\' \'}</span> - путь к категории через пробел
+  <span class="select-all">{$category.products_count}</span> - количество товаров в категории
+  <span class="select-all">{$category.min_price}</span> - минимальная цена в категории
+  <span class="select-all">{$category.max_price}</span> - максимальная цена в категории
+  <span class="select-all">{$category.fields[1].value}</span> - список кастомных полей у отдельных категорий
+  <span class="select-all">{$wa-&gt;shop-&gt;categoryUrl($category)}</span> – ссылка на категорию
+  <span class="select-all">{$wa-&gt;shop-&gt;categoryUrl($root_category)}</span> – ссылка на родительскую категорию
+  
+  <h3>Пагинация</h3>
+  <span class="select-all">{$page_number}</span> - номер страницы
+  <span class="select-all">{$pages_count}</span> - количество страниц
+  
+  <h3>Товары</h3>
+  <span class="select-all">{$product.name}</span> - название товара
+  <span class="select-all">{$product.seo_name}</span> - SEO-название товара
+  <span class="select-all">{$product.format_price}</span> - цена товара
+  <span class="select-all">{$product.price}</span> - текущая цена товара
+  <span class="select-all">{$product.sku}</span> - артикул товара
+  <span class="select-all">{$categories_names|sep:\' \'}</span> - путь к товару через пробел
+  
+  <h3>Бренды</h3>
+  <span class="select-all">{$brands}</span> - список брендов
+  <span class="select-all">{$brand_names}</span> - список наименований брендов
+  <span class="select-all">{$brand_names|randomize|array_slice:0:3|sep:\', \'}</span> - список из 3х случайных наименований брендов через запятую
+  
+  <h3>Определенный бренд</h3>
+  <span class="select-all">{$brand.name}</span> - наименование бренда
+</pre>
+{/literal}

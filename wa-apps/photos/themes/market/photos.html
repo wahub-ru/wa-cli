@@ -1,0 +1,44 @@
+{strip}
+    {$photos = $photos|default:[]}
+    {$pages_count = $pages_count|default:1}
+    {$current_page = $wa->get('page', 1)}
+
+    <div class="photos lazy-load" data-count_pages="{$pages_count|escape}">
+        <div class="photos__photos-container">
+            {* @event frontend_collection.%plugin_id%.thumbs_list *}
+            {if !empty($frontend_collection)}{foreach $frontend_collection as $item}{if !empty($item.thumbs_list)}{$item.thumbs_list}{/if}{/foreach}{/if}
+            {include './photos-thumbs.html' classes='photos__list'}
+        </div>
+        {if $pages_count > 1}
+            <div class="photos__footer-container">
+                {if $wa->get('page', 1) == 1}
+                    <div class="photos__more-button-container">
+                        <button class="photos__more-button button button_style_inverse button_size_l" type="button">
+                            <span class="icon-box">
+                                <span class="icon-box__content">
+                                    {_wp("Показать ещё")}
+                                </span>
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="dict-arrow-bottom" classes="button__icon" width=12 height=12}
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="photos__spinner-container">
+                        <span class="spinner">
+                            <span class="image-box">
+                                {call svg_icon classes="spinner " icon='spinner' width=16 height=16 fill='currentColor'}
+                            </span>
+                        </span>
+
+                    </div>
+                {/if}
+
+                <div class="photos__pagination-container">
+                    {call pagination total=$pages_count}
+                </div>
+            </div>
+        {/if}
+    </div>
+{/strip}

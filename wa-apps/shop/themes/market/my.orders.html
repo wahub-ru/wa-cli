@@ -1,0 +1,81 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_my', true)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Мои заказы")}"])}
+
+    <div class="content-wrapper__block">
+        <div class="block block_secondary">
+            <div class="block__header block__header_text">
+                [`Мои заказы`]
+            </div>
+            <div class="block__content">
+                {if count($orders) > 0}
+                    <div class="orders-table table">
+                        <div class="table__head orders-table__head">
+                        <div class="table__row">
+                            <div class="table__head-cell orders-table__cell orders-table__cell_id">
+                                [`Номер заказа`]
+                            </div>
+                            <div class="table__head-cell orders-table__cell orders-table__cell_status">
+                                [`Статус`]
+                            </div>
+                            <div class="table__head-cell orders-table__cell orders-table__cell_items">
+                                [`Состав заказа`]
+                            </div>
+                            <div class="table__head-cell orders-table__cell orders-table__cell_date">
+                                [`Дата заказа`]
+                            </div>
+                            <div class="table__head-cell orders-table__cell orders-table__cell_total">
+                                [`Сумма`]
+                            </div>
+                        </div>
+                        </div>
+                        <div class="table__body orders-table__body">
+                        {foreach $orders as $order}
+                            <a class="table__row orders-table__row link" href="{$order.url|escape}">
+                                <div class="table__cell orders-table__cell orders-table__cell_id">
+                                    {$order.id_str}
+                                </div>
+                                <div class="table__cell orders-table__cell orders-table__cell_status">
+                                    {$style = $order.state->getOption('style')}
+                                    <span class="order-status" style="color: {$style['color']|default:'currentColor'}">
+                                        {$order.state->getName()|escape}
+                                    </span>
+                                </div>
+                                <div class="table__cell orders-table__cell orders-table__cell_items">
+                                    {if isset($order.items) && count($order.items) > 0}
+                                        {$first_item = reset($order.items)}
+                                        {$more_count = count($order.items) - 1}
+                                        <span class="order-item">
+                                            <span class="order-item__name">{$first_item.name|escape}</span>
+                                            <span class="order-item__quantity">&times; {$first_item.quantity}</span>
+                                        </span> {if $more_count > 0}[`и`] <span class="link">[`ещё`] {$more_count} {call plural n=$more_count forms=["{_wp("товар")}", "{_wp("товара")}", "{_wp("товаров")}"]}</span>{/if}
+                                    {/if}
+                                </div>
+                                <div class="table__cell orders-table__cell orders-table__cell_date">
+                                    {$order.create_datetime|wa_datetime:'d.m.Y'}
+                                </div>
+                                <div class="table__cell orders-table__cell orders-table__cell_total">
+                                    {shop_currency_html($order.total, true)}
+                                </div>
+                            </a>
+                        {/foreach}
+                        </div>
+                    </div>
+                {else}
+                    <div class="not-found-block">
+                        <div class="not-found-block__header">
+                            [`У вас еще нет ни одного заказа.`]
+                        </div>
+                    </div>
+                {/if}
+            </div>
+        </div>
+    </div>
+    <!-- plugin hook: 'frontend_my_orders' -->
+    {foreach $frontend_my_orders as $plugin => $_}
+        <!-- frontend_my_orders.{$plugin} -->
+        {$_}
+    {/foreach}
+{/strip}

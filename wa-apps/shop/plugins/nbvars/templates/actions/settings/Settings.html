@@ -1,0 +1,59 @@
+<h1>{$name}</h1>
+
+<div class="s-alert" style="display: block;">
+    <pre>{literal}{$wa->shop->nbvarsPlugin->v('name')}{/literal}</pre>
+    Функция вывода переменной в шаблоне. Где 'name' название переменной.
+</div>
+<div class="fields form">
+    <form action="?plugin=nbvars&module=settings&action=save" method="post">
+        {$wa->csrf()}
+        <div class="field">
+            <div class="name">Добавить переменные</div>
+
+            {foreach item = variable from = $variables}
+            <div class="value">
+                <input type="text" name="ids[]" value="{$variable.name}" placeholder="Пример: phone" pattern="^[a-zA-Z]+$" autocomplete="off" required>
+                <input type="text" name="val[]" value="{$variable.value}" placeholder="+7 (999) 888-77-66" autocomplete="off" required>
+                <a href="javascript:void(0)" class="delete-value-vars"><i class="icon16 delete"></i></a>
+                <br/>
+                <span class="hint">Название и значение переменной.</span>
+            </div>
+            {foreachelse}
+            <div class="value">
+                <input type="text" name="ids[]" value="" placeholder="Пример: phone" pattern="^[a-zA-Z]+$" autocomplete="off" required>
+                <input type="text" name="val[]" value="" placeholder="+7 (999) 888-77-66" autocomplete="off" required>
+                <br/>
+                <span class="hint">Название и значение переменной.</span>
+            </div>
+            {/foreach}
+
+            <div class="value">
+                <ul class="menu-v s-inline-links compact">
+                    <li>
+                        <a href="javascript:void(0)" class="small inline-link add-set-button-vars">
+                            <i class="icon10 add"></i>
+                            <b><i>Дополнительная переменная</i></b>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="field">
+            <input type="submit" class="button green" value="[s`Save`]">
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript">
+    $('.add-set-button-vars').click(function () {
+        let self = $(this);
+        let el = self.closest('.value');
+        let value = el.prev();
+        value.after(value.clone().find('input').val('').closest('.value'));
+    });
+
+    $('#wa-plugins-container').on('click', '.delete-value-vars',function(){
+        $(this).closest('.value').remove();
+    });
+</script>

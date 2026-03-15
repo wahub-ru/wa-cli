@@ -1,0 +1,236 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: shop/plugins/syrattach\n"
+"POT-Creation-Date: 2014-12-03 01:43+0300\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Serge Rodovnichenko <sergerod@gmail.com>\n"
+"Language-Team: shop/plugins/syrattach\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=((((n%10)==1)&&((n%100)!=11))?(0):(((((n%10)>=2)&&((n%10)<=4))&&(((n%100)<10)||((n%100)>=20)))?(1):2));\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: .\n"
+"X-Generator: Poedit 2.4.2\n"
+"Language: ru_RU\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+msgid "Max. file size for upload:"
+msgstr "Максимальный размер файла для загрузки:"
+
+msgid "Select files"
+msgstr "Выберите файлы"
+
+msgid "Add file description"
+msgstr "Добавить описание файла"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "Related files"
+msgstr "Сопутствующие файлы"
+
+msgid "Attached files"
+msgstr "Прикрепленные файлы"
+
+msgid "Empty result"
+msgstr "Пустой ответ"
+
+msgid "Stop upload"
+msgstr "Остановить загрузку"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Files with extensions *.gif, *.jpg, *.jpeg, *.png are allowed only."
+msgstr ""
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Unknown product"
+msgstr "Неизвестный товар"
+
+msgid "Deleted"
+msgstr "Удалено"
+
+msgid "Saved"
+msgstr "Записано"
+
+msgid "Unknown attachment ID"
+msgstr "Неизвестный идентификатор вложения"
+
+msgid "Access denied"
+msgstr "Доступ запрещен"
+
+msgid "Attached Files"
+msgstr "Прикрепленные Файлы"
+
+msgid "Hook"
+msgstr "Хук"
+
+msgid "Hook name to display filelist. Each hook placement depends of theme design. <a href=\"http://www.webasyst.com/developers/docs/plugins/hooks/shop/frontend_product/\" target=\"_blank\">More info about hooks.</a>"
+msgstr "Название хука для показа списка файлов. Конкретное место расположение хука зависит от темы дизайна. <a href=\"http://www.webasyst.ru/developers/docs/plugins/hooks/shop/frontend_product/\" target=\"_blank\">Подробнее о хуках.</a>"
+
+msgid "No. Disable hooks"
+msgstr "Нет. Запретить хуки"
+
+msgid "Product ID missing while file metadata saving"
+msgstr "Не указан идентификатор товара при записи мета-данных"
+
+msgid "Cannot find a record for attachment ID#%d"
+msgstr "Не могу найти запись для вложения с идентификатором %d"
+
+msgid "Delete error"
+msgstr "Ошибка удаления"
+
+msgid "SyrAttach Plugin cannot delete file %s. Message: %s"
+msgstr "Плагин SyrAttach не смог удалить файл %s. Сообщение: %s"
+
+msgid "Description is not set"
+msgstr "Описание не задано"
+
+msgid "Do you really want to reset the template to the original one? All changes you're made will lost!"
+msgstr "Вы действительно хотите восстановить шаблон по умолчанию? Все внесенные вами изменения будут потеряны!"
+
+msgid "Restore original template"
+msgstr "Восстановить стандартный шаблон"
+
+msgid "Variables available within the template:"
+msgstr "Переменные, доступные в шаблоне:"
+
+msgid "A list of file data. Each file item is an array with keys:"
+msgstr "Список данных о файлах. Каждая запись о файле представляет из себя массив со следующими ключами:"
+
+msgid "Attachment ID#"
+msgstr "ID"
+
+msgid "File name"
+msgstr "Имя файла"
+
+msgid "File extension"
+msgstr "Расширение файла"
+
+msgid "File description"
+msgstr "Описание файла"
+
+msgid "File size in bytes"
+msgstr "Размер файла в байтах"
+
+msgid "File URL"
+msgstr "URL"
+
+msgid "Template to display at the hook position. HTML+Smarty"
+msgstr "Шаблон для отображения в выбранном хуке. HTML и Smarty"
+
+msgid "Template"
+msgstr "Шаблон"
+
+msgid "Attached Files Plugin Setup"
+msgstr "Настройка плагина Прикрепленные Файлы"
+
+msgid "Attached Files Plugin Settings"
+msgstr "Настройки плагина Прикрепленные Файлы"
+
+msgid "Attached File"
+msgstr "Прикрепленный файл"
+
+msgid "No ID given for product \"%s\""
+msgstr "Не указан идентификатор (ID) для товара '%s'"
+
+msgid "Wrong file name \"%s\" for product \"%s\". File not saved."
+msgstr "Неверное имя файла '%s' для товара '%s'. Файл не записан."
+
+msgid "File named \"%s\" not exists or it is not a file or file is not readable. File not saved."
+msgstr "Файл с именем '%s' не существует или недоступен для чтения. Или это вообще не файл. Файл не записан."
+
+msgid "Errors"
+msgstr "Ошибки"
+
+msgid "Product ID required"
+msgstr "Требуется id товара"
+
+msgid "Try to delete '%s'"
+msgstr "Попытка удалить '%s'"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Upload or drag & drop files here"
+msgstr "Загрузите или перетащите файлы сюда"
+
+msgid "Loading files"
+msgstr "Загружаемые файлы"
+
+msgid "File deletion confirmation"
+msgstr "Подтверждение удаления"
+
+msgid "Do you really want to delete this file?"
+msgstr "Вы действительно хотите удалить этот файл?"
+
+msgid "Size of %name% exceeds maximum upload size limit"
+msgstr "Размер файла %name% превышает максимально допустимый размер для загрузки"
+
+msgid "You can't upload files to a new product. First, save the product."
+msgstr "К новому товару невозможно загрузить файлы. Сначала сохраните товар."
+
+msgid "Drag & drop files here or click this area to upload files."
+msgstr "Перетащите файлы сюда или кликните на этой области для загрузки файлов."
+
+msgid "Upload error"
+msgstr "Ошибка загрузки"
+
+msgid "Files other than images that may be useful to the buyer: instructions, certificates, etc."
+msgstr "Файлы, кроме изображений, которые могут быть полезны покупателю: инструкции, сертификаты и т.д."
+
+msgid "GB"
+msgstr "ГБ"
+
+msgid "MB"
+msgstr "МБ"
+
+msgid "KB"
+msgstr "КБ"
+
+msgid "bytes"
+msgstr "байт"
+
+msgid "of"
+msgstr "из"
+
+msgid "Default template"
+msgstr "Шаблон по-умолчанию"
+
+msgid "show"
+msgstr "показать"
+
+msgid "Now this code is used instead of the default template. Transfer its code to the design theme template then"
+msgstr "Теперь этот шаблон используется вместо шаблона по-умолчанию. Перенесите этот код в шаблон темы дизайна, а затем"
+
+msgid "delete it from here"
+msgstr "удалите этот код здесь"
+
+msgid "JFYI. Variables available within the template:"
+msgstr "Для справки. Переменные, доступные в шаблоне:"
+
+msgid "Error deleting modified template"
+msgstr "Ошибка удаления пользовательского шаблона"
+
+msgid "Do you really want to delete your custom template?"
+msgstr "Вы действительно хотите удалить шаблон?"
+
+msgid "Storefront without template"
+msgstr "Витрина без шаблона"
+
+msgid "If the design theme used in the storefront does not have a template, the plugin can show the default template or switch self off"
+msgstr "Если в теме дизайна, использованной на витрине, нет шаблона для плагина, то плагин может либо показать шаблон по-умолчанию, либо отключиться для этой витрины"
+
+msgid "Show default template"
+msgstr "Показать шаблон по умолчанию"
+
+msgid "Template saved from previous version of plugin"
+msgstr "Шаблон, сохранённый в прошлой версии"
+
+msgid "Switch off"
+msgstr "Отключиться"

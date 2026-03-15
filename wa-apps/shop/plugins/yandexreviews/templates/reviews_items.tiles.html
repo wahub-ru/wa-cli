@@ -1,0 +1,50 @@
+{strip}
+{foreach $reviews as $r}
+  <div class="yreviews__item" data-review-id="{$r.yandex_review_id|escape}">
+    <div class="yreviews__head">
+<div class="yreviews__avatar">
+{* берём URL из бэкенда *}
+{assign var=avatar value=$r.avatar_public|default:''}
+
+{* режем маскированные enc- и обрезанные ID *}
+{assign var=avatar value=$avatar|regex_replace:"~^https?://avatars\\.mds\\.yandex\\.net/get-yapic/\\d+/enc-[^/]*(?:/.*)?$~":""}
+{assign var=avatar value=$avatar|regex_replace:"~^https?://avatars\\.mds\\.yandex\\.net/get-yapic/\\d+/[A-Za-z0-9_-]*-$~":""}
+{assign var=avatar value=$avatar|regex_replace:"~^https?://avatars\\.mds\\.yandex\\.net/get-yapic/\\d+/$~":""}
+
+{if $avatar}
+  <img class="yreviews__avatar-img"
+       src="{$avatar|escape}"
+       alt="{$r.author_name|default:'Пользователь'|escape}"
+       loading="lazy" decoding="async" referrerpolicy="no-referrer">
+{else}
+  <span class="yreviews__avatar-ph" aria-hidden="true"></span>
+{/if}
+
+
+
+
+</div>
+      <div class="yreviews__meta">
+        <div class="yreviews__author">{$r.author_name|default:'Пользователь'|escape}</div>
+        <div class="yreviews__rating">{if $r.rating}{section name=s loop=$r.rating}★{/section}{/if}</div>
+      </div>
+    </div>
+    {if !empty($r.photos)}
+      <div class="yreviews__photos">
+        {foreach $r.photos as $p}
+          <a class="yreviews__photo" href="{$p|escape}" data-fancybox="yreviews-{$r.yandex_review_id|escape}" data-caption="Фото из отзыва" rel="nofollow">
+            <img src="{$p|escape}" alt="">
+          </a>
+        {/foreach}
+      </div>
+    {/if}
+    {if $r.text}
+      <div class="yreviews__text js-ytext" data-clamp="8" data-minwords="50">{$r.text|escape|nl2br}</div>
+      <a href="#" class="yreviews__full js-ymore" hidden>Показать полностью</a>
+    {/if}
+    {if $r.review_datetime && $r.review_datetime>'2000-01-01 00:00:00'}
+      <div class="yreviews__date yreviews__date--bottom">{$r.review_datetime|date_format:"%d.%m.%Y"}</div>
+    {/if}
+  </div>
+{/foreach}
+{/strip}

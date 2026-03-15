@@ -1,0 +1,152 @@
+.shop-sk-main{
+    padding-top: 30px;
+}
+.shop-sk-tabs__contents{
+    padding-top: 10px;
+}
+.shop-sk-tabs__item{
+    display: none;
+}
+.shop-sk-tabs__item.selected{
+    display: block;
+}
+/* START FORM */
+.shop-sk-form .redactor-box{
+    border: 1px solid #ddd;
+}
+.shop-sk-form .field{
+    padding-top: 16px;
+}
+.shop-sk-form__save.field{
+    padding-top: 30px;
+}
+.shop-sk-form__status .success{
+    color: green;
+}
+.shop-sk-form__status .error{
+    color: red;
+}
+/* END FORM */
+
+/* START GENERATOR */
+.shop-sk-generate-form{
+
+}
+.shop-sk-generate-form__zag{
+    font-weight: bold;
+    font-size: 15px;
+}
+.shop-sk-generate-form__table{
+    width: auto !important;
+}
+.shop-sk-generate-form__table td{
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    font-size: 14px !important;
+}
+.shop-sk-generate-form__tr.error{
+    border-left: 1px solid red;
+    border-right: 1px solid red;
+}
+.shop-sk-generate-form__tr.error td{
+    border-top: 1px solid red !important;
+    border-bottom: 1px solid red !important;
+}
+.shop-sk-generate-form__tr label > *{
+    vertical-align: middle;
+    display: inline-block;
+}
+td.shop-sk-generate-form__sort{
+    width: 50px;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
+    cursor: pointer;
+}
+td.shop-sk-generate-form__name{
+    padding-left: 0 !important;
+    width: 180px;
+}
+.shop-sk-generate-form__name .hint{
+    display: block;
+}
+.shop-sk-generate-form__value{
+    width: 240px;
+}
+table .shop-sk-generate-form__value input{
+    width: 100% !important;
+}
+table input.shop-sk-generate-form__input-small{
+    width: 50px !important;
+}
+.shop-sk-generate-form__add{
+    margin-top: 14px;
+}
+.shop-sk-generate-form__add > *{
+    vertical-align: middle;
+}
+.shop-sk-generate-form__add a{
+    font-size: 13px;
+}
+/* END GENERATOR */
+
+/* START STATUSES */
+.shop-sk-statuses{
+    font-size: 14px !important;
+}
+.shop-sk-statuses__table a{
+    font-size: 14px !important;
+}
+.shop-sk-statuses__table input[type=text]{
+    font-size: 14px !important;
+}
+.shop-sk-statuses__table{
+    width: 400px !important;
+}
+.shop-skcallback__title{
+    width: 220px;
+}
+table.zebra .shop-sk-statuses__color{
+    width: 60px !important;
+}
+.shop-sk-statuses .s-summary-row td{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+.shop-sk-statuses__add{
+    font-size: 12px;
+    margin-top: 12px;
+}
+/* END STATUSES */
+
+/* START BLOCK WITH NOTICE */
+.shop-sk-with-notice{
+    overflow: hidden;
+}
+.shop-sk-with-notice__left{
+    width: 600px;
+    float: left;
+}
+.shop-sk-with-notice__left input[type=text]{
+    width: 100% !important;
+}
+.shop-sk-with-notice__right{
+    width: 300px;
+    float: left;
+    margin: 50px 0 0 40px;
+    padding: 15px;
+    background-color: #F7F7F7;
+    font-size: 13px;
+    border-radius: 5px;
+    color: #5C5550;
+    line-height: 18px;
+}
+.shop-sk-with-notice__right p{
+    margin-bottom: 15px;
+}
+/* END BLOCK WITH NOTICE */
+
+.value__two input[type=text]{
+    width: 100px !important;
+    margin-right: 10px !important;
+}

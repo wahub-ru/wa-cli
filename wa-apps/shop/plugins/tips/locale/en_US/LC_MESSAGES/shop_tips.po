@@ -1,0 +1,68 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: shop/plugins/tips\n"
+"POT-Creation-Date: 2017-04-10 20:22+0300\n"
+"PO-Revision-Date: \n"
+"Last-Translator:  shop/plugins/tips\n"
+"Language-Team:  shop/plugins/tips\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: en_US\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: .\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+#: /wa-apps/shop/plugins/tips/templates/actions/product/ProductLog.html:2
+#: /wa-apps/shop/plugins/tips/templates/hooks/backend_product_tab_li.html:2
+msgid "Edit History"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/actions/shopTipsPluginProductLog.action.php:22
+msgid "Unknown Product ID"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:18
+msgid "Edit history"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:18
+msgid "Show a product editing history in the separate tab at product view page in backend"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/shopTipsPlugin.class.php:23
+msgid "Created"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/shopTipsPlugin.class.php:26
+msgid "Updated"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/shopTipsPlugin.class.php:66
+msgid "Estimated delivery date"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/plugin.php:11
+msgid "Useful Stuff"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:10
+msgid "Product dates"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:11
+msgid "Show date of creation and editing of product"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:14
+msgid "do not show"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:14
+msgid "date"
+msgstr ""
+
+#: /wa-apps/shop/plugins/tips/lib/config/settings.php:14
+msgid "date and time"
+msgstr ""

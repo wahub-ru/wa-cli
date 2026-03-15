@@ -1,0 +1,33 @@
+{strip}
+    {include "./init.html" is_shop=true assign='_'}
+
+    {if count($products) > 0}
+        {$is_sidebar = $is_sidebar|default:$wa->globals('is_show_sidebar')}
+        {if $wa_app === 'shop' && $wa->param('action') === 'page'}
+            {$is_sidebar = !!$theme_settings['shop_information_sidebar_enabled']}
+        {/if}
+
+        {$is_slider = $is_slider|default:$wa->globals('is_slider')|default:false}
+        {$features_variant = $features_variant|default:$wa->globals('features_variant')|default:$theme_settings['shop_catalog_products_thumbs_features_variant']}
+
+        {$wa->globals('add_shop_resources', true)}
+        {if $wa_app !== 'shop' && $market['plugins']['shop_buy1click'] && !method_exists('shopBuy1clickViewHelper', 'frontendHead')}
+            {$_ = shopBuy1clickViewHelper::initAssets(true)}
+        {/if}
+
+        {$product = reset($products)}
+
+        {if !isset($product['skus'])}
+            {$_products = $wa->shop->products(array_keys($products), ['fields' => '*,skus'])}
+
+            {foreach $_products as $key => $product}
+                {$products[$key]['skus'] = $product['skus']}
+            {/foreach}
+        {/if}
+
+        {call products_thumbs products=$products is_sidebar=$is_sidebar is_mobile=$wa->globals('is_mobile') features_variant=$features_variant is_slider=$is_slider}
+
+        {$wa->globals('is_slider', null)}
+        {$wa->globals('features_variant', null)}
+    {/if}
+{/strip}

@@ -1,0 +1,60 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+    <div class="block">
+        <h1 class="block__header block__header_text">
+            {$h1|escape}
+        </h1>
+        {if $brands_alpha || $brands_search}
+            <div class="brands-search">
+                {if $brands_search}
+                    <div class="brands-search__field-wrapper input-search__input-container">
+                        <input class="brands-search__input input-search__input input-text input-text_size_l input-text_fill" type="text" value="" placeholder="Поиск брендов">
+                        <div class="brands-search__clear">
+                            <span class="brands-search__clear-icon image-box">
+                                {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </div>
+                    </div>
+                {/if}
+
+                {if $brands_alpha && count($letters)}
+                    {$has_en_letters = count($letters['en_letters'])}
+                    {$has_ru_letters = count($letters['ru_letters'])}
+                    {$has_numbers = count($letters['numbers'])}
+
+                    <div class="brands-letters">
+                        <div class="brands-letters__title title header_h3">По алфавиту</div>
+                        {if $has_en_letters}
+                            <ul class="brands-letters__list">
+                                {foreach $letters['en_letters'] as $e}
+                                    <li class="brands-letters__item link" data-letter="{$e}">{$e}</li>
+                                {/foreach}
+                            </ul>
+                        {/if}
+                        {if $has_ru_letters || $has_numbers}
+                            <ul class="brands-letters__list">
+                                {if $has_ru_letters}
+                                    {foreach $letters['ru_letters'] as $r}
+                                        <li class="brands-letters__item link" data-letter="{$r}">{$r}</li>
+                                    {/foreach}
+                                {/if}
+                                {if $has_numbers}
+                                    {foreach $letters['numbers'] as $n}
+                                        <li class="brands-letters__item link" data-letter="{$n}">{$n}</li>
+                                    {/foreach}
+                                {/if}
+                            </ul>
+                        {/if}
+                    </div>
+                {/if}
+            </div>
+        {/if}
+        {if $brands}
+            <div class="brands-list-block block__content">
+                {call brands_thumbs brands=$brands size='l' is_letters=$brands_alpha}
+            </div>
+        {/if}
+    </div>
+{/strip}

@@ -1,0 +1,221 @@
+{strip}
+    {include "./init.html" assign='_'}
+
+    {$has_global_error = !empty($error)}
+
+    {if $has_global_error}
+        <div class="error">{$error}</div>
+    {else}
+        {* Variables *}
+        {$has_discount = $discount > 0}
+        {$has_tax = $tax > 0}
+        {$has_shipping = !empty($params.shipping_name)}
+        {$has_terms = !empty($terms)}
+
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_flexdiscount = $plugins['shop_flexdiscount']}
+
+        {if isset($items)}
+            {$_items = $items}
+            {$items = []}
+
+            {foreach $_items as $i => $item}
+                {if $item.type === 'service'}
+                    {$items[$item.parent_id]['services'][$item.service_id] = $item}
+                {else}
+                    {$item.compare_price = $item.compare_price|default:0}
+                    {if $is_enabled_flexdiscount}
+                        {if is_callable(['shopFlexdiscountPluginHelper', 'cartPrice'], false)}
+                            {$flexdiscount_item_price = shopFlexdiscountPluginHelper::cartPrice($item, 0, null, false, false)|floatval}
+
+                            {if $item.price|floatval > $flexdiscount_item_price}
+                                {$item.compare_price = $item.price}
+                                {$item.price = $flexdiscount_item_price}
+                            {/if}
+                        {/if}
+                    {/if}
+
+                    {$items[$i] = $item}
+                    {$items[$i]['services'] = []}
+                {/if}
+            {/foreach}
+        {/if}
+
+        <div class="checkout-confirmation checkout-step step-confirmation">
+            <div class="checkout-confirmation__contact-container">
+                {call contact_block contact=$contact size='l'}
+            </div>
+            <div class="checkout-confirmation__address-container">
+                <div class="checkout-confirmation__addresses">
+                    {if $shipping_address}
+                        <div class="checkout-confirmation__address">
+                            <div class="block block_secondary block_size_xs">
+                                <div class="block__header block__header_text">
+                                    [`Адрес получателя`]
+                                </div>
+                                <div class="block__content">
+                                    <div class="checkout-confirmation__address-content">
+                                        {$shipping_address.value|replace:',':'<br />'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                    {if $billing_address}
+                        <div class="checkout-confirmation__address">
+                            <div class="block block_secondary block_size_xs">
+                                <div class="block__header block__header_text">
+                                    [`Адрес плательщика`]
+                                </div>
+                                <div class="block__content">
+                                    <div class="checkout-confirmation__address-content">
+                                        {$billing_address.value|replace:',':'<br />'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+            {if $params.shipping_name|default:null}
+                <div class="checkout-confirmation__shipping-container">
+                    [`Доставка`]:
+                    {' '}
+                    <span class="checkout-confirmation__shipping">{$params.shipping_name}</span>
+                </div>
+            {/if}
+
+            {if $params.payment_name|default:null}
+                <div class="checkout-confirmation__payment-container">
+                    [`Оплата`]:
+                    {' '}
+                    <span class="checkout-confirmation__payment">{$params.payment_name}</span>
+                </div>
+            {/if}
+
+            <div class="checkout-confirmation__items-container">
+                <div class="checkout-confirmation__items-table table table_responsive">
+                    <div class="table__head">
+                        <div class="checkout-list-item table__row">
+                            <div class="checkout-list-item__cell checkout-list-item__cell_sku table__head-cell">[`Артикул`]</div>
+                            <div class="checkout-list-item__cell checkout-list-item__cell_name table__head-cell">[`Наименование товара`]</div>
+                            <div class="checkout-list-item__cell checkout-list-item__cell_quantity table__head-cell">[`Quantity`]</div>
+                            <div class="checkout-list-item__cell checkout-list-item__cell_total table__head-cell">[`Total`]</div>
+                        </div>
+                    </div>
+                    <div class="table__body">
+                        {foreach $items as $item}
+                            {$has_compare_price = $item.compare_price > 0}
+
+                            <div class="checkout-list-item table__row">
+                                <div class="checkout-list-item__cell checkout-list-item__cell_sku table__cell">
+                                    <div class="table__label-text">
+                                        [`Артикул`]
+                                    </div>
+                                    {$item.sku_code}
+                                </div>
+                                <div class="checkout-list-item__cell checkout-list-item__cell_name table__cell">
+                                    <div class="table__label-text">
+                                        [`Наименование товара`]
+                                    </div>
+                                    {$item.name|regex_replace:'/ \(\)$/':''}
+
+                                    {if count($item.services) > 0}
+                                        <div class="checkout-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="checkout-list-item__service">
+                                                    + {$service.name}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="checkout-list-item__cell checkout-list-item__cell_quantity table__cell">
+                                    <div class="table__label-text">
+                                        [`Quantity`]
+                                    </div>
+                                    <span class="checkout-list-item__price">
+                                        {wa_currency_html($item.price, $item.currency)} &times; {$item.quantity}
+                                    </span>
+                                    {if count($item.services) > 0}
+                                        <div class="checkout-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="checkout-list-item__service">
+                                                    {wa_currency_html($service.price, $service.currency)} &times; {$service.quantity}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="checkout-list-item__cell checkout-list-item__cell_total table__cell">
+                                    <div class="table__label-text">
+                                        [`Total`]
+                                    </div>
+                                    <div class="checkout-list-item__total-prices">
+                                        {if $has_compare_price}
+                                            <div class="checkout-list-item__total-compare-price">
+                                                {wa_currency_html($item.compare_price * $item.quantity, $item.currency)}
+                                            </div>
+                                        {/if}
+
+                                        <div class="checkout-list-item__total-price{if $has_compare_price} checkout-list-item__total-price{/if}">
+                                            {wa_currency_html($item.price * $item.quantity, $item.currency)}
+                                        </div>
+                                    </div>
+                                    {if count($item.services) > 0}
+                                        <div class="checkout-list-item__services">
+                                            {foreach $item.services as $service}
+                                                <div class="checkout-list-item__service">
+                                                    + {wa_currency_html($service.price * $service.quantity, $service.currency)}
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/foreach}
+                    </div>
+                </div>
+            </div>
+            <div class="checkout-confirmation__comment-container">
+                <div class="block block_size_s block_secondary">
+                    <div class="block__header block__header_text">
+                        [`Комментарий к заказу`]
+                    </div>
+                    <div class="block__content">
+                        <textarea class="textarea textarea_fill" name="comment" placeholder="{_wp("Комментарий")}">{$wa->post('comment')}</textarea>
+                    </div>
+                </div>
+            </div>
+            {if $has_terms}
+                <div class="checkout-confirmation__policy-container">
+                    <div class="link-decorator">
+                        <label class="checkbox">
+                            <input class="checkbox__control" type="checkbox" name="terms" value="1" />
+                            <span class="checkbox__mark"></span>
+                            <span class="checkbox__label">
+                                [`Я принимаю`] <a href="{"{$wa->getUrl('/frontend/checkout', ['step' => 'confirmation'])}?terms=1"}" target="_blank">[`Условия предоставления услуг`]</a>
+                            </span>
+            			</label>
+					</div>
+
+					{if waRequest::method() === 'post' && !$wa->post('terms')}
+						<div class="checkout-confirmation__terms-error-container">
+							<div class="error">[`Вы должны прочитать и принять Условия предоставления услуг для того`], [`чтобы оформить заказ.`]</div>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</div>
+
+		<script>
+			$(function () {
+				window.market.Update($('.checkout-confirmation').parent());
+			});
+		</script>
+	{/if}
+
+	<!-- plugin hook: 'frontend_checkout' -->
+	{* @event frontend_checkout.%plugin_id% *}
+	{foreach $frontend_checkout as $_}{$_}{/foreach}
+{/strip}

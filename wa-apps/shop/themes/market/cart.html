@@ -1,0 +1,824 @@
+{strip}
+    {if $wa->get('clear')}
+        {$wa->globals('market.index.only_content', true)}
+        {$wa->shop->cart->clear()}
+
+        {(['status' => 'ok', 'data' => []])|json_encode}
+    {else}
+        {include "./init.html" assign='_'}
+        {* Theme Settings *}
+        {$is_enabled_related = $theme_settings['shop_checkout_cart_related_enabled']}
+        {$is_enabled_refresh_shapes = $theme_settings['shop_checkout_cart_refresh_shapes_enabled']}
+        {$zero_price_text = $theme_settings['shop_misc_zero_price_text']|default:''}
+
+        {$cart_url = $wa->getUrl('shop/frontend/cart')}
+        {$checkout_url = $wa->getUrl('shop/frontend/checkout')}
+
+        {if method_exists($wa->shop, 'checkout')}
+            {$cart_url = $wa->shop->checkout()->cartUrl()}
+            {$checkout_url = $wa->shop->checkout()->url()}
+        {/if}
+
+        {$is_cart_checkout = $checkout_url === $cart_url}
+
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_buy1click = $plugins['shop_buy1click']}
+        {$is_enabled_buy1step = $plugins['shop_buy1step']}
+        {$is_buy1step = $wa->param('plugin') === 'buy1step' || $wa->param('shop_buy1step_is_enabled')}
+        {$is_enabled_giftcertificates = $plugins['shop_giftcertificates']}
+
+        {$has_items = count($cart.items) > 0}
+
+        {if !isset($_currency)}
+            {$_currency = $wa->shop->currency()}
+        {/if}
+
+        {*Cart item*}
+        {function cart_item item=null static=false is_mobile=null}
+            {$has_services = !empty($item.services)}
+            {$has_active_services = false}
+            {$has_image = isset($item.product.image_id)}
+            {$image_size = '80'}
+
+            {if $is_mobile}
+                {$image_size = '50'}
+            {/if}
+
+            {if $has_services}
+                {foreach $item.services as $service}
+                    {$is_checked = !empty($service.id)}
+
+                    {if $is_checked}
+                        {$has_active_services = true}
+                        {break}
+                    {/if}
+                {/foreach}
+            {/if}
+
+            {$quantity_error = "[`Only %d pcs of %s are available, and you already have all of them in your shopping cart.`]"|replace:'%d':'([0-9]+)'|replace:'%s':'(.*?)'}
+            {$has_error = !empty($item.error)}
+            {$has_quantity_error = $has_error && preg_match("/{$quantity_error}/ui", $item.error)}
+
+            {$plugins = $wa->globals('plugins')}
+            {$is_enabled_flexdiscount = $plugins['shop_flexdiscount']}
+
+            {$item.compare_price = $item.compare_price|default:0}
+            {if $is_enabled_flexdiscount}
+                {if is_callable(['shopFlexdiscountPluginHelper', 'cartPrice'], false)}
+                    {$flexdiscount_item_price = shopFlexdiscountPluginHelper::cartPrice($item, 0, null, false, false)|floatval}
+
+                    {if $item.price|floatval > $flexdiscount_item_price}
+                        {$item.compare_price = $item.price}
+                        {$item.price = $flexdiscount_item_price}
+
+                        {$item.full_compare_price = $item.full_price}
+                        {$item.full_price = $flexdiscount_item_price * $item.quantity}
+                    {/if}
+                {/if}
+            {/if}
+
+            {$has_compare_price = !empty($item.compare_price) && $item.compare_price > 0}
+            {$has_full_compare_price = !empty($item.full_compare_price) && $item.full_compare_price > 0}
+
+            {$item_product = $wa->shop->product($item.product.id)}
+            {if class_exists('shopFrac')}
+                {$item_product = shopFrac::inheritSkuFieldsFromProduct($item.product)}
+            {/if}
+
+            {$item_product_sku_id = $item.sku_id}
+            {$item_product_sku = $item_product.skus[$item.sku_id]}
+            {$item_product_quantity_multiplicity = $item_product["order_multiplicity_factor"]|default:1|floatval|json_encode}
+            {$item_product_quantity_step = $item_product_sku["order_count_step"]|default:1|floatval|json_encode}
+            {$item_product_quantity_min = $item_product_sku["order_count_min"]|default:1|floatval|json_encode}
+            {$item_product_base_ratio = $wa->shop->numberFormat($item_product_sku["stock_base_ratio"])|default:0}
+
+            {$_show_fractional = !empty($formatted_units[$item_product["stock_unit_id"]]) && !empty($formatted_units[$item_product["base_unit_id"]]) && ($item_product["stock_unit_id"] !== $item_product["base_unit_id"]) && !empty($item_product_sku["stock_base_ratio"]) && $wa->globals('market.has_premium')}
+            {$is_available = $item.product.status && ($wa->shop->settings('ignore_stock_count') || $item_product_sku.count === null || $item_product_sku.count > 0)}
+
+            {$item_product_price = shop_currency($item_product_sku["price"], ["in_currency" => $_currency, "format" => "price_wrapper"])}
+            {$stock_unit = null}
+            {$base_unit = null}
+            {$base_price = null}
+
+            {if !empty($_show_fractional)}
+                {$stock_unit = $formatted_units[$item_product["stock_unit_id"]]}
+                {$base_unit = $formatted_units[$item_product["base_unit_id"]]}
+                {$base_price = ($item_product_sku["price"]/$item_product_sku["stock_base_ratio"])}
+                {$base_price = shop_currency($base_price, ["in_currency" => $_currency, "format" => "price_wrapper"])}
+            {elseif !empty($formatted_units) && $formatted_units[$item_product["stock_unit_id"]] && !empty($fractional_config) && $fractional_config["stock_units_enabled"] && $wa->globals('market.has_premium')}
+                {$stock_unit = $formatted_units[$item_product["stock_unit_id"]]}
+            {/if}
+
+            {* Template *}
+            <div class="cart-item {if $is_mobile}cart-item_size_s{/if} {if $static}cart-item_static{/if}" data-item_id="{$item.id|escape}">
+                <div class="cart-item__container">
+                    <div class="cart-item__container-image">
+                        <a class="cart-item__image-box image-box image-box_fill" href="{$wa->shop->productUrl($item.product)|escape}">
+                            {if $has_image}
+                                <img src="{$wa->shop->productImgUrl($item.product, $image_size)|escape}" alt="{$item.product.name}" data-rjs="2" />
+                            {else}
+                                {if !empty($theme_settings['product_dummy_image'])}
+                                    <img src="{$theme_settings['product_dummy_image']|escape}" alt="{$item.product.name}" width="{$image_size}"/>
+                                {else}
+                                    {call svg_icon classes='product-thumb__image product-thumb__image_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                {/if}
+                            {/if}
+                        </a>
+                    </div>
+                    <div class="cart-item__container-info">
+                        <div class="cart-item__name-container">
+                            <a class="link link_style_hover" href="{$wa->shop->productUrl($item.product)|escape}">
+                                {$item.name|regex_replace:'/\(\)$/':''|escape}
+                            </a>
+                        </div>
+                        {if $wa->globals('is_mobile') && $is_mobile}
+                            <div class="cart-item__responsive-container">
+                                <div class="cart-item__responsive-controls-container">
+                                    <div class="cart-item__responsive-quantity-container quantity-toggles quantity-toggles_size_s">
+                                        <span class="quantity{if $item.quantity == 1} quantity_min{/if}{if $wa->shop->settings('ignore_stock_count')} quantity_ignore-max{elseif $item_product_sku.count !== null && $item.quantity >= $item_product_sku.count} quantity_max{/if}{if $has_quantity_error} quantity_error{/if}">
+                                            <span class="quantity__button quantity__button_wide quantity__minus-button">
+                                                <span class="image-box">
+                                                    {call svg_icon icon='minus' width=9 height=9 fill='currentColor'}
+                                                </span>
+                                            </span>
+                                            <span class="quantity__input-box">
+                                                <input class="quantity__input quantity__field quantity__field_active input-text" inputmode="decimal" name="quantity[{$item.id|escape}]"  value="{$item.quantity|escape}" data-field-id="stock" data-min="{$item_product_quantity_min}" data-max="{if !$wa->shop->settings('ignore_stock_count')}null{else}{$item_product_sku['count']}{/if}" data-step="{$item_product_quantity_step}" data-multiplicity="{$item_product_quantity_multiplicity}" {if !$is_available} disabled{/if} {if $stock_unit} data-unit="{$stock_unit["name_short"]}"{/if}/>
+                                                {if $base_unit}
+                                                    <input class="quantity__field input-text" inputmode="decimal" data-field-id="base" value="{$item.quantity * $item_product_base_ratio}" data-ratio="{$item_product_base_ratio}" data-unit="{$base_unit["name_short"]}">
+                                                {elseif $stock_unit}
+                                                    <span class="quantity__unit quantity__unit_bottom">
+                                                        {$stock_unit["name_short"]}
+                                                    </span>
+                                                {/if}
+                                            </span>
+                                            <span class="quantity__button quantity__button_wide quantity__plus-button">
+                                                <span class="image-box">
+                                                    {call svg_icon icon='plus' width=9 height=9 fill='currentColor'}
+                                                </span>
+                                            </span>
+                                        </span>
+                                        {if !$is_available}
+                                            <span class="cart-item__no-available">Нет в наличии</span>
+                                        {elseif $base_unit !== null}
+                                            <div class="cart-item__quantity-toggles quantity-toggles__list">
+                                                <span class="quantity-toggles__item quantity-toggles__item_active" data-field-id="stock">
+                                                    {$stock_unit["name_short"]}
+                                                </span>
+                                                <span class="quantity-toggles__item" data-field-id="base">
+                                                    {$base_unit["name_short"]}
+                                                </span>
+                                            </div>
+                                            <div class="cart-item__prices-section quantity-toggles__unit-prices">
+                                                <div class="quantity-toggles__unit-price quantity-toggles__unit-price_active" data-unit-id="stock">{$item_product_price} / {$stock_unit["name_short"]}</div>
+                                                <div class="quantity-toggles__unit-price" data-unit-id="base">{$base_price} / {$base_unit["name_short"]}</div>
+                                            </div>
+                                        {/if}
+                                    </div>
+
+                                    {if !$static}
+                                        <div class="cart-item__responsive-delete-container">
+                                            <span class="cart-item__delete-button pseudo-link pseudo-link_style_gray">[`Удалить`]</span>
+                                        </div>
+                                    {/if}
+                                </div>
+                                <div class="cart-item__responsive-total-container">
+                                    <div class="cart-item__total-prices">
+                                        <span class="cart-item__total-price{if $has_full_compare_price} cart-item__total-price_with-compare{/if}">
+                                            {if $item.full_price == 0 && !empty($zero_price_text)}
+                                                {$zero_price_text}
+                                            {else}
+                                                {shop_currency_html($item.full_price, $item.currency)}
+                                            {/if}
+                                        </span>
+
+                                        {if $has_full_compare_price}
+                                            <span class="cart-item__total-compare-price">
+                                                {shop_currency_html($item.full_compare_price, $item.currency)}
+                                            </span>
+                                        {/if}
+                                    </div>
+                                    {if !$base_unit}
+                                        <div class="cart-item__sub-total">
+                                            <span class="cart-item__quantity">{$item.quantity|escape}</span> × {shop_currency_html($item.price, $item.currency)}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/if}
+
+                        {if $has_services}
+                            <div class="cart-item__services-container accordion-block {if $has_active_services}accordion-block_open{/if}">
+                                <div class="cart-item__services-toggle-container">
+                                    <span class="pseudo-link-box accordion-block__button">
+                                        <span class="icon-box">
+                                            <span class="icon-box__content">
+                                                <span class="pseudo-link-box__link">
+                                                    [`Дополнительные услуги`]
+                                                </span>
+                                            </span>
+                                            <span class="icon-box__icon">
+                                                {call svg_icon classes='cart-item__services-toggle-icon' icon='arrow-bottom' width=10 height=6 fill='currentColor'}
+                                            </span>
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="accordion-block__content cart-item__services-content-container">
+                                    <div class="cart-item__services-content">
+                                        <div class="services">
+                                            {foreach $item.services as $service_id => $service}
+                                                {$is_checked = !empty($service.id)}
+                                                {$has_variants = isset($service.variants)}
+
+                                                <div class="services__item">
+                                                    <div class="service" {if $is_checked}data-item_id="{$service.id|escape}"{/if}>
+                                                        <div class="service__control">
+                                                            <label class="checkbox">
+                                                                <input class="checkbox__control service__checkbox" type="checkbox" name="services[{$item.id}][]" value="{$service_id}"{if $is_checked} checked="checked"{/if} />
+                                                                <span class="checkbox__mark"></span>
+                                                                <span class="checkbox__label">
+                                                                    {$service.name|escape}{' '}
+
+                                                                    {if $service.price && !isset($service.variants)}
+                                                                        ({if $service.price > 0}+{/if}
+                                                                        <span class="service__price">{shop_currency_html($service.price, $service.currency)}</span>
+                                                                        )
+                                                                    {/if}
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                        {if isset($service.variants)}
+                                                            <div class="service__variants">
+                                                                <select class="select-decorator service__select-variants" name="service_variant[{$item.id|escape}][{$service_id|escape}]" {if !$is_checked}disabled="disabled"{/if} data-size="s">
+                                                                    {foreach $service.variants as $variant_id => $variant}
+                                                                        {$is_selected = $service.variant_id == $variant_id}
+
+                                                                        <option class="service__variant" {if $is_selected}selected="selected"{/if} value="{$variant_id|escape}">
+                                                                            {$variant.name|escape} (+{shop_currency($variant.price, $service.currency)})
+                                                                        </option>
+                                                                    {/foreach}
+                                                                </select>
+                                                            </div>
+                                                        {else}
+                                                            <input class="service__input-variant" type="hidden" name="service_variant[{$item.id|escape}][{$service_id|escape}]" value="{$service.variant_id|escape}">
+                                                        {/if}
+                                                    </div>
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                    <div class="cart-item__container-quantity quantity-toggles quantity-toggles_size_s">
+                        <span class="quantity{if $item.quantity == 1} quantity_min{/if}{if $wa->shop->settings('ignore_stock_count')} quantity_ignore-max{elseif $item_product_sku.count !== null && $item.quantity >= $item_product_sku.count} quantity_max{/if}{if $item_product_quantity_step > 1} quantity_step{/if}{if $has_quantity_error} quantity_error{/if}">
+                            <span class="quantity__button quantity__minus-button">
+                                <span class="image-box">
+                                    {call svg_icon icon='minus' width=9 height=9 fill='currentColor'}
+                                </span>
+                                <span class="quantity__step">{$item_product_quantity_step}</span>
+                            </span>
+                            <span class="quantity__input-box">
+                                <input class="quantity__input quantity__field quantity__field_active input-text" inputmode="decimal" name="quantity[{$item.id|escape}]" value="{$item.quantity|escape}" data-field-id="stock" data-min="{$item_product_quantity_min}" data-max="{if !$wa->shop->settings('ignore_stock_count')}null{else}{$item_product_sku['count']}{/if}" data-step="{$item_product_quantity_step}" data-multiplicity="{$item_product_quantity_multiplicity}" {if !$is_available} disabled{/if}{if $stock_unit} data-unit="{$stock_unit["name_short"]}"{/if}/>
+                                {if $base_unit}
+                                    <input class="quantity__field input-text" inputmode="decimal" data-field-id="base" value="{$item.quantity * $item_product_base_ratio}" data-ratio="{$item_product_base_ratio}" data-unit="{$base_unit["name_short"]}">
+                                {elseif $stock_unit}
+                                    <span class="quantity__unit quantity__unit_bottom">
+                                        {$stock_unit["name_short"]}
+                                    </span>
+                                {/if}
+                            </span>
+                            <span class="quantity__button quantity__plus-button">
+                                <span class="image-box">
+                                    {call svg_icon icon='plus' width=9 height=9 fill='currentColor'}
+                                </span>
+                                <span class="quantity__step">{$item_product_quantity_step}</span>
+                            </span>
+                        </span>
+                        {if !$is_available}
+                            <span class="cart-item__no-available">Нет в наличии</span>
+                        {else}
+                            {if $base_unit !== null}
+                                <div class="cart-item__quantity-toggles quantity-toggles__list quantity-toggles__list_center">
+                                    <span class="quantity-toggles__item quantity-toggles__item_active" data-field-id="stock">
+                                        {$stock_unit["name_short"]}
+                                    </span>
+                                    <span class="quantity-toggles__item" data-field-id="base">
+                                        {$base_unit["name_short"]}
+                                    </span>
+                                </div>
+                                <div class="cart-item__prices-section quantity-toggles__unit-prices">
+                                    <div class="quantity-toggles__unit-price quantity-toggles__unit-price_active" data-unit-id="stock">{$item_product_price} за {$stock_unit["name_short"]}</div>
+                                    <div class="quantity-toggles__unit-price" data-unit-id="base">{$base_price} за {$base_unit["name_short"]}</div>
+                                </div>
+                            {/if}
+                        {/if}
+                    </div>
+                    <div class="cart-item__container-total">
+                        <div class="cart-item__total-prices">
+                            <span class="cart-item__total-price{if $has_full_compare_price} cart-item__total-price_with-compare{/if}">
+                                {if $item.full_price == 0 && !empty($zero_price_text)}
+                                    {$zero_price_text}
+                                {else}
+                                    {shop_currency_html($item.full_price, $item.currency)}
+                                {/if}
+                            </span>
+
+                            {if $has_full_compare_price}
+                                <span class="cart-item__total-compare-price">
+                                    {shop_currency_html($item.full_compare_price, $item.currency)}
+                                </span>
+                            {/if}
+                        </div>
+                        {if $item.full_price != 0 || empty($zero_price_text)}
+                            <div class="cart-item__sub-total">
+                                <span class="cart-item__quantity">{$item.quantity|escape}</span> × {shop_currency_html($item.price, $item.currency)}
+                            </div>
+                        {/if}
+                        {if !$static}
+                            <div class="cart-item__delete-button-container">
+                                <span class="cart-item__delete-button pseudo-link pseudo-link_style_gray">[`Удалить`]</span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+
+                {if $has_error}
+                    <div class="cart-item__error">
+                        {$item.error}
+                    </div>
+                {/if}
+            </div>
+        {/function}
+
+
+        {if $wa->get('item_id')}
+            {*cart-item-modal*}
+            {$wa->globals('market.index.only_content', true)}
+
+            {$cart_count = $wa->shop->cart->count()}
+            {$cart_total = $wa->shop->cart->total()}
+            {$item_id = $wa->get('item_id')}
+            {$item = $cart.items[$item_id]}
+            {$has_image = isset($item.product.image_id)}
+            {$is_dummy_image = !$has_image}
+
+            <div class="cart-item-modal">
+                <div class="cart-item-modal__item-container">
+                    {call cart_item item=$item static=true is_mobile=$wa->get('mobile')}
+                </div>
+                <div class="cart-item-modal__cart-container">
+                    <div class="cart-item-modal__cart">
+                        <div class="cart-item-modal__cart-info">
+                            <a class="link" href="{$cart_url|escape}">[`В корзине`] <span class="cart-item-modal__count">{$cart_count|escape} {call plural n=$cart_count forms=["{_wp("товар")}", "{_wp("товара")}", "{_wp("товаров")}"]}</span></a>{if $cart_total != 0 || empty($zero_price_text)} [`на сумму`] <span class="cart-item-modal__total">{shop_currency_html($cart_total, true)}</span>{/if}
+                        </div>
+                        <div class="cart-item-modal__cart-buttons-container">
+                            <div class="cart-item-modal__cart-buttons">
+                                <div class="cart-item-modal__cart-button">
+                                    <a class="button button_size_l cart-item-modal__button" href="{$cart_url|escape}">
+                                        [`Перейти в корзину`]
+                                    </a>
+                                </div>
+                                <div class="cart-item-modal__cart-button">
+                                    <button class="cart-item-modal__button cart-item-modal__continue-button button button_style_inverse button_size_l">
+                                        [`Продолжить покупки`]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {if $theme_settings['shop_checkout_add_to_cart_effect'] === 'modal_cross'}
+                    {$related_products = $wa->shop->crossSelling($item.product_id, 4)}
+
+                    {if count($related_products) > 0}
+                        <div class="cart-item-modal__products-container">
+                            <div class="block block_size_s">
+                                <div class="block__header block__header_text">
+                                    [`Рекомендуем посмотреть`]
+                                </div>
+                                <div class="block__content">
+                                    {call products_thumbs_mini  products=$related_products}
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+                {/if}
+            </div>
+        {elseif $wa->get('popup')}
+            {*cart-popup*}
+            {$wa->globals('market.index.only_content', true)}
+
+            {if $is_enabled_buy1step}
+                {$settings = shopBuy1stepPlugin::getContext()->getSettingsService()->getCurrentStorefrontSettings()}
+
+                {if $settings->isEnabledForAdmin()}
+                    {$is_enabled = $wa->user->isAdmin()}
+                {else}
+                    {$is_enabled = $settings->isEnabled()}
+                {/if}
+
+                {$is_enabled = $is_enabled && $settings->isEnabledOnStorefront()}
+                {$is_enabled = $is_enabled && !(waRequest::isMobile() && $settings->isDisabledOnMobile())}
+
+                {if $is_enabled && $settings->getMode() === 'cart'}
+                    {$checkout_url = $cart_url}
+                {/if}
+            {/if}
+
+            {if count($cart.items) > 0}
+                <div class="cart-popup">
+                    <div class="cart-popup__close">
+                        <span class="image-box">
+                            {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                        </span>
+                    </div>
+                    <div class="cart-popup__header">
+                        <span class="title title_h3">
+                            [`Корзина`]
+                        </span>
+                    </div>
+                    <div class="cart-popup__content">
+                        <div class="cart-popup__items-container">
+                            <div class="cart-popup__items">
+                                {foreach $cart.items as $item}
+                                    <div class="cart-popup__item">
+                                        {$has_image = isset($item.product.image_id)}
+
+                                        <div class="cart-popup-item" data-item_id="{$item.id|escape}">
+                                            <div class="cart-popup-item__image-container">
+                                                <a class="cart-popup-item__image-box image-box image-box_fill" href="{$wa->shop->productUrl($item.product)|escape}">
+                                                    {if $has_image}
+                                                        <img src="{$wa->shop->productImgUrl($item.product, '60')|escape}" alt="{$item.name|escape}" data-rjs="2" />
+                                                    {else}
+                                                        {call svg_icon icon='no-thumb' width=50 height=50 fill='#CFCFCF'}
+                                                    {/if}
+                                                </a>
+                                            </div>
+                                            <div class="cart-popup-item__info-container">
+                                                <div class="cart-popup-item__name-container">
+                                                    <a class="link link_style_hover" href="{$wa->shop->productUrl($item.product)|escape}">
+                                                        {$item.name|escape}
+                                                    </a>
+                                                </div>
+                                                <div class="cart-popup-item__quantity-container">
+                                                    {$item.quantity|escape} [`шт.`]
+                                                </div>
+                                            </div>
+                                            <div class="cart-popup-item__total-container">
+                                                {shop_currency_html($item.full_price, $item.currency)}
+                                            </div>
+                                            <div class="cart-popup-item__delete-container">
+                                                <span class="button button_style_gray button_size_xxs button_icon cart-popup-item__delete-button">
+                                                    <span class="image-box image-box_fill">
+                                                        {call svg_icon icon='cross' classes='button__icon' width=8 height=8}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                        <div class="cart-popup__total-container">
+                            <div class="cart-popup__total-label">
+                                [`Итоговая сумма`]:
+                            </div>
+                            <div class="cart-popup__total">
+                                {shop_currency_html($cart.total, true)}
+                            </div>
+                        </div>
+                        <div class="cart-popup__buttons-container">
+                            <div class="cart-popup__buttons{if $is_cart_checkout} cart-popup__buttons_fill{/if}">
+                                {if !$is_cart_checkout}
+                                    <div class="cart-popup__button">
+                                        <a class="button button_size_l button_style_inverse button_fill" href="{$cart_url|escape}">
+                                            [`Перейти в корзину`]
+                                        </a>
+                                    </div>
+                                {/if}
+                                <div class="cart-popup__button{if $is_cart_checkout} cart-popup__button_fill{/if}">
+                                    <a class="button button_size_l button_fill" href="{$checkout_url|escape}">
+                                        [`Оформить заказ`]
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {/if}
+        {else}
+            {* Cart Page Start *}
+                {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Корзина")}"])}
+                {$wa->globals('is_checkout', true)}
+
+                {* Template *}
+                <div class="cart-page blocks" data-is_enabled_refresh_shapes="{call bool2str value=$is_enabled_refresh_shapes}">
+                    <div class="blocks__item">
+                        <div class="block">
+                            <div class="block__header">
+                                <div class="block-header">
+                                    <div class="block-header__main">
+                                        <h1 class="title title_h1">[`Корзина`]</h1>
+                                    </div>
+                                    {if $has_items}
+                                        <div class="block-header__additional">
+                                            <span class="pseudo-link-box pseudo-link-box_style_gray pseudo-link-box_link cart-page__clear-button">
+                                                <span class="icon-box">
+                                                    <span class="icon-box__icon">
+                                                        {call svg_icon icon="trash" classes="pseudo-link-box__icon" width=14 height=18}
+                                                    </span>
+                                                    <span class="icon-box__content">
+                                                        <span class="pseudo-link-box__link">
+                                                            {_wp("Очистить корзину")}
+                                                        </span>
+                                                    </span>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                            <div class="block__content">
+                                {if $has_items}
+                                    <form class="cart-page__form form form_fill ajax-form" action="{$wa->getUrl('shop/frontend/cart')}" method="post" data-remove-header="1">
+
+                                        <div class="cart-page__container">
+                                            <div class="cart-page__container-items">
+                                                <div class="cart-page__items">
+                                                    {if !is_null($cart)}
+                                                        <div class="cart-items-header">
+                                                            <div class="cart-items-header__container">
+                                                                <div class="cart-items-header__container-info">[`Ваш заказ`]</div>
+                                                                <div class="cart-items-header__container-quantity">[`Количество`]</div>
+                                                                <div class="cart-items-header__container-total">[`Сумма`]</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="cart-items-container">
+                                                            <div class="cart-items">
+                                                                {foreach $cart.items as $item}
+                                                                    <div class="cart-items__item">
+                                                                        {call cart_item item=$item is_mobile=$wa->globals('is_mobile')}
+                                                                    </div>
+                                                                {/foreach}
+                                                            </div>
+                                                        </div>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <div class="cart-page__container-summary">
+                                                {$has_discount = $discount > 0}
+                                                {$has_add_affiliate_bonus = shopAffiliate::isEnabled() && !empty($add_affiliate_bonus)}
+                                                {$has_affiliate_bonus = shopAffiliate::isEnabled() && $affiliate_bonus > 0}
+                                                {$has_affiliate_discount = shopAffiliate::isEnabled() && $use_affiliate|default:null && $affiliate_bonus > 0}
+                                                {$has_added_affiliate_bonus = shopAffiliate::isEnabled() && !empty($add_affiliate_bonus)}
+                                                {$used_affiliate_bonus = $used_affiliate_bonus|default:0}
+
+                                                {$subtotal = $wa->shop->cart->total(false)}
+
+                                                {$buy1click_button = null}
+
+                                                {if $is_enabled_buy1click}
+                                                    {capture assign='buy1click_button'}
+                                                        <div class="buy1click-decorator buy1click-decorator_cart-button">
+                                                            {shopBuy1clickViewHelper::getCartButton()|replace:'{$class_placeholder}':'button button_style_light button_fill button_size_l'}
+                                                        </div>
+                                                    {/capture}
+                                                {/if}
+
+                                                <div class="cart-summary {if $is_buy1step}cart-summary_buy1step{/if}" data-use_affiliate="{$use_affiliate|default:null}">
+                                                    <div class="cart-summary__sub-totals">
+                                                        <div class="cart-summary__sub-total cart-summary__sub-total_sub-total">
+                                                            <div class="row-value">
+                                                                <div class="row-value__label-container">
+                                                                    <span class="row-value__label-text">
+                                                                        {_wp("Подытог")}
+                                                                    </span>
+                                                                </div>
+                                                                <div class="row-value__value-container">
+                                                                    <span class="row-value__value-text">
+                                                                        {shop_currency_html($subtotal, true)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="cart-summary__sub-total">
+                                                            <div class="row-value">
+                                                                <div class="row-value__label-container">
+                                                                    <span class="row-value__label-text">
+                                                                        {_wp("Скидка")}
+                                                                    </span>
+                                                                </div>
+                                                                <div class="row-value__value-container">
+                                                                    <span class="row-value__value-text">
+                                                                        <span class="cart-summary__discount">{shop_currency_html($discount, true)}</span>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        {if $has_affiliate_discount}
+                                                            <div class="cart-summary__sub-total">
+                                                                <div class="row-value">
+                                                                    <div class="row-value__label-container">
+                                                                        <span class="row-value__label-text">
+                                                                            {_wp("Бонусные баллы")}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="row-value__value-container">
+                                                                        <span class="row-value__value-text">
+                                                                            <span class="cart-summary__affiliate-discount">{shop_currency_html(shopAffiliate::convertBonus($used_affiliate_bonus))}</span>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        {/if}
+                                                    </div>
+                                                    {if shopDiscounts::isEnabled('coupons')}
+                                                        <div class="cart-summary__coupon-container">
+                                                            {$coupon_code = $coupon_code|default:''}
+                                                            {$has_coupon = !!$coupon_code}
+                                                            {$is_invalid_coupon = $coupon_code && empty($coupon_discount) && empty($coupon_free_shipping)}
+
+                                                            <div class="cart-coupon toggle-block {if $has_coupon}toggle-block_active{/if}">
+                                                                <div class="cart-coupon__button-box">
+                                                                    <span class="pseudo-link toggle-block__button">[`У меня есть купон`]</span>
+                                                                </div>
+                                                                <div class="cart-coupon__field-box">
+                                                                    <div class="inline-field inline-field_fill">
+                                                                        <div class="inline-field__content">
+                                        									<input class="cart-coupon__input input-text input-text_fill {if $is_invalid_coupon}input-text_error{/if}" name="coupon_code" placeholder="{_wp("Введите код купона")}" value="{$coupon_code|escape}" />
+	                                                                        {if $is_invalid_coupon}
+																				<div class="inline-field__error">
+																					[`Неверный код купона`]
+																				</div>
+	                                                                        {/if}
+																		</div>
+																		<div class="inline-field__button">
+																			<button class="button">OK</button>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+	                                                {/if}
+
+                                                    {if $is_enabled_giftcertificates}
+                                                        <div class="cart-summary__coupon-container">
+                                                            <div class="cart-coupon toggle-block {if $has_coupon}toggle-block_active{/if}">
+                                                                <div class="cart-coupon__button-box">
+                                                                    <span class="pseudo-link toggle-block__button">[`У меня есть сертификат`]</span>
+                                                                </div>
+                                                                <div class="cart-coupon__field-box giftcertificates-decorator">
+                                                                    <div class="inline-field inline-field_fill">
+                                                                        {shopGiftcertificatesPluginHelper::getCartForm()}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {/if}
+													<div class="cart-summary__total-container">
+														<span class="cart-summary__total-label">[`Итоговая сумма`]:</span>
+														<span class="cart-summary__total">
+	                                                        {if $cart.total == 0 && !empty($zero_price_text)}
+	                                                            {$zero_price_text}
+	                                                        {else}
+	                                                            {shop_currency_html($cart.total, true)}
+	                                                        {/if}
+														</span>
+													</div>
+	                                                {if shopAffiliate::isEnabled()}
+														<div class="cart-summary__add-affiliate-bonus-container">
+															<div class="row-value">
+															    <div class="row-value__label-container">
+															        <span class="row-value__label-text">
+															            {_wp("Начислится на счет")}
+															        </span>
+															    </div>
+															    <div class="row-value__value-container">
+															        <span class="row-value__value-text">
+															            <span class="cart-summary__add-affiliate-bonus">{$add_affiliate_bonus} [`б.`]</span>
+															        </span>
+															    </div>
+															</div>
+
+														</div>
+	                                                {/if}
+	                                                {if $has_affiliate_bonus}
+														<div class="cart-summary__use-affiliate-container">
+															<input type="hidden" name="use_affiliate" value="" />
+															<label class="checkbox">
+																<input class="checkbox__control cart-summary__use-affiliate-input" type="checkbox" name="use_affiliate" value="1" {if $use_affiliate}checked="checked"{/if} />
+																<span class="checkbox__mark"></span>
+																<span class="checkbox__label">
+																	[`Использовать бонусы для частичной оплаты заказа`] — <span class="cart-summary__affiliate-bonus">{$affiliate_bonus} [`б.`]</span>
+																</span>
+															</label>
+														</div>
+	                                                {/if}
+													<div class="cart-summary__buttons-container">
+														<div class="cart-summary__button-container">
+															<button class="button button_size_l button_fill cart-summary__button" name="checkout" value="1"{if $is_buy1step} type="button"{/if}>[`Оформить заказ`]</button>
+														</div>
+	                                                    {if $buy1click_button}
+															<div class="cart-summary__buy1click-container">
+	                                                            {$buy1click_button}
+															</div>
+	                                                    {/if}
+													</div>
+												</div>
+											</div>
+										</div>
+                                        <div class="form__loader">
+                                            <span class="spinner">
+                                                <span class="image-box">
+                                                    {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                                                </span>
+                                            </span>
+
+                                        </div>
+									</form>
+								{else}
+									<div class="not-found-block">
+										<div class="not-found-block__header">
+											[`Корзина пуста.`]
+										</div>
+										<div class="not-found-block__content">
+											[`Для добавления товаров в корзину`]{' '}
+											<a class="link" href="{$wa_url|escape}">[`перейдите на главную.`]</a>
+										</div>
+									</div>
+								{/if}
+							</div>
+						</div>
+					</div>
+
+					{capture assign='frontend_cart_content'}
+						{$decorated_plugins = ['freedelivery', 'giftcertificates']}
+
+						{foreach $frontend_cart as $plugin => $_}
+							{$plugin_id = "{substr($plugin, 0, -7)}"}
+
+                            {if $is_enabled_giftcertificates && $plugin_id == 'giftcertificates'}{continue}{/if}
+
+							{capture assign='output'}
+								<!-- frontend_cart.{$plugin} -->
+								{$_}
+							{/capture}
+
+							{if $plugin_id|in_array:$decorated_plugins}
+								<div class="{$plugin_id}-decorator">
+									{if $plugin_id === 'freedelivery'}
+										<div class="products-slider-decorator">
+											{$output}
+										</div>
+									{else}
+										{$output}
+									{/if}
+								</div>
+							{else}
+								{$output}
+							{/if}
+						{/foreach}
+					{/capture}
+
+					{if !empty($frontend_cart_content)}
+						<div class="blocks__item">
+							<!-- plugin hook: 'frontend_cart' -->
+							{* @event frontend_cart.%plugin_id% *}
+							{$frontend_cart_content}
+						</div>
+					{/if}
+
+					{$related_products = $wa->shop->crossSelling($cart.items, 'product_id')}
+
+					{if $is_enabled_related && count($related_products) > 0}
+						<div class="blocks__item">
+							<div class="block slider-block">
+								<div class="block__header">
+									<div class="slider-block__header-container">
+										<div class="slider-block__header-text-container">
+                                            [`Рекомендуем`]
+										</div>
+
+										<div class="slider-block__buttons-container">
+	                                        {call slider_arrows}
+										</div>
+									</div>
+								</div>
+								<div class="block__content">
+									{call products_thumbs products=$related_products is_slider=true}
+								</div>
+							</div>
+						</div>
+					{/if}
+				</div>
+
+			{* Cart Page End *}
+		{/if}
+	{/if}
+{/strip}

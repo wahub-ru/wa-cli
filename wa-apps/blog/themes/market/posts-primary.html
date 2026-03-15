@@ -1,0 +1,124 @@
+{strip}
+    {* Theme Settings *}
+    {$is_author_enabled = $theme_settings['blog_enable_author']}
+
+    <div class="blog-posts">
+        {foreach $posts as $post}
+            <div class="blog-posts__item">
+                {* Post Primary Start *}
+                    {function post_user is_responsive=0}
+                        {if $post.user}
+                            <div class="blog-post__author-container {if !$is_responsive}r-hidden-md{else}r-hidden-desktop{/if}">
+                                {call contact_block contact=$wa->contact($post.user.id) link=$post.user.posts_link}
+                            </div>
+                        {/if}
+                    {/function}
+                    <div class="blog-post">
+                        <div class="blog-post__name-container">
+                            <span class="title title_h2">
+                                <a class="link link_style_hover" href="{$post.link|escape}">
+                                    {$post.title}
+                                </a>
+                            </span>
+                        </div>
+                        <div class="blog-post__info-container">
+                            {if $is_author_enabled}
+                                {call post_user}
+                            {/if}
+
+                            <div class="blog-post__datetime-container">
+                                <span class="datetime icon-box">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon='date' width=18 height=20 fill='#CFCFCF'}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        {$post.datetime|wa_datetime:'humandate'}
+                                    </span>
+                                </span>
+
+                            </div>
+
+                            {if $post.comments_allowed && !empty($post.comment_count)}
+                                <div class="blog-post__comments-container">
+                                    <a class="link-box" href="{$post.link}#comments">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon icon="comments" classes="link-box__icon" width=18 height=18}
+                                            </span>
+
+                                            <span class="icon-box__content">
+                                                <span class="link-box__link" data-plain-text="{$post.comment_count}">
+                                                    {$post.comment_count} {call plural forms=["{_wp("комментарий")}", "{_wp("комментария")}", "{_wp("комментариев")}"] n=$post.comment_count}
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                </div>
+                            {/if}
+                        </div>
+
+                        {if $is_author_enabled}
+                            {call post_user is_responsive=1}
+                        {/if}
+
+                        {$post_text = $post.text}
+                        {$post_image_url = "{call blog_post_image post=$post size='l'}"|trim}
+
+                        {if !empty($post_image_url)}
+                            {$post_text = $post.text}
+                            {$post_text = $post_text|regex_replace:'/<figure>?.+<\/figure>/':''}
+                            {$post_text = $post_text|regex_replace:'/<img?.+\>/':''}
+                            {$post_text = $post_text|regex_replace:'/<p><\/p>/':''}
+
+                            <div class="blog-post__image-block image-box image-box_contain">
+                                <img class="blog-post__image" src="{$post_image_url}" alt="">
+                            </div>
+                        {/if}
+
+                        <div class="blog-post__content-container">
+                            {if $is_search && $wa->param('search') !== 'category'}
+                                <div class="content-decorator">
+                                    {$post_text|strip_tags|truncate:400}
+                                </div>
+                            {else}
+                                <div class="content-decorator">
+                                    {$post_text}
+                                </div>
+
+                                {if $post.cutted}
+                                    <div class="blog-post__more-container">
+                                        <a class="button button_style_light" href="{$post.link|escape}">
+                                            <span class="icon-box">
+                                                <span class="icon-box__content">
+                                                    {$post.cut_link_label|default:"{_wp("Читать далее")}"}
+                                                </span>
+                                                <span class="icon-box__icon">
+                                                    {call svg_icon icon="dict-arrow-right" classes="button__icon" width=10 height=10}
+                                                </span>
+                                            </span>
+                                        </a>
+                                    </div>
+                                {/if}
+
+                                {if $post.album_id && $post.album.id && $post.album.photos}
+                                    <div class="blog-post__photos-album">
+                                        {foreach $post.album.photos as $photo}
+                                            <div class="blog-post__photos-album-item">
+                                                <a href="{$post.link}#photo{$photo.id}">
+                                                    {call image
+                                                        src=$photo.thumb_crop.url
+                                                        alt=$photo.name
+                                                    }
+                                                </a>
+                                            </div>
+                                        {/foreach}
+                                    </div>
+                                {/if}
+                            {/if}
+                        </div>
+                    </div>
+                {* Post Primary End *}
+            </div>
+        {/foreach}
+    </div>
+{/strip}

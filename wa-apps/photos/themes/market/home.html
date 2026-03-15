@@ -1,0 +1,92 @@
+{strip}
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+
+    {* Theme Settings *}
+    {$is_enabled_stream = $theme_settings['photos_stream_enabled']}
+    {$header_text_stream = $theme_settings['photos_stream_header']}
+    {$header_text = $theme_settings['photos_header']}
+    {$variant = $theme_settings['photos_variant']}
+
+
+    {* Variables *}
+    {$wa->globals('is_show_breadcrumbs', true)}
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Фотографии")}"])}
+
+    {if $variant === 'sidebar'}
+        {$wa->globals('is_show_sidebar', true)}
+    {/if}
+
+    {capture assign='stream_block'}
+        {$_photos = []}
+        {foreach $photos as $photo}
+            {if empty($photo.description) || (!empty($photo.description) && !preg_match('/^promo_id=\d+/', $photo.description))}
+                {$_photos[] = $photo}
+            {/if}
+        {/foreach}
+        {$photos = $_photos}
+
+        {include './photos.html'}
+    {/capture}
+
+    {* Template *}
+    <div class="photos-home-page">
+        <div class="blocks">
+
+            {if $variant === 'sidebar'}
+                <div class="blocks__item">
+                    <div class="block">
+                        <div class="block__header">
+                            <h1 class="title title_h1">
+                                {if $header_text}
+                                    {$header_text}
+                                {else}
+                                    {$wa->title()}
+                                {/if}
+                            </h1>
+                        </div>
+                        <div class="block__content">
+                            {$stream_block}
+                        </div>
+                    </div>
+                </div>
+            {else}
+                <div class="blocks__item">
+                    <div class="block">
+                        <div class="block__header">
+                            <h1 class="title title_h1">
+                                {if $header_text}
+                                    {$header_text}
+                                {else}
+                                    {$wa->title()}
+                                {/if}
+
+                            </h1>
+                        </div>
+                        <div class="block__content">
+                            {$albums = $wa->photos->childAlbums()}
+
+                            {include './albums.html'}
+                        </div>
+                    </div>
+                </div>
+
+                {if $is_enabled_stream && $stream_block}
+                    <div class="blocks__item">
+                        <div class="block">
+                            <div class="block__header photos-home-page__sub-header">
+                            <span class="title title_h2">
+                                {$header_text_stream|escape}
+                            </span>
+                            </div>
+                            <div class="block__content">
+                                {$stream_block}
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+            {/if}
+
+
+        </div>
+    </div>
+{/strip}

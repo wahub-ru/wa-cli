@@ -1,0 +1,12 @@
+fd2c4fd47bad389a380609f9ad3e6b75 *img/nbvars.png
+a1751e1f10a3b96b05d0401c97e72008 *lib/.htaccess
+49248111e17890d0380c7765631c9001 *lib/actions/settings/shopNbvarsPluginSettings.action.php
+f899bad6b07d56a15feca90266a30109 *lib/actions/settings/shopNbvarsPluginSettingsSave.controller.php
+5a02bbb50c04948820e38a0ddadc7873 *lib/classes/shopNbvarsPluginViewHelper.class.php
+afa51a429438da7810354681465bd2ca *lib/config/db.php
+db15aeabaab19e3741e2b8eb711382e6 *lib/config/plugin.php
+97ab9b0c533ce744ef1a52acbee45cb7 *lib/config/requirements.php
+777c3632a42a174a813aca83b4673b74 *lib/models/shopNbvarsVariable.model.php
+b021d7082762e9facb2ff9550ce0d7cc *lib/shopNbvarsPlugin.class.php
+a1751e1f10a3b96b05d0401c97e72008 *templates/.htaccess
+7431d27ed58048da9db17a3b96ed844f *templates/actions/settings/Settings.html

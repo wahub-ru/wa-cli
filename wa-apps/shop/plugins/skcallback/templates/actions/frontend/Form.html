@@ -1,0 +1,473 @@
+{strip}
+    <script src="{$shopSkCallbackPathJS}{if $skcallback_settings.minimization}shopSkCallback.min.js?1{else}shopSkCallback.js?1{/if}"></script>
+
+    <div class="shop-sk-callback js-sk-callback">
+
+        {if $skcallback_defines.title}
+            <div class="shop-sk-callback__title">{$skcallback_defines.title}</div>
+        {/if}
+
+        {if $skcallback_defines.text}
+            <div class="shop-sk-callback__text">{$skcallback_defines.text}</div>
+        {/if}
+
+        <form class="shop-sk-callback__form js-sk-callback-form">
+
+            {$wa->csrf()}
+
+            {* === КВИЗ-КАЛЬКУЛЯТОР ПАКЕТОВ === *}
+            <div id="sk-quiz" class="sk-quiz">
+
+                {* Шаг 1 — тип пакета *}
+                <div class="sk-quiz__step sk-quiz__step--type is-active" data-step="1">
+                    <h3 class="sk-quiz__title">Выберите тип пакета</h3>
+
+                    <div class="sk-quiz__options" data-field="type">
+                        <button type="button" class="sk-quiz__option" data-value='Пакет "Майка"'>
+                            <span class="sk-quiz__option-label">Пакет «Майка»</span>
+                        </button>
+
+                        <button type="button" class="sk-quiz__option" data-value='Пакет с вырубной ручкой'>
+                            <span class="sk-quiz__option-label">Пакет с вырубной ручкой</span>
+                        </button>
+                    </div>
+
+                    <div class="sk-quiz__nav">
+                        <span></span>
+                        <button type="button" class="sk-quiz__next" disabled>Далее</button>
+                    </div>
+                </div>
+
+                {* Шаг 2 — размер *}
+                <div class="sk-quiz__step" data-step="2">
+                    <h3 class="sk-quiz__title">Выберите размер пакета</h3>
+
+                    <div class="sk-quiz__options" data-field="size">
+                        <button type="button" class="sk-quiz__option" data-value="24×40"><span>24×40</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="30×50"><span>30×50</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="35×60"><span>35×60</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="38×60"><span>38×60</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="40×70"><span>40×70</span></button>
+                    </div>
+
+                    <div class="sk-quiz__nav">
+                        <button type="button" class="sk-quiz__prev">Назад</button>
+                        <button type="button" class="sk-quiz__next" disabled>Далее</button>
+                    </div>
+                </div>
+
+                {* Шаг 3 — толщина *}
+                <div class="sk-quiz__step" data-step="3">
+                    <h3 class="sk-quiz__title">Выберите толщину пакета</h3>
+
+                    <div class="sk-quiz__options" data-field="thickness">
+                        <button type="button" class="sk-quiz__option" data-value="50 мкм"><span>50 мкм</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="60 мкм"><span>60 мкм</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="70 мкм"><span>70 мкм</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="80 мкм"><span>80 мкм</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="90 мкм"><span>90 мкм</span></button>
+                    </div>
+
+                    <div class="sk-quiz__nav">
+                        <button type="button" class="sk-quiz__prev">Назад</button>
+                        <button type="button" class="sk-quiz__next" disabled>Далее</button>
+                    </div>
+                </div>
+
+                {* Шаг 4 — тип печати *}
+                <div class="sk-quiz__step" data-step="4">
+                    <h3 class="sk-quiz__title">Выберите тип печати</h3>
+
+                    <div class="sk-quiz__options" data-field="print">
+                        <button type="button" class="sk-quiz__option" data-value="1+0"><span>1+0</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="2+0"><span>2+0</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="3+0"><span>3+0</span></button>
+                    </div>
+
+                    <div class="sk-quiz__nav">
+                        <button type="button" class="sk-quiz__prev">Назад</button>
+                        <button type="button" class="sk-quiz__next" disabled>Далее</button>
+                    </div>
+                </div>
+
+                {* Шаг 5 — тираж *}
+                <div class="sk-quiz__step" data-step="5">
+                    <h3 class="sk-quiz__title">Выберите размер тиража</h3>
+
+                    <div class="sk-quiz__options" data-field="quantity">
+                        <button type="button" class="sk-quiz__option" data-value="10 000"><span>10 000</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="20 000"><span>20 000</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="30 000"><span>30 000</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="40 000"><span>40 000</span></button>
+                        <button type="button" class="sk-quiz__option" data-value="50 000"><span>50 000</span></button>
+                    </div>
+
+                    <div class="sk-quiz__nav">
+                        <button type="button" class="sk-quiz__prev">Назад</button>
+                        <button type="button" class="sk-quiz__next" disabled>Показать результат</button>
+                    </div>
+                </div>
+
+                {* Шаг 6 — результат *}
+                <div class="sk-quiz__step" data-step="6">
+                    <h3 class="sk-quiz__title">Результат расчёта</h3>
+
+                    <div class="sk-quiz__result">
+                        <p>Тип пакета: <strong data-summary="type">—</strong></p>
+                        <p>Размер: <strong data-summary="size">—</strong></p>
+                        <p>Толщина: <strong data-summary="thickness">—</strong></p>
+                        <p>Тип печати: <strong data-summary="print">—</strong></p>
+                        <p>Тираж: <strong data-summary="quantity">—</strong></p>
+
+                        <hr>
+
+                        {* пока заглушки *}
+                        <p>Цена за один пакет — <strong data-summary="price">2 рубля</strong></p>
+                        <p>Цена за печать всего тиража — <strong data-summary="total">30 000 рублей</strong></p>
+                    </div>
+
+                    <div class="sk-quiz__nav sk-quiz__nav--result">
+                        <button type="button" class="sk-quiz__prev">Назад</button>
+                        <button type="button" class="sk-quiz__restart">Посчитать ещё раз</button>
+                        <button type="button" class="sk-quiz__go-to-form">Оставить заявку</button>
+                    </div>
+                </div>
+
+            </div>
+            {* === /КВИЗ === *}
+
+            {* Всё остальное оборачиваем, чтобы можно было скрывать/показывать после квиза *}
+            <div class="js-sk-quiz-form-part">
+
+                {foreach $skcallback_controls as $control}
+                    {if $control.type_name == 'phone'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_phone" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}{if $control.require}*{/if}</div>
+                            <div class="shop-sk-callback__control">
+                                <input type="text" name="sk_callback_form[{$control.id}]" class="shop-sk-callback__input{if $control.additional} js-sk-callback-maskedinput{/if}" data-mask="{$control.additional}" value="" />
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'email'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_email" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}{if $control.require}*{/if}</div>
+                            <div class="shop-sk-callback__control">
+                                <input type="text" name="sk_callback_form[{$control.id}]" class="shop-sk-callback__input" value="" />
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'name'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_text" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}{if $control.require}*{/if}</div>
+                            <div class="shop-sk-callback__control">
+                                <input type="text" name="sk_callback_form[{$control.id}]" class="shop-sk-callback__input" value="" />
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'text'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_text" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}{if $control.require}*{/if}</div>
+                            <div class="shop-sk-callback__control">
+                                <input type="text" name="sk_callback_form[{$control.id}]" class="shop-sk-callback__input" value="" />
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'textarea'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_textarea" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}{if $control.require}*{/if}</div>
+                            <div class="shop-sk-callback__control">
+                                <textarea class="shop-sk-callback__textarea" name="sk_callback_form[{$control.id}]"></textarea>
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'checkbox'}
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_checkbox" data-id="{$control.id}">
+                            <div class="shop-sk-callback__control">
+                                <label class="shop-sk-callback__label">
+                                    <input type="checkbox" name="sk_callback_form[{$control.id}]" class="shop-sk-callback__checkbox" value="1" />
+                                    <span class="shop-sk-callback__label-name">{if $control.additional}{$control.additional}{else}{$control.title}{/if}</span>
+                                </label>
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'string' && $control.additional}
+                        <div class="shop-sk-callback__pole shop-sk-callback__string">
+                            <div class="shop-sk-callback__control">
+                                {$control.additional}
+                            </div>
+                        </div>
+                    {elseif $control.type_name == 'slider'}
+                        {$min = 9}
+                        {$max = 18}
+
+                        {if isset($control.additional[0]) && !empty($control.additional[0])}
+                            {$min = $control.additional[0]}
+                        {/if}
+
+                        {if isset($control.additional[1]) && !empty($control.additional[1])}
+                            {$max = $control.additional[1]}
+                        {/if}
+
+                        {if $min >= $max}
+                            {$min = 9}
+                            {$max = 18}
+                        {/if}
+
+                        <div class="shop-sk-callback__pole js-sk-callback__pole shop-sk-callback__pole_slider js-sk-callback-pole-slider" data-id="{$control.id}">
+                            <div class="shop-sk-callback__name">{$control.title}</div>
+                            <div class="shop-sk-callback__control">
+                                <div class="shop-sk-callback__inputs shop-sk-callback__inputs_slider">
+                                    <input type="text" name="sk_callback_form[{$control.id}][min]" class="shop-sk-callback__input shop-sk-callback__input_min js-sk-callback-input-min" value="{$min}" /> :
+                                    <input type="text" name="sk_callback_form[{$control.id}][max]" class="shop-sk-callback__input shop-sk-callback__input_max js-sk-callback-input-max" value="{$max}" />
+                                </div>
+                                <div class="shop-sk-callback__values">
+                                    с<span class="shop-sk-callback__value shop-sk-callback__value_min js-sk-callback-value-min">{$min}</span>
+                                    до<span class="shop-sk-callback__value shop-sk-callback__value_max js-sk-callback-value-max">{$max}</span>
+                                </div>
+                                <div class="shop-sk-callback__slider-block">
+                                    <div class="shop-sk-callback__slider js-sk-callback-slider" data-min="{$min}" data-max="{$max}"></div>
+                                </div>
+
+                                <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                            </div>
+                        </div>
+                    {/if}
+                {/foreach}
+
+                {if !empty($skcallback_defines.captcha)}
+                    <div class="shop-sk-callback__pole js-sk-callback__pole" data-id="captcha">
+                        {$wa->captcha()}
+                        <span class="shop-sk-callback__error js-sk-callback-error"></span>
+                    </div>
+                {/if}
+
+                <div class="shop-sk-callback__pole shop-sk-callback__pole_submit">
+                    <div class="shop-sk-callback__control">
+                        <input type="submit" class="shop-sk-callback__submit js-sk-callback-submit" value="{$skcallback_defines.button}" />
+                        &nbsp;&nbsp;
+                        <span class="shop-sk-callback__preloader js-sk-callback-preloader" style="display: none;"><i class="fa fa-spinner fa-spin fa-2x fa-fw" style="vertical-align: middle; color: #545252;"></i></span>
+                    </div>
+                </div>
+
+            </div> {* /js-sk-quiz-form-part *}
+
+        </form>
+
+    </div>
+
+{literal}
+    <style>
+        .sk-quiz {
+            margin: 20px 0 30px;
+            background: #f7f7f7;
+            padding: 24px;
+            border-radius: 12px;
+        }
+        .sk-quiz__step { display: none; }
+        .sk-quiz__step.is-active { display: block; }
+        .sk-quiz__title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 20px;
+            text-align: center;
+        }
+        .sk-quiz__options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .sk-quiz__step--type .sk-quiz__options {
+            flex-direction: row;
+        }
+        .sk-quiz__step--type .sk-quiz__option { flex: 1; }
+        .sk-quiz__option {
+            border-radius: 20px;
+            border: 1px solid #d0d0d0;
+            background: #f0f0f0;
+            padding: 10px 16px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 14px;
+            transition: background .2s, border-color .2s, transform .1s;
+        }
+        .sk-quiz__option:hover { background: #e4e4e4; }
+        .sk-quiz__option.is-selected {
+            background: #ffe6b3;
+            border-color: #f0a500;
+        }
+        .sk-quiz__nav {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .sk-quiz__nav--result { justify-content: flex-end; }
+        .sk-quiz__nav button {
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .sk-quiz__next { background: #f0a500; color: #000; }
+        .sk-quiz__next[disabled] {
+            opacity: .5;
+            cursor: default;
+        }
+        .sk-quiz__prev,
+        .sk-quiz__restart { background: #dddddd; }
+        .sk-quiz__go-to-form {
+            background: #3a8dde;
+            color: #fff;
+        }
+        .sk-quiz__result p { margin: 4px 0; }
+    </style>
+
+    <script>
+        $(function(){
+
+            // стандартная инициализация плагина
+            var shopSkCallbackInit = new shopSkCallback({/literal}{$skcallback_init|json_encode}{literal});
+
+            // === Логика квиза ===
+            (function($) {
+                var $quiz = $('#sk-quiz');
+                if (!$quiz.length) { return; }
+
+                var state = {
+                    type: '',
+                    size: '',
+                    thickness: '',
+                    print: '',
+                    quantity: ''
+                };
+
+                var $form       = $quiz.closest('form');
+                var $formPart   = $form.find('.js-sk-quiz-form-part');
+                var $resultField = $form.find('.shop-sk-callback__textarea[name="sk_callback_form[4]"]');
+
+                // изначально скрываем остальные поля
+                $formPart.hide();
+
+                function resetState() {
+                    state.type = '';
+                    state.size = '';
+                    state.thickness = '';
+                    state.print = '';
+                    state.quantity = '';
+                }
+
+                function showStep(step) {
+                    $quiz.find('.sk-quiz__step').removeClass('is-active');
+                    $quiz.find('.sk-quiz__step[data-step="' + step + '"]').addClass('is-active');
+                }
+
+                function buildResultText() {
+                    // пока цены заглушки
+                    var price  = '2 рубля';
+                    var total  = '30 000 рублей';
+
+                    var txt =
+                        'Калькулятор пакетов:\n' +
+                        '- Тип пакета: '   + (state.type      || 'не выбран')   + '\n' +
+                        '- Размер: '       + (state.size      || 'не выбран')   + '\n' +
+                        '- Толщина: '      + (state.thickness || 'не выбрана')  + '\n' +
+                        '- Тип печати: '   + (state.print     || 'не выбран')   + '\n' +
+                        '- Тираж: '        + (state.quantity  || 'не выбран')   + '\n\n' +
+                        'Цена за один пакет: ' + price + '\n' +
+                        'Цена за печать всего тиража: ' + total;
+
+                    return txt;
+                }
+
+                function updateSummary() {
+                    var $resultStep = $quiz.find('.sk-quiz__step[data-step="6"]');
+                    $.each(state, function(key, val) {
+                        $resultStep.find('[data-summary="' + key + '"]').text(val || '—');
+                    });
+
+                    // здесь же сразу записываем результат в поле комментария
+                    var text = buildResultText();
+                    if ($resultField.length) {
+                        $resultField.val(text);
+                    }
+                }
+
+                // Выбор опций
+                $quiz.on('click', '.sk-quiz__option', function() {
+                    var $option = $(this);
+                    var field = $option.closest('.sk-quiz__options').data('field');
+                    var value = $option.data('value');
+
+                    state[field] = value;
+
+                    $option
+                        .addClass('is-selected')
+                        .siblings('.sk-quiz__option')
+                        .removeClass('is-selected');
+
+                    var $step = $option.closest('.sk-quiz__step');
+                    $step.find('.sk-quiz__next').prop('disabled', false);
+                });
+
+                // Далее
+                $quiz.on('click', '.sk-quiz__next', function() {
+                    var $step = $(this).closest('.sk-quiz__step');
+                    var current = parseInt($step.data('step'), 10);
+                    var next = current + 1;
+
+                    if (current === 5) {
+                        updateSummary();
+                    }
+
+                    showStep(next);
+                });
+
+                // Назад
+                $quiz.on('click', '.sk-quiz__prev', function() {
+                    var $step = $(this).closest('.sk-quiz__step');
+                    var current = parseInt($step.data('step'), 10);
+                    var prev = current - 1;
+                    if (prev < 1) { prev = 1; }
+
+                    // если выходим с шага результата — снова скрываем форму
+                    if (current === 6) {
+                        $formPart.slideUp(200);
+                    }
+
+                    showStep(prev);
+                });
+
+                // Посчитать ещё раз
+                $quiz.on('click', '.sk-quiz__restart', function() {
+                    resetState();
+                    $quiz.find('.sk-quiz__option').removeClass('is-selected');
+                    $quiz.find('.sk-quiz__next').prop('disabled', true);
+                    $formPart.slideUp(200);
+                    if ($resultField.length) {
+                        $resultField.val('');
+                    }
+                    showStep(1);
+                });
+
+                // Оставить заявку — показываем остальную форму
+                $quiz.on('click', '.sk-quiz__go-to-form', function() {
+                    $formPart.slideDown(200, function() {
+                        var $first = $formPart.find('input:visible, textarea:visible').first();
+                        if ($first.length) {
+                            $('html, body').animate({
+                                scrollTop: $first.offset().top - 30
+                            }, 400);
+                            $first.focus();
+                        }
+                    });
+                });
+
+                // стартуем с первого шага
+                showStep(1);
+
+            })(jQuery);
+
+        });
+    </script>
+{/literal}
+{/strip}

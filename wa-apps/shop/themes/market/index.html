@@ -1,0 +1,202 @@
+{strip}
+    {if $wa->globals('market.index.only_content')}
+        {$content}
+    {else}
+        {include "./init.html" assign='_'}
+
+        <!DOCTYPE html>
+        <html lang="{call correct_lang}">
+        <head{if $wa->globals('market.route') == 'shop/frontend/product'} prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# product: http://ogp.me/ns/product#"{/if}>
+            {include './head.html' inline}
+        </head>
+        <body class="page {$wa->globals('market.index.body_classes')}">
+        {if $wa->shop}
+            <div class="microdata">
+                <div itemscope itemtype="http://schema.org/WebSite">
+                    <link itemprop="url" href="{$wa->domainUrl()}" />
+                    <form itemprop="potentialAction" itemscope itemtype="http://schema.org/SearchAction">
+                        <meta itemprop="target" content="{$wa->getUrl('shop/frontend/search', true)|escape}?query={'{query}'}" />
+                        <input itemprop="query-input" type="text" name="query" />
+                        <input type="submit" />
+                    </form>
+                </div>
+            </div>
+        {/if}
+
+        {function microdata_organization}
+            <div class="microdata">
+                <div itemscope itemtype="http://schema.org/Organization">
+                    <link itemprop="url" href="{$wa->domainUrl()}" />
+                    <meta itemprop="name" content="{$wa->accountName()|escape}" />
+                    <meta itemprop="address" content="{"{eval var=$theme_settings['address']}"|escape}" />
+                    <meta itemprop="telephone" content="{"{eval var=$theme_settings['phone_1']}"|escape}" />
+
+                    {if $theme_settings['logo_alt_enabled'] && $theme_settings['logo_alt']}
+                        {$logo_url = "{$wa_theme_url}{$theme_settings['logo_alt']}"}
+                    {elseif $theme_settings['logo']}
+                        {$logo_url = "{$wa_theme_url}{$theme_settings['logo']}"}
+                    {else}
+                        {$logo_url = null}
+                    {/if}
+
+                    {if $logo_url}
+                        <div itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+                            <link itemprop="image" href="{$logo_url|escape}" />
+                            <link itemprop="contentUrl" href="{$logo_url|escape}" />
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/function}
+
+        {call microdata_organization}
+
+
+        <div class="index">
+            <div class="header-overlay"></div>
+            <div class="index__wrapper">
+                <header class="index__header">
+                    {if !$wa->globals('is_mobile')}
+                        {include './header.html' inline}
+                    {else}
+                        {include './header-mobile.html' inline}
+                    {/if}
+                </header>
+                <main class="index__content">
+                    {include './main.html' inline}
+                </main>
+
+                {if $wa->mailer}
+                    {function index_subscribe}
+                        <div class="index__subscribe">
+                            <div class="index-subscribe">
+                                <div class="container">
+                                    <div class="index-subscribe__content">
+                                        <div class="index-subscribe__info">
+                                            <div class="title title_h1 index-subscribe__header">
+                                                {$theme_settings['footer_subscribe_header']|escape}
+                                            </div>
+                                            <div class="index-subscribe__text">
+                                                {$theme_settings['footer_subscribe_description']}
+                                            </div>
+                                        </div>
+                                        <div class="index-subscribe__form">
+                                            <div class="mailer-decorator">
+                                                <div class="form-decorator" data-field_size="s">
+                                                    {$wa->mailer->form($theme_settings['footer_subscribe_form_id'])|regex_replace:'/<style>.*?<\/style>/s':''}
+                                                    <div class="form-decorator__trigger"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="index-subscribe__icon">
+                                            {call svg_icon icon='subscribe' width=127 height=119 fill='currentColor'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {/function}
+
+                    {if $theme_settings['footer_subscribe_show'] == 'all'}
+                        {call index_subscribe}
+                    {elseif $theme_settings['footer_subscribe_show'] === 'home' && $wa->globals('market.route') == 'shop/frontend/'}
+                        {call index_subscribe}
+                    {elseif $theme_settings['footer_subscribe_show'] === 'except_checkout' && !$wa->globals('is_checkout')}
+                        {call index_subscribe}
+                    {/if}
+                {/if}
+
+
+                {if count($wa->globals('market.fixed_bar_btns')|default:[]) > 0}
+                    {call fixed_bar}
+                {/if}
+
+                <footer class="index__footer">
+                    {include './footer.html' inline}
+                </footer>
+            </div>
+        </div>
+
+        {if $theme_settings['cookie_panel'] && !$wa->cookie('cookie_agree')}
+            <div class="info-panel-container info-panel-container_open">
+                <div class="info-panel info-panel_dark cookie-panel">
+                    <div class="container">
+                        <div class="info-panel__container">
+                            <div class="info-panel__content-container">
+                                <div class="cookie-panel__container">
+                                    {capture assign='button'}
+                                        <div class="cookie-panel__button-container">
+                                            <button class="cookie-panel__close-button button button_size_xs">
+                                                {$theme_settings['cookie_panel_button_text']|escape}
+                                            </button>
+                                        </div>
+                                    {/capture}
+
+                                    {if $theme_settings['cookie_panel_button_side'] === 'left'}
+                                        {$button}
+                                    {/if}
+                                    <div class="cookie-panel__content-container">
+                                        {$theme_settings['cookie_panel_text']|escape}
+                                    </div>
+                                    {if $theme_settings['cookie_panel_button_side'] === 'right'}
+                                        {$button}
+                                    {/if}
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        {/if}
+
+
+        <div class="info-panel-container info-panel-container_top custom-panel-container">
+            <div class="container">
+                <div class="info-panel-container__content"></div>
+            </div>
+        </div>
+
+        {if $theme_settings['admin_toolbar'] && $wa->user()->isAdmin()}
+            {function side_buttons}
+                <div class="side-buttons">
+                    <div class="side-buttons__button">
+                        <a class="side-button" href="{$link_edit|escape}" target="_blank">
+                            <span class="image-box image-box_fill">
+                                {call svg_icon icon='pen' width=20 height=20 fill='currentColor'}
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            {/function}
+
+            {if $wa->globals('market.route') == 'shop/frontend/category'}
+                {call side_buttons link_edit="{$wa_backend_url}shop/?action=products#/products/category_id={$category.id}"}
+            {elseif $wa->globals('market.route') == 'shop/frontend/product'}
+                {call side_buttons link_edit="{$wa_backend_url}shop/?action=products#/product/{$product.id}/"}
+            {elseif $wa->globals('market.route') == 'site/frontend/'}
+                {call side_buttons link_edit="{$wa_backend_url}site/#/pages/{$page.id}"}
+            {elseif $wa->globals('market.route') == 'shop/frontend/page'}
+                {call side_buttons link_edit="{$wa_backend_url}shop/?action=storefronts#/pages/{$page.id}"}
+            {elseif $wa->globals('market.route') == 'blog/frontend/post'}
+                {call side_buttons link_edit="{$wa_backend_url}blog/?module=post&id={$post.id}&action=edit"}
+            {/if}
+        {/if}
+
+
+        {if $theme_settings['up_button'] && !$wa->globals('is_mobile')}
+            <div class="up-button">
+                {call svg_icon icon='dict-arrow-top' width=16 height=16 fill='#ffffff'}
+            </div>
+        {/if}
+
+        <script>
+            window.market = {
+                config: {$wa->globals('market.js_config')|json_encode}
+            };
+        </script>
+        </body>
+        </html>
+    {/if}
+{/strip}

@@ -1,0 +1,2616 @@
+{strip}
+    {function svg_icon icon='' classes='' width='' height='' fill='' stroke='' stroke_width='' block=false img=false}
+        {if $block}
+            {$classes = "{$classes} svg-icon_block"}
+        {/if}
+
+        {if isset($wa_real_parent_theme_url)}
+            {$theme_url = $wa_real_parent_theme_url}
+        {elseif isset($wa_real_theme_url)}
+            {$theme_url = $wa_real_theme_url}
+        {else}
+            {$theme_url = $wa->shop->themeUrl($wa->param('theme'))}
+        {/if}
+
+        {$href = "{$theme_url}svg/icon.sprite.svg?v={$wa_theme_version}#{$icon}"}
+
+        {if $img}
+            <img class="svg-icon svg-icon_img {$classes}" src="{$href|escape}" {if $width}width="{$width|escape}"{/if} {if $height}height="{$height|escape}"{/if}/>
+        {else}
+            <svg class="svg-icon {$classes}"
+                {if $width}width="{$width|escape}"{/if} {if $height}height="{$height|escape}"{/if} {if $fill}fill="{$fill|escape}"{/if} {if $stroke}stroke="{$stroke|escape}"{/if}{if $stroke_width} stroke-width="{$stroke_width|escape}"{/if}>
+                <use xlink:href="{$href|escape}"></use>
+            </svg>
+        {/if}
+    {/function}
+
+    {function image
+        src=''
+        classes=''
+        alt=''
+        data=[]
+        attrs=[]
+        contain=false
+        swiper=false
+        r2x=false
+        default_size=null
+        srcset=null
+        priority=null
+        lazy=true
+    }
+        {if !$wa->globals('market.enable_2x')}
+            {$r2x = false}
+        {/if}
+
+        {if $r2x}
+            {$regexp = '/^(.*?)(\.[^\.]*)?(\.[A-z]{3,4}(?:\?.*)?)$/'}
+            {$match = null}
+
+            {if preg_match($regexp, $src, $match)}
+                {if $match[2]}
+                    {$srcset = "{$match[1]}{$match[2]}@2x{$match[3]} 2x"}
+                {elseif $default_size}
+                    {$srcset = "{$match[1]}.{$default_size}@2x{$match[3]} 2x"}
+                {/if}
+            {/if}
+        {/if}
+
+        {foreach $data as $name => $value}
+            {$attrs["data-{$name}"] = $value}
+        {/foreach}
+
+        {if $contain}
+            {$classes = "{$classes} image-contain"}
+        {/if}
+
+        {if $lazy}
+            {$classes = "{$classes} lazy-image"}
+        {/if}
+
+        {if $lazy}
+            {$attrs['data-src'] = $src}
+        {else}
+            {$attrs['src'] = $src}
+        {/if}
+        {$attrs['alt'] = $alt|escape}
+
+        {if $srcset}
+            {if $lazy}
+                {$attrs['data-srcset'] = $srcset}
+            {else}
+                {$attrs['srcset'] = $srcset}
+            {/if}
+        {/if}
+
+        {if $priority}
+            {$attrs['fetchpriority'] = $priority}
+        {/if}
+
+        {$attrs_html_list = []}
+
+        {foreach $attrs as $name => $value}
+            {$attrs_html_list[] = "{$name}=\"{$value|escape}\""}
+        {/foreach}
+
+        {$attrs_html = implode(' ', $attrs_html_list)}
+
+        <img class="{$classes|escape}" {$attrs_html} />
+    {/function}
+
+    {function pages_tree pages=[] selected_ids=[] depth=0 is_show_count=false}
+        <div class="pages-tree">
+            {foreach $pages as $page}
+                {$is_selected = in_array($page.id, $selected_ids)}
+                {$has_children =  !empty($page.childs) && $depth < 1}
+                <div class="pages-tree__item {if $is_selected}pages-tree__item_selected{/if} {if $has_children}pages-tree__item_has-children{/if}"
+                     data-page_id="{$page.id|escape}">
+                    <a class="pages-tree__item-link link" href="{$page.url|escape}" title="{$page.name|escape}">
+                        {$page.name|escape}
+                    </a>
+                    {if $has_children && $is_selected}
+                        <div class="pages-tree__item-children">
+                            {call pages_tree pages=$page.childs depth=$depth + 1 selected_ids=$selected_ids}
+                        </div>
+                    {/if}
+                </div>
+            {/foreach}
+        </div>
+    {/function}
+
+    {function list_rows_item text='' args=[]}
+        {if $text}
+            {$_style = $args['_style']|default:null}
+            {$target = $args['target']|default:null}
+            {$link = $args['link']|default:'javascript://'}
+            {$list_rows_classes = $args['list_rows_classes']|default:''}
+            {$data = $args['data']|default:[]}
+            {$has_arrow = $args['has_arrow']|default:false}
+            {$informer = $args['informer']|default:null}
+            {$counter = $args['counter']|default:null}
+            {$icon = $args['icon']|default:[]}
+            {$item_category = $args['item_category']|default:[]}
+            {$is_hidden = $args['is_hidden']|default:''}
+            {$is_selected = $args['is_selected']|default:false}
+            {$is_highlighted = $args['is_highlighted']|default:false}
+            {$show_logo = $args['show_logo']|default:false}
+            {$has_badge = false}
+            {$is_brand = $args['is_brand']|default:false}
+            <a class="list-rows__item{if $_style} list-rows__item_style_{$_style|escape}{/if}{if $list_rows_classes} {$list_rows_classes}{/if}{if $is_hidden} list-rows__item_hidden{/if}{if $is_selected} list-rows__item_selected{/if}{if $is_highlighted} list-rows__item_highlighted{/if}"
+               href="{$link|escape}"{if $target} target="{$target|escape}"{/if}{if $data} data-{$data.name|default:''}="{($data.content|default:'')|strip|escape}"{/if}>
+                {if $icon}
+                    <span class="list-rows__item-icon">
+                        {call svg_icon icon=$icon.name|default:'' width=$icon.width|default:'' height=$icon.height|default:'' fill=$icon.color|default:'currentColor'}
+                    </span>
+                {/if}
+                {if $show_logo && $item_category}
+                    {$category_image_url = ''}
+                    {if $is_brand}
+                        {$category_image_url = $item_category.image_url|default:''}
+                    {else}
+                        {call shop_category_image category=$item_category assign='category_image_url' size=34}
+                    {/if}
+                    <span class="list-rows__item-image image-box_contain">
+                        {if $category_image_url}
+                            {call image
+                                src=$category_image_url
+                                alt=$text
+                            }
+                        {else}
+                            {call svg_icon icon='no-thumb' width=60 height=54 fill='#eeeeee'}
+                        {/if}
+                    </span>
+                {/if}
+                <span class="list-rows__item-name">
+                    {$text}
+
+                    {if $item_category && is_array($item_category) && isset($item_category.params)}
+                        {$badge = $item_category.params['badge']|default:null}
+                        {$badge_color = $item_category.params['badge_color']|default:'#FF3131'}
+                        {$badge_text_color = $item_category.params['badge_text_color']|default:'#FFFFFF'}
+                        {$has_badge = !is_null($badge)}
+                    {/if}
+                </span>
+                {if $has_badge}
+                    <span class="list-rows__item-badge"
+                          style="background-color: {$badge_color|escape};color:{$badge_text_color|escape}">
+                        {$badge|escape}
+                    </span>
+                {/if}
+
+                {$has_tips = $informer !== null || $counter !== null || $has_arrow}
+                {if $has_tips}
+                    <div class="list-rows__item-tips">
+                        {if $informer !== null}
+                            <span class="list-rows__item-informer list-rows__item_tip counter {$informer.name|default:''}-counter{if $informer.count|default:'' == 0} counter_empty{/if}">
+                                {$informer.count|default:0}
+                            </span>
+                        {/if}
+                        {if $counter !== null}
+                            <span class="list-rows__item-counter list-rows__item_tip {if not $has_arrow}list-rows__item_tip-space-right{/if}">
+                                {$counter.count|default:0}
+                            </span>
+                        {/if}
+                        {if $has_arrow}
+                            <span class="list-rows__item-arrow list-rows__item_tip">
+                                {call svg_icon icon='arrow-right' width=6 height=10 fill='currentColor'}
+                            </span>
+                        {/if}
+                    </div>
+                {/if}
+            </a>
+        {/if}
+    {/function}
+
+    {function share_block services='' social_source='yastatic' pinterest_image=null classes=''}
+        {$wa->globals('ya-share_is_enabled', true)}
+        {$wa->globals('ya-share_source', $social_source)}
+
+        {if !$pinterest_image}
+            {$services = $services|replace:'pinterest':''}
+        {/if}
+
+        {if !empty($services)}
+            <div class="share{if $classes} {$classes}{/if}">
+                <div class="share__links">
+                    <div class="share__link share__link_copy">
+                        <span class="share__icon-box icon-box">
+                            <span class="share__icon icon-box__icon">
+                                {call svg_icon icon="link-chain" width=24 height=24}
+                            </span>
+                            <span class="share__link-text icon-box__content">
+                                {_wp("Копировать ссылку")}
+                            </span>
+                        </span>
+                    </div>
+                    <a class="share__link share__link_mail" href="mailto:?subject={$wa->title()}&body={$wa->title()} - {$wa->domainUrl()}{$wa->currentUrl()}">
+                        <span class="share__icon-box icon-box">
+                            <span class="share__icon icon-box__icon">
+                                {call svg_icon icon="envelope" width=24 height=24}
+                            </span>
+                            <span class="share__link-text icon-box__content">
+                                {_wp("Отправить по email")}
+                            </span>
+                        </span>
+                    </a>
+                    <div class="ya-share2 ya-share2" data-services="{$services|replace:' ':''}"
+                        data-bare="true"{if $pinterest_image} data-image="{$pinterest_image}"{/if}></div>
+                </div>
+            </div>
+        {/if}
+    {/function}
+
+    {function slider_arrows prev_arrow_classes='slider-block__prev-button' next_arrow_classes='slider-block__next-button'}
+        <div class="slider-arrows">
+            <span class="button button_style_gray button_icon slider-arrows__arrow {$prev_arrow_classes}">
+                {call svg_icon icon='arrow-left' classes='button__icon svg-icon_fill' width=6 height=10}
+            </span>
+
+            <span class="button button_style_gray button_icon slider-arrows__arrow {$next_arrow_classes}">
+                {call svg_icon icon='arrow-right' classes='button__icon svg-icon_fill' width=6 height=10}
+            </span>
+        </div>
+    {/function}
+
+    {function contact_block contact=null size=null link=null}
+        {$photo_size = 24}
+        {if $size === 's'}
+            {$photo_size = 22}
+        {/if}
+
+        {if $size === 'l'}
+            {$photo_size = 50}
+        {/if}
+
+        {if $contact}
+            {capture assign="block_content"}
+                <span class="contact__photo-box">
+                    {if isset($contact.photo) && $contact.photo}
+                        {$photo = $contact->getPhoto($photo_size)}
+                        <img class="contact__photo" src="{$photo|escape}" alt="{$contact.name|escape}">
+                    {elseif isset($contact.image) && !empty($contact.image)}
+                        <img class="contact__photo" src="{$contact.image|escape}" alt="{$contact.name|escape}">
+                    {else}
+                        {call svg_icon icon='no-avatar' width=$photo_size height=$photo_size}
+                    {/if}
+                </span>
+                <span class="contact__name-box">
+                    <span class="link-box__link">{$contact.name|escape}</span>
+                </span>
+            {/capture}
+
+            {if $link}
+                <a class="contact link-box link-box_style_hover {if $size}contact_size_{$size|escape}{/if}"
+                   href="{$link|escape}">
+                    {$block_content}
+                </a>
+            {else}
+                <span class="contact {if $size}contact_size_{$size|escape}{/if}">
+                    {$block_content}
+                </span>
+            {/if}
+        {/if}
+    {/function}
+
+    {function product_available ignore_stock_count=null size='s' low=0 critical=0 show_exact_count=0 show_only_status=false decorated=0 no_icon=false custom_status=[] custom_statuses_content=[] stock_unit=null}
+        {if !isset($ignore_stock_count)}
+            {$ignore_stock_count = $wa->shop->settings('ignore_stock_count')}
+        {/if}
+        {$class_modifier = ''}
+        {if $show_only_status}
+            {$low = 0}
+        {/if}
+        {$unit = _wp("шт.")}
+        {if $stock_unit}
+            {$unit = $stock_unit}
+        {/if}
+        {if $n > $low || $n === null}
+            {$class_modifier = 'in-stock'}
+            {capture assign="content"}
+                {if $show_exact_count && $n !== null && !$show_only_status}
+                    [`В наличии`] {$n|escape} {$unit}
+                {else}
+                    [`В наличии`]
+                {/if}
+            {/capture}
+        {elseif $n > $critical}
+            {$class_modifier = 'low'}
+            {capture assign="content"}
+                {if $show_exact_count && $n !== null}
+                    {call plural n=$n forms=["{_wp("Осталась")} {$n|escape} {$unit}", "{_wp("Осталось")} {$n|escape} {$unit}", "{_wp("Осталось")} {$n|escape} {$unit}"]}
+                {else}
+                    [`Осталось несколько штук`]
+                {/if}
+            {/capture}
+        {elseif $n > 0}
+            {$class_modifier = 'critical'}
+            {capture assign="content"}
+                {call plural n=$n forms=["{_wp("Осталась")} {$n|escape} {$unit}", "{_wp("Осталось")} {$n|escape} {$unit}", "{_wp("Осталось")} {$n|escape} {$unit}"]}
+            {/capture}
+        {else}
+            {$class_modifier = 'out-of-stock'}
+            {capture assign="content"}
+                {if $ignore_stock_count}[`Предзаказ`]{else}[`Нет в наличии`]{/if}
+            {/capture}
+        {/if}
+
+        {if is_array($custom_status) && !empty($custom_status)}
+            {if isset($custom_status['status']) && in_array($custom_status['status'], ['in-stock','low','critical','out-of-stock'])}
+                {$class_modifier = $custom_status['status']}
+            {/if}
+
+            {if isset($custom_status['text']) && !empty($custom_status['text'])}
+                {$content = "{eval var=$custom_status['text']}"}
+            {/if}
+        {elseif is_array($custom_statuses_content) && isset($custom_statuses_content[$class_modifier]) && !empty($custom_statuses_content[$class_modifier])}
+            {$content = "{eval var=$custom_statuses_content[$class_modifier]}"}
+        {/if}
+
+        <span class="product-available product-available_{$class_modifier} {if $size}product-available_size_{$size|escape}{/if}">
+            {if !$no_icon}
+                {$icon_id = 'available'}
+                {if $class_modifier === 'out-of-stock'}
+                    {$icon_id = 'no-available'}
+                {/if}
+                <span class="icon-box">
+                    <span class="icon-box__icon">
+                        {call svg_icon icon=$icon_id width=14 height=14 fill='currentColor'}
+                    </span>
+                    <span class="icon-box__content{if $decorated} icon-box__content_decorated{/if}">
+                        {$content}
+                    </span>
+                </span>
+            {else}
+                {$content}
+            {/if}
+        </span>
+    {/function}
+
+    {function product_stocks_available product_stocks=[] show_exact_count=0 show_only_status=false stock_unit=null}
+        {if !$stocks}
+            {$stocks = shopHelper::getStocks(true)|default:null}
+        {/if}
+
+        {$stocks_available_statuses = $wa->globals('market.stocks_available_statuses')}
+        {$stocks_statuses = []}
+        {if $stocks_available_statuses && isset($stocks_available_statuses['stocks_statuses']) && is_array($stocks_available_statuses['stocks_statuses'])}
+            {$stocks_statuses = $stocks_available_statuses['stocks_statuses']}
+        {/if}
+
+        {if $product_stocks}
+            <div class="product-stocks-available">
+                {foreach $product_stocks as $stock_id => $p_stock}
+                    <div class="product-stocks-available__stock">
+                        <span class="product-stocks-available__name">{$p_stock.name}: </span>{call product_available
+                        n=$p_stock.count size='s' low=$stocks[$stock_id].low_count critical=$stocks[$stock_id].critical_count show_exact_count=$show_exact_count show_only_status=$show_only_status no_icon=true custom_statuses_content=$stocks_statuses[$stock_id]|default:null stock_unit=$stock_unit}
+                    </div>
+                {/foreach}
+            </div>
+        {/if}
+    {/function}
+
+    {function product_badge product=null size=null is_discount=false}
+        {$product_badge = $product.badge}
+        {$badge_type = $product.badge}
+        {$sku = $product['skus'][$product['sku_id']]}
+
+        {if $is_discount}
+            {$badge_type = 'discount'}
+            {$percent = round((1 - ($sku['price'] / $sku['compare_price'])) * 100)}
+            {$product_badge = "-{$percent}%"}
+        {elseif strpos($badge_type, 'autobadge-default') !== false}
+            {$badge_type = 'autobadge'}
+            {$product_badge = $product_badge|replace:'Хит!':'Хит продаж'}
+            {$product_badge = $product_badge|replace:'New!':'Новинка'}
+            {$product_badge = $product_badge|replace:'Скидка!':'Скидка'}
+        {elseif !in_array($badge_type, ['bestseller', 'lowprice', 'new'])}
+            {$badge_type = 'custom'}
+        {/if}
+        <div class="product-badge product-badge_{$badge_type|escape} {if $size}product-badge_size_{$size|escape}{/if}">
+            {if $badge_type === 'bestseller'}
+                [`Хит`]
+            {elseif $badge_type === 'lowprice'}
+                [`Скидка`]
+            {elseif $badge_type === 'new'}
+                [`Новинка`]
+            {else}
+                {$product_badge}
+            {/if}
+        </div>
+    {/function}
+
+    {function rating_overview
+        product=null
+        rating=null
+        size=null
+        is_compact=false
+        show_rating=true
+        show_count=true
+        is_responsive=false
+        is_icon=false
+        is_link=false
+        count_reviews=null
+    }
+        {if $rating === null && $product}
+            {$rating = $product.rating}
+        {/if}
+        <div class="rating-overview{if $size} rating-overview_size_{$size|escape}{/if}">
+            {if $show_rating}
+                <div class="rating-overview__rating">
+                    {if $is_compact}
+                        <span class="rating">
+                            <span class="rating__star rating__star{if $rating > 0}_full{else}_empty{/if}"></span>
+                        </span>
+                        {if $rating > 0}
+                            <span class="rating-overview__value">
+                                {$rating|string_format:"%.1f"}
+                            </span>
+                        {/if}
+                    {else}
+                        <span class="rating">
+                            {$rating_stars = explode(',', "{call rating_stars rating=$rating}")}
+                            {foreach $rating_stars as $star}
+                                <span class="rating__star rating__star_{$star}"></span>
+                            {/foreach}
+                        </span>
+
+                    {/if}
+                </div>
+            {/if}
+            {if $show_count && $product}
+                <div class="rating-overview__count-reviews">
+                    {capture assign="content"}
+                        <span class="icon-box">
+                            {if $is_icon}
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="comments" classes="{if $is_link}link-box__icon{/if}" width=14 height=14}
+                                </span>
+                            {/if}
+                            <span class="icon-box__content">
+                                <span{if $is_link} class="link-box__link"{/if}>
+                                    {if !$is_responsive}
+                                        {if $count_reviews > 0}
+                                            {if $size === 's'}
+                                                ({$count_reviews})
+                                            {else}
+                                                {$count_reviews} {call plural n=$count_reviews forms=["{_wp("отзыв")}", "{_wp("отзыва")}", "{_wp("отзывов")}"]}
+                                            {/if}
+                                        {elseif $is_link}
+                                            [`Написать отзыв`]
+                                        {else}
+                                            [`Отзывов ещё нет`]
+                                        {/if}
+                                    {else}
+                                        ({$count_reviews})
+                                    {/if}
+                                </span>
+                            </span>
+                        </span>
+                    {/capture}
+
+                    {if $is_link}
+                        <a class="link-box link-box_style_gray" href="{$wa->shop->productUrl($product)}#reviews">
+                            {$content}
+                        </a>
+                    {else}
+                        {$content}
+                    {/if}
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function product_feature_value product_id=null feature=[] value=[] inline=false block=false}
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_seofilter = $plugins['shop_seofilter']}
+        {$is_enabled_fiwex = $plugins['shop_fiwex']}
+
+        {if !is_array($value)}
+            {$value = [$value]}
+        {/if}
+
+        {if $feature.type === 'color'}
+            {capture assign='value'}
+                {foreach $value as $k => $v}
+                    {$url = null}
+
+                    {if $product_id && $is_enabled_seofilter}
+                        {$url = shopSeofilterViewHelper::getValueUrl($feature.code, $v)}
+                    {/if}
+
+                    {capture assign='output'}
+                        {* Product Feature Value Color Start *}
+                        {$size = 's'}
+                        {$color_hex = str_pad(dechex($v.code), 6, '0', $smarty.const.STR_PAD_LEFT)}
+
+                        {if !$v@first}
+                            {' '}
+                        {/if}
+
+                        <span class="color {if $size}color_size_{$size|escape}{/if}" title="{$v.value|escape}">
+                            <span class="color__icon-box">
+                                <span class="color__icon" style="background-color: {$v.hex}"></span>
+                            </span>
+                            <span class="color__name{if $size && $theme_settings['shop_catalog_products_feature_color_type']} color__name_show{/if}">{$v.value|escape}</span>
+                        </span>
+                        {* Product Feature Value Color End *}
+                    {/capture}
+
+                    {if $url}
+                        <a class="link link_clean" href="{$url}">
+                            {$output}
+                        </a>
+                    {else}
+                        {$output}
+                    {/if}
+                {/foreach}
+            {/capture}
+        {else}
+            {foreach $value as $k => $v}
+                {$url = null}
+
+                {if $product_id && $is_enabled_seofilter}
+                    {$url = shopSeofilterViewHelper::getValueUrl($feature.code, $v)}
+                {/if}
+
+                {if $url}
+                    {$custom_link_text = ''}
+                    {$target_is_blank = false}
+                    {if method_exists('shopSeofilterProductfiltersViewHelper', 'getCustomLinkText')}
+                        {$custom_link_text = shopSeofilterProductfiltersViewHelper::getCustomLinkText()}
+                    {/if}
+                    {if method_exists('shopSeofilterProductfiltersViewHelper', 'targetIsBlank')}
+                        {$target_is_blank = shopSeofilterProductfiltersViewHelper::targetIsBlank()}
+                    {/if}
+
+                    {capture assign='v'}
+                        {if $custom_link_text}
+                            {$v}
+                            (
+                            <a class="link" href="{$url}"
+                               {if $target_is_blank}target="_blank"{/if}>{$custom_link_text}</a>
+                            )
+                        {else}
+                            <a class="link" href="{$url}" {if $target_is_blank}target="_blank"{/if}>
+                                {$v}
+                            </a>
+                        {/if}
+                    {/capture}
+
+                    {if $is_enabled_fiwex}
+                        {capture assign='v'}
+                            <span class="fiwex-feat-val" {if $product_id}data-product_id="{$product_id|escape}"{/if} data-fiwex-parent_id="{$feature.id}">
+                                {$v}
+                            </span>
+                        {/capture}
+                    {/if}
+
+                    {$value[$k] = $v}
+                {/if}
+            {/foreach}
+            {$value = implode(', ', $value)}
+        {/if}
+
+        {$value}
+    {/function}
+
+    {function product_features features=[] product=null nowrap=false inline=false limit=-1 exclude_features_ids=[] feature_codes=[] is_products_list=false}
+        {$product_features = $product.features|default:[]}
+        {$count_features = 0}
+
+        {$plugins = $wa->globals('plugins')}
+        {$is_enabled_featurestips = $plugins['shop_featurestips'] && isset($featurestips)}
+        {$is_enabled_fiwex = $plugins['shop_fiwex']}
+        {if isset($sku_features) && !$is_products_list}
+            {$features = $sku_features}
+        {/if}
+        <div class="product-features-overview{if $nowrap} product-features-overview_nowrap{/if}{if $inline} product-features-overview_inline{/if}">
+            {foreach $product_features as $feature_code => $value}
+                {if $value === null || !$value}
+                    {continue}
+                {/if}
+
+                {$feature = $features[$feature_code]}
+                {$is_divider = $feature['type'] === 'divider'}
+
+                {if $is_divider || in_array($feature.id, $exclude_features_ids) || (count($feature_codes) > 0 && !in_array($feature_code, $feature_codes))}
+                    {continue}
+                {/if}
+
+                {if $limit != -1 && $count_features >= $limit}
+                    {break}
+                {/if}
+
+                {$featurestips_output = ''}
+                {if $is_enabled_featurestips}
+                    {$featurestips_output = "{shopFeaturestipsPlugin::ShowFeatureTip($featurestips, $feature_code)}"}
+                {/if}
+
+                {if $featurestips_output}
+                    {capture assign='feature_label'}
+                        {$feature.name|escape}
+                        <span class="product-features-overview__item-featurestips-decorator">
+                            {$featurestips_output}
+                        </span>
+                    {/capture}
+                {elseif $is_enabled_fiwex}
+                    {capture assign='feature_label'}
+                        <span class="fiwex-feat" data-feat_id="{$feature.id}">
+                            {$feature.name|escape}
+                        </span>
+                    {/capture}
+                {else}
+                    {$feature_label = "{$feature.name|escape}:"}
+                {/if}
+                <div class="product-features-overview__item">
+                    <span class="value">
+                        <span class="value__label-text">
+                            {$feature_label}
+                        </span>
+                        <span class="value__value-text link-decorator">
+                            {call product_feature_value product_id=$product.id value=$value feature=$feature inline=true}
+                        </span>
+                    </span>
+                </div>
+                {$count_features = $count_features + 1}
+            {/foreach}
+        </div>
+    {/function}
+
+    {function variants_list variants=[] limit=0 nowrap=false hide_no_available=false is_links=false}
+        {if count($variants) > 0}
+            {$variants_list_html = ''}
+            {$hidden_count=0}
+            {$visible_count = 0}
+            {foreach $variants as $variant}
+                {if $hide_no_available && isset($variant['is_available']) && !$variant['is_available']}{continue}{/if}
+                {if !empty($variant['name']) && (!$limit || ($limit > 0 && $visible_count < $limit))}
+                    {$is_url = $is_links && isset($variant.url) && !empty($variant.url)}
+                    {capture assign='variant_block'}
+                        {if $is_url}
+                            <a class="variants-list__item variants-list__item_url link" href="{$variant.url}">
+                                {$variant['name']}
+                            </a>
+                        {else}
+                            <span class="variants-list__item">
+                                {$variant['name']}
+                            </span>
+                        {/if}
+                    {/capture}
+                    {$variants_list_html = $variants_list_html|cat:$variant_block}
+                    {$visible_count = $visible_count + 1}
+                {else}
+                    {$hidden_count = $hidden_count + 1}
+                {/if}
+            {/foreach}
+            {if $variants_list_html !== ''}
+                <div class="variants-list{if $nowrap} variants-list_nowrap{/if}{if $hidden_count > 0} variants-list_has-hidden{/if}"{if $hidden_count > 0} data-count="+{$hidden_count}"{/if}>
+                    {$variants_list_html}
+                </div>
+            {/if}
+        {/if}
+    {/function}
+
+    {function advantages size=null}
+        {if $theme_settings['block_utp']}
+            {$utp = $wa->block('market.utp')}
+        {else}
+            {$utp = null}
+        {/if}
+
+        {if !$utp}
+            {$default_icons = ["advantages-shipping", "advantages-payment", "advantages-discount", "advantages-exchange", "advantages-intouch"]}
+
+            {if $size == null && ($theme_settings["shop_advantages_view"] === 'top' || $wa->globals('is_mobile'))}
+                {$size = 's'}
+            {/if}
+
+            {$svg_size = 40}
+
+            {if $theme_settings["shop_advantages_view"] === 'top'}
+                {$svg_size = 55}
+            {/if}
+
+            <div class="advantages {if $size}advantages_size_{$size}{/if}">
+                {for $i = 1; $i <= 5; $i++}
+                    {$header = "{eval var=$theme_settings["shop_advantages_{$i}_header"]}"}
+
+                    {if empty($header)}
+                        {continue}
+                    {/if}
+
+                    <div class="advantages__item">
+                        <div class="advantage {if $size}advantage_size_{$size}{/if} {if $theme_settings["shop_advantages_view"] === 'top'}advantage_top{/if}">
+                            <div class="advantage__icon-box">
+                                <span class="image-box image-box_fill advantage__image-box">
+                                    {if !empty($theme_settings["shop_advantages_{$i}_icon"])}
+                                        {call image
+                                            src="{$wa_theme_url}{$theme_settings["shop_advantages_{$i}_icon"]}"
+                                            alt=$header
+                                        }
+                                    {elseif !empty($theme_settings["shop_advantages_{$i}_icon_fa"])}
+                                        <i class="{$theme_settings["shop_advantages_{$i}_icon_fa"]|escape}"></i>
+                                    {else}
+                                        {call svg_icon width=$svg_size height=$svg_size icon=$default_icons[$i - 1] fill='currentColor'}
+                                    {/if}
+                                </span>
+                            </div>
+                            <div class="advantage__content">
+                                <div class="advantage__title title title_h4">
+                                    {if !empty($theme_settings["shop_advantages_{$i}_link"])}
+                                        <a class="link link_style_hover" href="{$theme_settings["shop_advantages_{$i}_link"]|escape}" target="_blank">
+                                            {$header}
+                                        </a>
+                                    {else}
+                                        {$header}
+                                    {/if}
+                                </div>
+                                {if $size !== 'xs'}
+                                    <div class="advantage__body">
+                                        {eval var=$theme_settings["shop_advantages_{$i}_text"]}
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                {/for}
+            </div>
+        {else}
+            {$utp}
+        {/if}
+    {/function}
+
+    {function select classes='' block_classes='' select_name=null options=[] value=null disabled=false size=null fill=false}
+        {* Variables *}
+        {$first_option = null}
+        {$selected_option = null}
+
+        {foreach $options as $i => $option}
+            {if !array_key_exists('disabled', $option)}
+                {$options[$i].disabled = false}
+            {/if}
+
+            {if !array_key_exists('classes', $option)}
+                {$options[$i].classes = ''}
+            {/if}
+
+            {if array_key_exists('options', $option)}
+                {foreach $option.options as $j => $_option}
+                    {if !array_key_exists('disabled', $_option)}
+                        {$options[$i].options[$j].disabled = false}
+                    {/if}
+
+                    {if !array_key_exists('label_html', $_option)}
+                        {$options[$i].options[$j].label_html = ''}
+                    {/if}
+
+                    {if !array_key_exists('classes', $_option)}
+                        {$options[$i].options[$j].classes = ''}
+                    {/if}
+
+                    {if !array_key_exists('value', $_option)}
+                        {$_option.value = $_option.label}
+                        {$options[$i].options[$j].value = $_option.label}
+                    {/if}
+
+                    {$options[$i].options[$j].selected = false}
+
+                    {if $value == $_option.value}
+                        {$options[$i].options[$j].selected = true}
+                        {$selected_option = $options[$i].options[$j]}
+                    {/if}
+                {/foreach}
+            {else}
+                {if !array_key_exists('label_html', $option)}
+                    {$options[$i].label_html = ''}
+                {/if}
+
+                {if !array_key_exists('value', $option)}
+                    {$option.value = $option.label}
+                    {$options[$i].value = $option.label}
+                {/if}
+
+                {$options[$i].selected = false}
+
+                {if $value == $option.value}
+                    {$options[$i].selected = true}
+                    {$selected_option = $options[$i]}
+                {/if}
+            {/if}
+        {/foreach}
+
+        {if is_null($selected_option)}
+            {foreach $options as $i => $option}
+                {if array_key_exists('options', $option)}
+                    {foreach $option.options as $j => $_option}
+                        {if !$options[$i].options[$j].disabled}
+                            {$options[$i].options[$j].selected = true}
+                            {$selected_option = $options[$i].options[$j]}
+                            {break}
+                        {/if}
+                    {/foreach}
+                {else}
+                    {if !$options[$i].disabled}
+                        {$options[$i].selected = true}
+                        {$selected_option = $options[$i]}
+                        {break}
+                    {/if}
+                {/if}
+
+                {if !is_null($selected_option)}
+                    {break}
+                {/if}
+            {/foreach}
+        {/if}
+
+        {* Template *}
+        <label class="select {if $size}select_size_{$size}{/if} {if $fill}select_fill{/if} {$block_classes}">
+            <select class="select__control {$classes}"{if $select_name} name="{$select_name|escape}"{/if} {if $disabled}disabled="disabled"{/if}>
+                {foreach $options as $option}
+                    {if array_key_exists('options', $option)}
+                        <optgroup label="{$option.label|escape}" {if $option.classes}class="{$option.classes|escape}"{/if} {if $option.disabled}disabled="disabled"{/if}>
+                            {foreach $option.options as $_option}
+                                <option value="{$_option.value|escape}" {if $_option.classes}class="{$_option.classes|escape}"{/if} {if $_option.label_html}data-label="{$_option.label_html|escape}"{/if} {if $_option.disabled}disabled="disabled"{/if} {if $_option.selected}selected="selected"{/if}>
+                                    {$_option.label}
+                                </option>
+                            {/foreach}
+                        </optgroup>
+                    {else}
+                        <option value="{$option.value|escape}" {if $option.classes}class="{$option.classes|escape}"{/if} {if $option.label_html}data-label="{$option.label_html|escape}"{/if} {if $option.disabled}disabled="disabled"{/if} {if $option.selected}selected="selected"{/if}>
+                            {$option.label}
+                        </option>
+                    {/if}
+                {/foreach}
+            </select>
+            <span class="select__box">
+                <span class="select__content">
+                    {$selected_option.label_html|default:$selected_option.label|default:''}
+                </span>
+                <span class="select__arrow">
+                    {call svg_icon classes='select__arrow-icon' icon='arrow-bottom' width=10 height=6 fill='currentColor'}
+                </span>
+            </span>
+            <span class="select__dropdown">
+                {foreach $options as $option}
+                    {if array_key_exists('options', $option)}
+                        <span class="select__optgroup {if $option.disabled}select__optgroup_disabled{/if}">
+                            <span class="select__optgroup-label">
+                                {$option.label}
+                            </span>
+                            {foreach $option.options as $_option}
+                                <span class="select__option {if $_option.disabled}select__option_disabled{/if} {if $_option.selected}select__option_selected{/if}">
+                                    {$_option.label_html|default:$_option.label}
+                                </span>
+                            {/foreach}
+                        </span>
+                    {else}
+                        <span class="select__option {if $option.disabled}select__option_disabled{/if} {if $option.selected}select__option_selected{/if}">
+                            {$option.label_html|default:$option.label}
+                        </span>
+                    {/if}
+                {/foreach}
+            </span>
+        </label>
+    {/function}
+
+    {function catalog_tree
+        categories=[]
+        classes=''
+        fixed_width=false
+        show_products_count=false
+        show_real_count=false
+        side=null
+        max_depth=2
+        use_field_url='url'
+        is_enabled_image=false
+        is_enabled_image_only_root=false
+        sidebar_side=null
+        current_category_id=null
+        data=[]
+    }
+        <nav class="catalog-tree {if $fixed_width}catalog-tree_fixed-width{/if}">
+            {call catalog_list
+                categories=$categories
+                classes=$classes
+                side=$side
+                max_depth=$max_depth
+                show_children=true
+                show_products_count=$show_products_count
+                show_real_count=$show_real_count
+                use_field_url=$use_field_url
+                is_enabled_image=$is_enabled_image
+                is_enabled_image_only_root=$is_enabled_image_only_root
+                sidebar_side=$sidebar_side
+                current_category_id=$current_category_id
+                data=$data
+            }
+        </nav>
+    {/function}
+
+    {function catalog_extend
+        categories=[]
+        current_category_id=null
+        fixed_width=false
+        show_products_count=false
+        show_real_count=false
+        show_columns_title=false
+        is_enabled_image=false
+        count_columns=3
+        limit_columns=null
+        use_field_url='url'
+        show_first=false
+        break_avoid=false
+        sidebar_side=null
+    }
+        <div class="catalog-extend {if $fixed_width}catalog-extend_fixed-width{/if}">
+            <nav class="catalog-extend__list-container">
+                {call catalog_list
+                    categories=$categories
+                    current_category_id=$current_category_id
+                    show_products_count=$show_products_count
+                    show_real_count=$show_real_count
+                    show_children=true
+                    use_field_url=$use_field_url
+                    show_first=$show_first
+                    is_enabled_image=$is_enabled_image
+                    is_extend=true
+                    sidebar_side=$sidebar_side
+                }
+            </nav>
+
+            <div class="catalog-extend__columns-container{if $sidebar_side === 'right'} catalog-extend__columns-container_right{/if}">
+                {foreach $categories as $category}
+                    {if !isset($category.childs)}
+                        {$category.childs = []}
+                    {/if}
+
+                    {if count($category.childs) == 0}
+                        {continue}
+                    {/if}
+
+                    {$column_title = null}
+
+                    {if $show_columns_title}
+                        {$column_title = $category.name}
+                    {/if}
+
+                    {$link = $category.url}
+
+                    {if $category.id == '-1'}
+                        {$column_title = null}
+                        {$link = false}
+                    {/if}
+
+                    <div class="catalog-extend__columns" data-category_id="{$category.id|escape}">
+                        {call catalog_columns
+                            title=$column_title
+                            categories=$category.childs
+                            count_columns=$count_columns
+                            show_products_count=$show_products_count
+                            limit=$limit_columns
+                            link=$link
+                            break_avoid=$break_avoid
+                        }
+                    </div>
+                {/foreach}
+            </div>
+        </div>
+    {/function}
+
+    {function catalog_columns
+        count_columns=3
+        show_products_count=false
+        show_category_name=null
+        title=null
+        limit=-1
+        link=null
+        braek_avoid=false
+        icon_box_markup=''
+        classes=''
+        data=[]
+    }
+        {if !isset($show_category_name)}
+            {$show_category_name = $theme_settings['header_horizontal_show_name']}
+        {/if}
+
+        {if count($categories) <= $count_columns}
+            {$simple_columns_view = true}
+        {else}
+            {$simple_columns_view = $theme_settings['header_horizontal_column_per_category']}
+        {/if}
+
+        {$is_header_weight_bold = $theme_settings['header_catalog_weight_bold_enabled']}
+
+        {$data_attrs=[]}
+        {foreach $data as $name => $value}
+            {$data_attrs[] ="data-{$name}=\"{$value}\""}
+        {/foreach}
+
+        {$data_attrs_html = implode(' ', $data_attrs)}
+
+        {if $title}
+            <div class="catalog-columns-header">
+                {if $title}
+                    {if $link}
+                        <a href="{$link}" class="catalog-columns-header__title title title_h4 link link_style_hover">{$title|escape}</a>
+                    {else}
+                        <span class="catalog-columns-header__title title title_h4">{$title|escape}</span>
+                    {/if}
+                {/if}
+            </div>
+        {/if}
+
+        <div class="catalog-columns {if $simple_columns_view}catalog-columns_simple{/if} {$classes}" {$data_attrs_html} style="columns:{$count_columns};-moz-columns:{$count_columns};-webkit-columns:{$count_columns}">
+            {foreach $categories as $category}
+                {if $category.params['hidden']|default:false}
+                    {continue}
+                {/if}
+
+                {$show_logo = $theme_settings['header_catalog_logo_subcategory_enabled']}
+                {$logo_position = $theme_settings['header_catalog_logo_subcategory_position']}
+
+                {* Template *}
+                <div class="catalog-columns__category-container{if $break_avoid} catalog-columns__category-container_break-avoid{/if}{if $logo_position} catalog-columns__category-container_{$logo_position}{/if}"
+                        {if $simple_columns_view} style="width:calc(100% / {$count_columns})"{/if}>
+                    {if $show_logo}
+                        {$image_url = "{call shop_category_image category=$category size=60}"}
+                        {$has_image = !empty($image_url)}
+
+                        <div class="catalog-columns__image-container">
+                            <div class="catalog-columns__image-box">
+                                <a class="image-box image-box_fill" href="{$category.url}">
+                                    {if $has_image}
+                                        {call image
+                                        src=$image_url
+                                        classes='catalog-columns__image'
+                                        alt=$category.name
+                                        }
+                                    {else}
+                                        {call svg_icon classes='catalog-columns__image catalog-columns__image_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                    {/if}
+                                </a>
+                            </div>
+                        </div>
+                    {/if}
+                    <div class="catalog-columns__content">
+                        <div class="catalog-columns__category">
+                            <span class="catalog-columns__content">
+                                <a class="catalog-columns__link link link_style_hover{if $is_header_weight_bold} catalog-columns__link_bold{/if}" href="{$category.url}">{$category.name}</a>
+
+                                {if $show_products_count}
+                                    <span class="catalog-columns__count">
+                                        {call products_count category=$category}
+                                    </span>
+                                {/if}
+
+                                {if $category.params['badge']|default:null}
+                                    &emsp;
+                                    <span class="catalog-columns__category-badge" style="background-color: {$category.params['badge_color']|default:'#FF3131'|escape};color:{$category.params['badge_text_color']|default:'#FFFFFF'|escape}">
+                                        {$category.params['badge']|escape}
+                                    </span>
+                                {/if}
+                            </span>
+                        </div>
+                        {if $limit != 0 && !empty($category.childs)}
+                            {$is_category_has_no_link = $category.url == '#'}
+                            <div class="catalog-columns__subcategories{if $is_category_has_no_link} toggle-block{/if}">
+                                {$showed_counter = 0}
+                                {foreach $category.childs as $subcategory}
+                                    {if $subcategory.params['hidden']|default:false}
+                                        {continue}
+                                    {/if}
+
+                                    <div class="catalog-columns__subcategory{if $limit > 0 && $showed_counter >= $limit} catalog-columns__subcategory_hidden{/if}">
+                                        <a class="catalog-columns__subcategory-link link link_style_hover" href="{$subcategory.url}">
+                                            {$subcategory.name}
+
+                                            {if $show_products_count}
+                                                <span class="catalog-columns__count">
+                                                    {call products_count category=$subcategory}
+                                                </span>
+                                            {/if}
+
+                                            {if $subcategory.params['badge']|default:null}
+                                                &emsp;
+                                                <span class="catalog-columns__category-badge" style="background-color:{$subcategory.params['badge_color']|default:'#FF3131'|escape};color:{$subcategory.params['badge_text_color']|default:'#FFFFFF'|escape}">
+                                                    {$subcategory.params['badge']|escape}
+                                                </span>
+                                            {/if}
+                                        </a>
+                                    </div>
+
+                                    {$showed_counter = $showed_counter + 1}
+
+                                    {if $limit > 0 && $showed_counter == $limit && !$is_category_has_no_link}
+                                        {break}
+                                    {/if}
+                                {/foreach}
+
+                                {if count($category.childs) > $showed_counter}
+                                    <div class="catalog-columns__subcategory">
+                                        <a class="link{if $is_category_has_no_link} toggle-block__button{/if}" href="{$category.url}" data-active="{_wp('Скрыть')}">
+                                            [`Смотреть все`]
+                                        </a>
+                                    </div>
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/foreach}
+        </div>
+    {/function}
+
+    {function catalog_list
+        categories=[]
+        classes=''
+        current_category_id=null
+        is_current_branch=false
+        is_enabled_image=false
+        is_enabled_image_only_root=false
+        show_children=false
+        show_products_count=false
+        show_real_count=false
+        depth=0
+        max_depth=3
+        side=null
+        use_field_url='url'
+        show_first=false
+        is_extend=false
+        sidebar_side=null
+        data=[]
+    }
+        {if $show_first}
+            {$data['show_first'] = true}
+        {/if}
+
+        {$data_attrs=[]}
+        {foreach $data as $name => $value}
+            {$data_attrs[] ="data-{$name}=\"{$value}\""}
+        {/foreach}
+
+        {$data_attrs_html = implode(' ', $data_attrs)}
+
+        <ul class="catalog-list {if $depth}catalog-list_depth_{$depth|escape}{/if} {if $side}catalog-list_side_{$side|escape}{/if} {$classes}" {$data_attrs_html}>
+            {foreach $categories as $category}
+                {$is_pseudo = $category.id == -1}
+
+                {if $is_pseudo}
+                    {$depth = $depth - 1}
+                {/if}
+
+                {$has_children = $depth < $max_depth && isset($category.childs) && count($category.childs) > 0}
+                {$products_count = 0}
+                {$is_hidden = $category.params['hidden']|default:false}
+
+                {$_is_current_branch = false}
+                {if $current_category_id !== null}
+                    {if $_is_current_branch === false}
+                        {call is_current_category_branch _category=$category checked_category_id=$current_category_id}
+                        {$_is_current_branch = $wa->globals('market.return')}
+                    {/if}
+
+                    {if $category.id == $current_category_id}
+                        {$current_category_id = null}
+                    {/if}
+                {/if}
+
+                {if $is_hidden}
+                    {continue}
+                {/if}
+
+                {if $is_enabled_image}
+                    {$image_url = "{call shop_category_image category=$category size=44}"}
+                    {$has_image = !empty($image_url)}
+                {else}
+                    {$image_url = null}
+                    {$has_image = false}
+                {/if}
+
+                {if $show_products_count && !$is_pseudo && !$has_children}
+                    {$products_count = "{call products_count category=$category}"}
+                {/if}
+
+                {* Template *}
+                <li class="catalog-list__item {if $has_children && $show_children}catalog-list__item_has-children{if $sidebar_side === 'right'} catalog-list__item_right{/if}{/if}" data-category_id="{$category.id|escape}">
+                    <span class="catalog-list__content {if !$is_pseudo && $_is_current_branch}catalog-list__content_current{/if}">
+                        {if $has_image}
+                            <span class="catalog-list__item-image-container{if $sidebar_side === 'right'} catalog-list__item-image-container_left{/if}">
+                                {call image
+                                src=$image_url
+                                classes='catalog-list__item-image'
+                                alt=$category.name
+                                }
+                            </span>
+                        {/if}
+                        <span class="catalog-list__item-content-container">
+                            {if !$is_pseudo && !$_is_current_branch}
+                                <a class="catalog-list__link" href="{$category[$use_field_url]}">
+                                    {$category.name}
+                                </a>
+                            {else}
+                                {$category.name}
+                            {/if}
+
+                            {if ($show_products_count || $show_real_count) && !$has_children}
+                                <span class="catalog-list__count">
+                                    {if $show_products_count}
+                                        {$products_count}
+                                    {else}
+                                        {$category.count}
+                                    {/if}
+                                </span>
+                            {/if}
+
+                            {if $category.params['badge']|default:null}
+                                &emsp;
+                                <span class="catalog-list__badge" style="background-color:{$category.params['badge_color']|default:'#FF3131'|escape};color:{$category.params['badge_text_color']|default:'#FFFFFF'|escape}">
+                                    {$category.params['badge']|escape}
+                                </span>
+                            {/if}
+                        </span>
+
+                        {if $has_children && $show_children}
+                            {$icon = 'arrow-right'}
+                            {if $sidebar_side === 'right'}
+                                {$icon = 'arrow-left'}
+                            {/if}
+                            {call svg_icon icon=$icon classes='catalog-list__arrow-icon' width=6 height=10 fill='currentColor'}
+                        {/if}
+                    </span>
+
+                    {if $show_children && $has_children && !$is_extend}
+                        <div class="catalog-list__children-container{if $sidebar_side === 'right'} catalog-list__children-container_left{/if}">
+                            {call catalog_list
+                                categories=$category.childs
+                                is_enabled_image=!$is_enabled_image_only_root && $is_enabled_image
+                                show_children=$show_children
+                                show_products_count=$show_products_count
+                                show_real_count=$show_real_count
+                                depth=($depth + 1)
+                                max_depth=$max_depth
+                                side=$side
+                                use_field_url=$use_field_url
+                                sidebar_side=$sidebar_side
+                                current_category_id=$current_category_id
+                                is_current_branch=$_is_current_branch
+                            }
+                        </div>
+                    {/if}
+                </li>
+            {/foreach}
+        </ul>
+    {/function}
+
+    {function catalog_flat
+        categories=[]
+        current_category_id=null
+        show_products_count=false
+        show_real_count=false
+        limit_flat=5
+        is_enabled_image=false
+        count_flat=4
+        use_field_url='url'
+    }
+        {$is_header_weight_bold = $theme_settings['header_catalog_weight_bold_enabled']}
+
+        <div class="catalog-flat">
+            <nav class="catalog-flat__list-container">
+                <ul class="catalog-flat__list" style="grid-template-columns: repeat({$count_flat}, 1fr)">
+                    {foreach $categories as $category}
+                        {$is_pseudo = $category.id == -1}
+
+                        {$has_children = isset($category.childs) && count($category.childs) > 0}
+                        {$products_count = 0}
+                        {$is_hidden = $category.params['hidden']|default:false}
+
+                        {$_is_current_branch = false}
+
+                        {if $is_hidden}
+                            {continue}
+                        {/if}
+
+                        {if $is_enabled_image}
+                            {$image_url = "{call shop_category_image category=$category size=0 height=73}"}
+                            {$has_image = !empty($image_url)}
+                        {else}
+                            {$image_url = null}
+                            {$has_image = false}
+                        {/if}
+
+                        {if $show_products_count}
+                            {$products_count = "{call products_count category=$category}"}
+                        {/if}
+
+                        {* Template *}
+                        <li class="catalog-flat__item {if $has_children}catalog-flat__item_has-children{/if}" data-category_id="{$category.id|escape}">
+                            <span class="catalog-flat__content">
+                                {if $is_enabled_image}
+                                    {if $has_image}
+                                        <a href="{$category[$use_field_url]}" class="catalog-flat__item-image-container">
+                                            {call image
+                                            src=$image_url
+                                            classes='catalog-flat__item-image'
+                                            alt=$category.name
+                                            }
+                                        </a>
+                                    {else}
+                                        <a href="{$category[$use_field_url]}" class="catalog-flat__item-image-container">
+                                            {call svg_icon classes='catalog-flat__image catalog-flat__image_dummy' icon='no-thumb' width=73 height=73 fill='#CFCFCF'}
+                                        </a>
+                                    {/if}
+                                {/if}
+                                <span class="catalog-flat__item-content-container">
+                                    {if !$is_pseudo}
+                                        <a class="catalog-flat__link{if $is_header_weight_bold} catalog-flat__link_bold{/if}" href="{$category[$use_field_url]}">
+                                            {$category.name}
+                                        </a>
+                                    {else}
+                                        {$category.name}
+                                    {/if}
+
+                                    {if ($show_products_count || $show_real_count)}
+                                        &nbsp;
+                                        <sup class="catalog-flat__count">
+                                            {if $show_products_count}
+                                                {$products_count}
+                                            {else}
+                                                {$category.count}
+                                            {/if}
+                                        </sup>
+                                    {/if}
+
+                                    {if $category.params['badge']|default:null}
+                                        &emsp;
+                                        <span class="catalog-flat__badge" style="background-color:{$category.params['badge_color']|default:'#FF3131'|escape};color:{$category.params['badge_text_color']|default:'#FFFFFF'|escape}">
+                                            {$category.params['badge']|escape}
+                                        </span>
+                                    {/if}
+                                </span>
+                            </span>
+
+                            {if $has_children && $limit_flat > 0}
+                                <ul class="catalog-flat__children-container">
+                                    {foreach $category.childs as $key => $child}
+                                        <li class="catalog-flat__children-item">
+                                            {if $child.url}
+                                                <a class="catalog-flat__children-link" href="{$child.url}">
+                                                    {$child.name|escape}
+                                                </a>
+                                            {else}
+                                                <span>{$child.name|escape}</span>
+                                            {/if}
+                                            {if $show_products_count}
+                                                &nbsp;
+                                                <sup class="catalog-flat__count">
+                                                    {call products_count category=$child}
+                                                </sup>
+                                            {/if}
+                                        </li>
+
+                                        {if $key === $limit_flat - 1}
+                                            {break}
+                                        {/if}
+                                    {/foreach}
+                                </ul>
+
+                                {if count($category.childs) > $limit_flat && $category[$use_field_url]}
+                                    <div class="catalog-flat__show-more">
+                                        <a class=" catalog-flat__link" href="{$category[$use_field_url]}">
+                                            [`Смотреть ещё`]
+                                        </a>
+                                    </div>
+                                {/if}
+                            {/if}
+                        </li>
+                    {/foreach}
+                </ul>
+            </nav>
+        </div>
+    {/function}
+
+    {function brands_thumbs brands=[] size=null is_sidebar=false is_letters=false is_slider=false is_thumbs=false}
+        {if !$wa->globals('is_mobile') || $is_thumbs || $is_slider}
+            <div class="brands-thumbs{if $is_sidebar} brands-thumbs_offset-sidebar{/if}{if $is_slider} brands-thumbs_slider swiper{/if}">
+                <div class="brands-thumbs__wrapper {if $is_slider}swiper-wrapper swiper-wrapper_overflow-fixed{/if}">
+                    {foreach $brands as $brand}
+                        <div class="brands-thumbs__item brand-item{if $is_slider} swiper-slide{/if}"{if $is_letters} data-letter="{$brand.name|mb_substr:0:1}"{/if}>
+                            <a class="brand-thumb {if $size}brand-thumb_size_{$size|escape}{/if}" href="{$brand.frontend_url|escape}">
+                                <span class="brand-thumb__image-container">
+                                    <span class="image-box image-box_fill brand-thumb__image-box">
+                                        {if $brand.image_url}
+                                            {call image
+                                                src=$brand.image_url
+                                                alt=$brand.name
+                                            }
+                                        {else}
+                                            {call svg_icon icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                        {/if}
+                                    </span>
+                                </span>
+                                <span class="brand-thumb__name-container">
+                                    {$brand.name|escape}
+                                </span>
+                            </a>
+                        </div>
+                    {/foreach}
+                </div>
+            </div>
+        {else}
+            <div class="list-rows list-rows_separated r-brands-list r-clear-offsets">
+                {foreach $brands as $brand}
+                    {$data = []}
+                    {if $is_letters}
+                        {$data = [
+                        name => 'letter',
+                        content => $brand.name|mb_substr:0:1
+                        ]}
+                    {/if}
+                    {call list_rows_item text=$brand.name args=[
+                    link => $brand.frontend_url,
+                    list_rows_classes => 'brand-item',
+                    has_arrow => 1,
+                    is_hidden => false,
+                    data => $data
+                    ]
+                    }
+                {/foreach}
+            </div>
+        {/if}
+    {/function}
+
+    {function pagination url=null page=null total=1}
+        {if !isset($url)}
+            {$url = $wa->currentUrl(false, true)}
+        {/if}
+
+        {if !isset($page)}
+            {$page = $wa->get('page', 1)}
+        {/if}
+
+        {if $page < 1}
+            {$page = 1}
+        {/if}
+
+        {$nb = 1}
+
+        <div class="pagination">
+            {if $page > 1}
+                {$page_url = "{call page_url page=($page - 1) url=$url}"}
+
+                <div class="pagination__item">
+                    <a class="pagination-item pagination-item_prev" href="{$page_url}">
+                        {call svg_icon classes='pagination-item__icon' icon='arrow-left' width=6 height=10 fill='currentColor'}
+                    </a>
+                </div>
+            {/if}
+
+            {$p = 1}
+            {$n = 1}
+
+            {while $p <= $total}
+                {$page_url = "{call page_url page=$p url=$url}"}
+                {$is_first = $p <= $nb}
+                {$is_last = $total - $nb + 1 <= $p}
+                {$is_middle = abs($page - $p) <= $nb}
+
+                {if !$is_first && !$is_last && !$is_middle}
+                    <div class="pagination__item">
+                        <span class="pagination-item pagination-item_space">...</span>
+                    </div>
+
+                    {if $p < $page}
+                        {$p = $page - $nb}
+                    {else}
+                        {$p = $total - $nb + 1}
+                    {/if}
+                {else}
+
+                    {if $p == $page}
+                        <div class="pagination__item">
+                            <span class="pagination-item pagination-item_current">{$p}</span>
+                        </div>
+                    {else}
+                        <div class="pagination__item">
+                            <a class="pagination-item" href="{$page_url}">{$p}</a>
+                        </div>
+                    {/if}
+
+
+                    {$p = $p + 1}
+                {/if}
+            {/while}
+
+            {if $page < $total}
+                {$page_url = "{call page_url page=($page + 1) url=$url}"}
+
+                <div class="pagination__item">
+                    <a class="pagination-item pagination-item_next" href="{$page_url}">
+                        {call svg_icon classes='pagination-item__icon' icon='arrow-right' width=6 height=10 fill='currentColor'}
+                    </a>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function panel_banner hash=''}
+        {capture assign='content'}
+            <div class="banner-panel__container">
+                <div class="banner-panel__content-container" style="color: {$theme_settings['promo_top_banner_text_color']|escape};">
+                    {$theme_settings['promo_top_banner_text']}
+                </div>
+                {if !empty($theme_settings['promo_top_banner_button_text'])}
+                    <div class="banner-panel__button-container">
+                        <a class="button button_size_xs" href="{$theme_settings['promo_top_banner_link']|escape}" style="color: {$theme_settings['promo_top_banner_button_text_color']|escape};background-color: {$theme_settings['promo_top_banner_button_background_color']|escape};" target="_blank">
+                            {$theme_settings['promo_top_banner_button_text']|escape}
+                        </a>
+                    </div>
+                {/if}
+            </div>
+        {/capture}
+
+        {$background_color = $theme_settings['promo_top_banner_background_color']}
+
+        <div class="info-panel info-panel_align_center banner-panel" data-banner_hash="{$hash|escape}" style="background-color: {$background_color|escape};">
+            <div class="container">
+                <div class="info-panel__container">
+                    <div class="info-panel__content-container">
+                        {$content}
+                    </div>
+                    <div class="info-panel__close-button-container">
+                        <span class="info-panel__close-button">
+                            <span class="image-box">
+                                {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {/function}
+
+    {function reviews_thumbs reviews=[] size=null is_slider=false is_sidebar=false}
+        {$product_ids = []}
+
+        {foreach $reviews as $review}
+            {$product_ids[] = $review.product_id}
+        {/foreach}
+
+        {$product_ids = array_unique($product_ids)}
+        {$products = $wa->shop->products($product_ids)}
+
+        <div class="reviews-thumbs {if $is_slider}reviews-thumbs_slider swiper{/if} {if $size}reviews-thumbs_size_{$size}{/if} {if $is_sidebar}reviews-thumbs_offset-sidebar{/if}">
+            <div class="reviews-thumbs__wrapper {if $is_slider}swiper-wrapper swiper-wrapper_overflow-fixed{/if}">
+                {foreach $reviews as $review}
+                    {if !isset($products[$review.product_id])}
+                        {continue}
+                    {/if}
+
+                    <div class="reviews-thumbs__item {if $is_slider}swiper-slide{/if}">
+                        {$product = $products[$review.product_id]}
+                        {$has_image = isset($product.image_id)}
+                        {$has_author = !empty($review.author)}
+
+                        <div class="review-thumb">
+                            <div class="review-thumb__product">
+                                <div class="review-thumb__product-image-box">
+                                    {if $has_image}
+                                        {call image
+                                            src=$wa->shop->productImgUrl($product, '60')
+                                            classes='review-thumb__product-image'
+                                            alt=$product.name
+                                            r2x=true
+                                        }
+                                    {else}
+                                        {if !empty($theme_settings['product_dummy_image'])}
+                                            {call image
+                                                src=$theme_settings['product_dummy_image']
+                                                classes='review-thumb__product-image'
+                                                alt=$product.name
+                                                attrs=[
+                                                    'width' => 60
+                                                ]
+                                            }
+                                        {else}
+                                            {call svg_icon classes='review-thumb__product-image' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                        {/if}
+                                    {/if}
+                                </div>
+                                <div class="review-thumb__product-content">
+                                    <div class="review-thumb__product-name">
+                                        <a class="link link_style_hover" href="{call get_product_url product=$product}">
+                                            {$product.name}
+                                        </a>
+                                    </div>
+                                    <div class="review-thumb__product-rating">
+                                        {call rating_overview rating=$review.rate show_rating=true is_compact=true}
+                                    </div>
+                                </div>
+                            </div>
+                            {if $has_author}
+                                <div class="review-thumb__author">
+                                    {$review.author.name}
+                                </div>
+                            {/if}
+                            <div class="review-thumb__text">
+                                {$review.text|escape}
+                            </div>
+                            <div class="review-thumb__date">
+                                {$review.datetime|wa_datetime:'humandate'}
+                            </div>
+                        </div>
+                    </div>
+                {/foreach}
+            </div>
+        </div>
+    {/function}
+
+    {function categories_compact categories=[] limit=-1 show_log=false show_count=false is_wide='' show_real_count=false}
+        <div class="categories-compact{if $wa->globals('is_show_sidebar') || $is_wide} categories-compact_offset-sidebar{/if} toggle-block">
+            <div class="categories-compact__list">
+                {$count_hidden = 0}
+
+                {foreach $categories as $category}
+                    {$is_hidden = $limit != -1 && $category@iteration > $limit}
+                    {$products_count = 0}
+
+                    {if $is_hidden}
+                        {$count_hidden = $count_hidden + 1}
+                    {/if}
+
+                    <div class="categories-compact__item {if $is_hidden}categories-compact__item_hidden{/if}">
+                        {if $show_count}
+                            {if $show_real_count}
+                                {$products_count = $category.count}
+                            {else}
+                                {$products_count = "{call products_count category=$category}"}
+                            {/if}
+
+                        {/if}
+
+                        {$category_image_url = "{call shop_category_image category=$category size=60}"}
+
+                        {$is_dummy_image = empty($category_image_url)}
+
+                        <div class="category-compact">
+                            {if $show_logo}
+                                <span class="category-compact__image-box">
+                                    <span class="image-box image-box_contain">
+                                        <a class="category-compact__link category-compact__link_image" href="{$category.url}">
+                                            {if !$is_dummy_image}
+                                                {call image
+                                                    src=$category_image_url
+                                                    classes='category-compact__image'
+                                                    alt=$category.name
+                                                }
+                                            {else}
+                                                {call svg_icon classes='category-compact__image category-compact__image_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                            {/if}
+                                        </a>
+                                    </span>
+                                </span>
+                            {/if}
+                            <span class="category-compact__content">
+                                <a class="category-compact__link" href="{$category.url}"><span class="category-compact__name">{$category.name}</span></a>
+                                {if $show_count}
+                                    <span class="category-compact__products-count">{$products_count}</span>
+                                {/if}
+                            </span>
+                        </div>
+                    </div>
+                {/foreach}
+            </div>
+            {if $count_hidden > 0}
+                <div class="categories-compact__footer">
+                    <button class="categories-compact__show-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Показать ещё`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                    <button class="categories-compact__hide-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Скрыть`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-top' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function categories_extend categories=[] is_extend_header_bold=false size=null show_logo=false show_products_count=false limit=-1 subcategories_limit=-1}
+        <div class="categories-extend{if $size} categories-extend_size_{$size}{/if} toggle-block">
+            <ul class="categories-extend__list">
+                {$count_hidden = 0}
+
+                {if $size === 's'}
+                    {$image_size = 63}
+                {else}
+                    {$image_size = 73}
+                {/if}
+
+                {foreach $categories as $category}
+                    {$is_hidden = $limit != -1 && $category@iteration > $limit}
+                    {$products_count = 0}
+
+                    {if $is_hidden}
+                        {$count_hidden = $count_hidden + 1}
+                    {/if}
+
+                    {$category_children = []}
+                    {if isset($category.childs)}
+                        {$category_children = $category.childs|default:[]}
+                    {elseif isset($category.children)}
+                        {$category_children = $category.children|default:[]}
+                    {/if}
+
+                    <li class="categories-extend__item {if $is_hidden}categories-extend__item_hidden{/if}">
+                        {$products_count = 0}
+                        {if $show_products_count}
+                            {$products_count = "{call products_count category=$category}"}
+                        {/if}
+
+                        {$image_url = "{call shop_category_image category=$category size=$image_size}"}
+
+                        {$has_image = !empty($image_url)}
+
+                        <div class="category-extend {if $size}category-extend_size_{$size}{/if} toggle-block">
+                            {if $show_logo}
+                                <div class="category-extend__image-container">
+                                    <div class="category-extend__image-box">
+                                        <a class="image-box image-box_fill" href="{$category.url}">
+                                            {if $has_image}
+                                                {call image
+                                                    src=$image_url
+                                                    classes='category-extend__image'
+                                                    alt=$category.name
+                                                }
+                                            {else}
+                                                {call svg_icon classes='category-extend__image category-extend__image_dummy' icon='no-thumb' width=60 height=54 fill='#CFCFCF'}
+                                            {/if}
+                                        </a>
+                                    </div>
+                                </div>
+                            {/if}
+                            <div class="category-extend__content">
+                                <a class="category-extend__name {if $is_extend_header_bold}category-extend__name_bold{/if} link link_style_hover" href="{$category.url}">
+                                    {$category.name}
+                                </a>
+
+                                {if $show_products_count}
+                                    <span class="category-extend__products-count">{$products_count}</span>
+                                {/if}
+
+                                {if count($category_children) > 0}
+                                    {$count_hidden_childs = 0}
+
+                                    <ul class="category-extend__subcategories">
+                                        {foreach $category_children as $subcategory}
+                                            {$is_hidden = $subcategories_limit != -1 && $subcategory@iteration > $subcategories_limit}
+                                            {$products_count = 0}
+
+                                            {if $show_products_count}
+                                                {$products_count = "{call products_count category=$subcategory}"}
+                                            {/if}
+
+                                            {if $is_hidden}
+                                                {$count_hidden_childs = $count_hidden + 1}
+                                            {/if}
+
+                                            <li class="category-extend__subcategory {if $is_hidden}category-extend__subcategory_hidden{/if}">
+                                                <a class="link link_style_hover" href="{$subcategory.url}">
+                                                    {$subcategory.name}
+                                                </a>
+
+                                                {if $show_products_count}
+                                                    <span class="category-extend__products-count">{$products_count}</span>
+                                                {/if}
+                                            </li>
+                                        {/foreach}
+                                    </ul>
+
+                                    {if $count_hidden_childs > 0}
+                                        <div class="category-extend__footer">
+                                            <span class="pseudo-link toggle-block__button category-extend__show-button">[`Показать все`]</span>
+                                            <span class="pseudo-link toggle-block__button category-extend__hide-button">[`Скрыть`]</span>
+                                        </div>
+                                    {/if}
+                                {/if}
+                            </div>
+                        </div>
+                    </li>
+                {/foreach}
+            </ul>
+
+            {if $count_hidden > 0}
+                <div class="categories-extend__footer">
+                    <button class="categories-extend__show-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Показать ещё`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                    <button class="categories-extend__hide-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Скрыть`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-top' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function categories_mini categories=[] show_count=false show_real_count=false use_url_field='url' limit=-1 is_links=false is_slider=false}
+        <div class="categories-mini{if $is_slider} categories-mini_slider{else} toggle-block{/if}">
+            <div class="categories-mini__list">
+                {$count_hidden = 0}
+
+                {foreach $categories as $category}
+                    {$is_hidden = $limit != -1 && $category@iteration > $limit && !$is_slider}
+
+                    {if $is_hidden}
+                        {$count_hidden = $count_hidden + 1}
+                    {/if}
+
+                    <div class="categories-mini__item {if $is_hidden}categories-mini__item_hidden{/if}">
+
+                        {if $show_count}
+                            {if $show_real_count}
+                                {$products_count = $category.count}
+                            {else}
+                                {$products_count = "{call products_count category=$category}"}
+                            {/if}
+                        {/if}
+
+                        <a class="category-mini{if $is_links} category-mini_link{/if}" href="{$category[$use_url_field]}">
+                            <span class="category-mini__name">{$category.name}</span>
+
+                            {if $show_count}
+                                <sup class="category-mini__products-count">{$products_count}</sup>
+                            {/if}
+                        </a>
+                    </div>
+                {/foreach}
+            </div>
+            {if $count_hidden > 0}
+                <div class="categories-mini__footer">
+                    <button class="categories-mini__show-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Показать ещё`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                    <button class="categories-mini__hide-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Скрыть`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-top' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function categories_r categories=[] limit=null classes='' show_logo=false show_count=false}
+        {if !isset($limit)}
+            {$limit = max(-1, intval($theme_settings['shop_home_categories_subcategories_limit_adaptive']|default:$theme_settings['shop_home_categories_subcategories_limit']))}
+        {/if}
+
+        <div class="list-rows list-rows_multicolor list-rows_separated r-clear-offsets r-hidden-desktop toggle-block {$classes}">
+            {foreach $categories as $category}
+                {$counter = null}
+
+                {if $show_count}
+                    {$counter = [
+                        'count' => "{call products_count category=$category}"
+                    ]}
+                {/if}
+
+                {call list_rows_item text=$category.name args=[
+                    item_category => $category,
+                    link => $category.url,
+                    has_arrow => 1,
+                    counter => $counter,
+                    is_hidden => "{call is_hidden_list_item list_iteration=$category@iteration list_limit=$limit}",
+                    show_logo => $show_logo
+                ]}
+            {/foreach}
+            {if count($categories) > $limit}
+                <div class="list-rows__expand r-inner-wrapper">
+                    <button class="list-rows__expand-button button button_style_inverse button_size_l button_align_center toggle-block__button">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Показать ещё`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                    <button class="list-rows__expand-button_hide toggle-block__button button button_style_inverse button_size_l button_align_center toggle-block__button">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Скрыть`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-top' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function categories_thumbs
+        categories=[]
+        show_logo=false
+        show_products_count=false
+        limit=-1
+        show_real_count=false
+        use_url_field='url'
+        show_badge=false
+        is_mobile=false
+        is_sidebar=false
+    }
+        <div class="categories-thumbs toggle-block{if $is_mobile} categories-thumbs_mobile{/if}{if $is_sidebar} categories-thumbs_offset-sidebar{/if}">
+            <div class="categories-thumbs__wrapper">
+                {$count_hidden = 0}
+
+                {foreach $categories as $category}
+                    {$badge = $category.params['badge']|default:null}
+                    {$badge_color = $category.params['badge_color']|default:'#FF3131'}
+                    {$badge_text_color = $category.params['badge_text_color']|default:'#FFFFFF'}
+                    {$has_badge = !is_null($badge)}
+                    {$is_hidden = $limit != -1 && $category@iteration > $limit}
+
+                    {if $is_hidden}
+                        {$count_hidden = $count_hidden + 1}
+                    {/if}
+
+                    <div class="categories-thumbs__item {if $is_hidden}categories-thumbs__item_hidden{/if}">
+                        {$products_count = 0}
+
+                        {if $show_products_count}
+                            {if $show_real_count}
+                                {$products_count = $category.count}
+                            {else}
+                                {$products_count = "{call products_count category=$category}"}
+                            {/if}
+                        {/if}
+
+                        {$image_url = "{call shop_category_image category=$category size=125}"}
+                        {$has_image = !empty($image_url)}
+
+                        <a class="category-thumb{if $is_mobile} category-thumb_mobile{/if}" href="{$category[$use_url_field]}">
+                            {if $show_logo}
+                                <span class="category-thumb__image-box">
+                                    {if $has_image}
+                                        <span class="image-box image-box_fill">
+                                                {call image
+                                                    src=$image_url
+                                                    classes='category-thumb__image'
+                                                    alt=$category.name
+                                                }
+                                        </span>
+                                    {else}
+                                        {call svg_icon classes='category-thumb__image svg-icon_fill' icon='no-thumb' width=100 fill='#CFCFCF'}
+                                    {/if}
+                                </span>
+                            {/if}
+
+                            {$name_rows = $theme_settings['shop_catalog_subcategories_thumbs_name_rows']}
+                            <div class="category-thumb__name"{if $name_rows != 2 && !$is_mobile} style="max-height: {$name_rows * 27}px;-webkit-line-clamp: {$name_rows};"{/if}>
+                                {$category.name}
+                            </div>
+
+                            {if $show_products_count}
+                                <span class="category-thumb__products-count">{$products_count} {call plural forms=["{_wp("товар")}", "{_wp("товара")}", "{_wp("товаров")}"] n=$products_count}</span>
+                            {/if}
+
+                            {if $has_badge && $show_logo}
+                                <div class="category-thumb__category-badge" style="background-color:{$badge_color|escape};color:{$badge_text_color|escape}">
+                                    {$badge|escape}
+                                </div>
+                            {/if}
+                        </a>
+                    </div>
+                {/foreach}
+            </div>
+
+            {if $count_hidden > 0}
+                <div class="categories-thumbs__footer">
+                    <button class="categories-thumbs__show-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Показать ещё`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-bottom' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                    <button class="categories-thumbs__hide-button toggle-block__button button button_style_inverse button_size_l button_wide">
+                        <span class="icon-box">
+                            <span class="icon-box__content">
+                                [`Скрыть`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='dict-arrow-top' width=12 height=12 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function seofilters_links category=[]}
+        {if $category && is_callable(['shopSflPluginViewHelper', 'getGroupedLinks'], false)}
+            {$groups = shopSflPluginViewHelper::getGroupedLinks($category.id)}
+
+            {if $groups}
+                <div class="seofilters-links">
+                    {foreach $groups as $groupTitle => $group}
+                        {if $groupTitle !== -1 && !empty($group)}
+                            <div class="seofilters-links__group">
+                                {if $group.title}
+                                    <div class="seofilters-links__header">{$group.title}: </div>
+                                {/if}
+                                <div class="seofilters-links__wrapper">
+                                    <div class="seofilters-links__slider swiper">
+                                        <div class="seofilters-links__list swiper-wrapper">
+                                            {foreach $group.links as $item}
+                                                <div class="seofilters-links__item swiper-slide">
+                                                    <a class="seofilters-links__link{if $item.frontend_url == $wa->currentUrl()} seofilters-links__link_current{/if}" href="{$item.frontend_url}">{$item.label}</a>
+                                                </div>
+                                            {/foreach}
+                                        </div>
+                                    </div>
+                                    <div class="seofilters-links__prev">
+                                        {call svg_icon icon='arrow-left' width=6 height=10 fill='currentColor'}
+                                    </div>
+                                    <div class="seofilters-links__next">
+                                        {call svg_icon icon='arrow-right' width=6 height=10 fill='currentColor'}
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
+                    {/foreach}
+                </div>
+            {/if}
+        {/if}
+    {/function}
+
+    {function review
+        review=null
+        id=null
+        show_product_link=false
+        show_title=null
+        show_author=true
+        show_shop_name=false
+        show_rating=true
+        date_position='bottom'
+        author_url=''
+        show_product_image=false
+        product_image_size='96'
+        product_image_align='left'
+        show_text=true
+        show_review_images=true
+        show_comments=true
+        show_reply_button=true
+    }
+        {* Theme Settings *}
+        {$hide_title_site = !$theme_settings['shop_product_reviews_hide_title_site']|default:1}
+
+        {* Variables *}
+        {$is_reply = $review.depth != 0}
+
+        {if $is_reply}
+            {$show_product_image = false}
+            {$show_product_link = false}
+            {$show_rating = false}
+        {/if}
+
+        {if $show_title === null}
+            {$show_title = !$hide_title_site}
+        {/if}
+
+        {$review.comments = $review.comments|default:[]}
+        {$has_replies = count($review.comments) > 0}
+
+        {$review_product_id = $review.product_id|default:$review.product.id|default:''}
+        {$review_product_name = $review.product_name|default:''}
+        {$review_product_url = $review.product_url|default:''}
+        {$review_product_image_url = ''}
+
+        {if ($show_product_image || (empty($review_product_url) && $show_product_link)) && !empty($review_product_id)}
+            {$review_product = $wa->shop->product($review_product_id)}
+
+            {$review_product_name = $review_product.name}
+            {if empty($review_product_url) && $show_product_link}
+                {$review_product_url = $wa->shop->productUrl($review_product)}
+            {/if}
+            {if $show_product_image}
+                {$review_product_image_url = $wa->shop->productImgUrl($review_product, $product_image_size)}
+            {/if}
+        {/if}
+
+        {* Template *}
+        <div class="product-review product-review_depth_{$review.depth|escape} {if $review.rate}product-review_rate_{intval($review.rate)|escape}{/if}  {if $has_replies}product-review_has-replies{/if} {if $is_reply}product-review_reply{/if}" data-review_id="{$review.id|escape}">
+            {if $show_author || $date_position == 'top'}
+                <div class="product-review__top">
+                    {if $show_author}
+                        <div class="product-review__author">
+                            {$author = $review.author}
+
+                            {if isset($author.id)}
+                                {$author = $wa->contact($author.id)}
+                            {/if}
+
+                            {if !empty($author_url)}
+                                {$author_url = $review.site}
+                            {/if}
+
+                            {if $is_reply}
+                                {call contact_block contact=$author size='s' link=$author_url}
+                            {else}
+                                {call contact_block contact=$author link=$author_url}
+                            {/if}
+                        </div>
+                    {/if}
+                    {if ifempty($review.author.is_user) > 0 && $show_shop_name}
+                        <span class="product-review__staff">
+                            {$wa->shop->settings('name')}
+                        </span>
+                    {/if}
+                    {if $date_position == 'top'}
+                        <div class="product-review__date">
+                            {$review.datetime|wa_datetime:'d.m.Y / H:i'}
+                        </div>
+                    {/if}
+                </div>
+            {/if}
+            <div class="product-review__body {if !empty($review_product_image_url)} product-review__body_image-align-{$product_image_align}{/if}">
+                {if !empty($review_product_image_url)}
+                    <div class="product-review__product-image-wrapper">
+                        <img class="product-review__product-image" src="{$review_product_image_url|escape}" alt="{$review_product_name}">
+                    </div>
+                {/if}
+                <div class="product-review__main">
+                    {if $show_product_link}
+                        <a class="product-review__product-url link" href="{$review_product_url}">{$review_product_name}</a>
+                    {/if}
+                    {if $show_rating}
+                        {$review_rating = $review.rate|default:$review.rating|default:0}
+                        <div class="product-review__rating">
+                            {call rating_overview rating=$review_rating show_rating=true}
+                        </div>
+                    {/if}
+                    <div class="product-review__content">
+                        <div class="content-decorator">
+                            {if $review.body}
+                                {$review.body}
+                            {else}
+                                {if $show_title && $review.title}
+                                    <h4>{$review.title|escape}</h4>
+                                {/if}
+
+                                {if $show_text}
+                                    {$review.text|escape}
+                                {/if}
+                            {/if}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="product-review__footer">
+                {if $date_position == 'bottom'}
+                    <div class="product-review__footer-date">
+                        {$review.datetime|wa_datetime:'d.m.Y / H:i'}
+                    </div>
+                {/if}
+                {if $show_comments && $show_reply_button}
+                    <div class="product-review__footer-reply">
+                        <span class="pseudo-link product-review__reply-button">[`ответить`]</span>
+                    </div>
+                {/if}
+            </div>
+            {if $show_review_images && !empty($review.images)}
+                {capture assign='gallery_content'}
+                    <div class="popup-gallery" data-popup-gallery-id="{$id}" style="max-width: 100%;width: 1300px;">
+                        <div class="popup-gallery__images-container">
+                            <div class="popup-gallery__images swiper">
+                                <div class="popup-gallery__images-wrapper swiper-wrapper">
+                                    {foreach $review.images as $image}
+                                        {$image_id = "{$review.id}_{$image@iteration}"}
+                                        {$image_url = null}
+                                        {$image_desc = ''}
+
+                                        {if is_array($image)}
+                                            {$image_id = $image.id|escape}
+                                            {$image_url = $image.url_1|escape}
+                                            {$image_desc = $image.description|escape}
+                                        {else}
+                                            {$image_url = $image|escape}
+                                        {/if}
+
+                                        <div class="popup-gallery__image swiper-slide image-box image-box_contain" data-image_id="{$image_id}">
+                                            <img src="{$image_url}" alt="{$image_desc}" />
+                                        </div>
+                                    {/foreach}
+                                </div>
+                            </div>
+                            <div class="popup-gallery__arrow popup-gallery__arrow_prev">
+                                {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-left' width=16 height=26}
+                            </div>
+                            <div class="popup-gallery__arrow popup-gallery__arrow_next">
+                                {call svg_icon classes='popup-gallery__arrow-icon' icon='arrow-right' width=16 height=26}
+                            </div>
+                        </div>
+                        {if $wa->globals('is_mobile') && count($review.images) > 1}
+                            <div class="popup-gallery__pagination gallery-pagination gallery-pagination_product"></div>
+                        {/if}
+                    </div>
+                {/capture}
+
+                <div class="product-review__images review-images open-popup-gallery" data-popup-gallery-id="{$id}" data-gallery="{$gallery_content|escape}">
+                    {foreach $review.images as $image}
+                        {$image_url = null}
+                        {$full_image_url = null}
+                        {$image_desc = ''}
+
+                        {if is_array($image)}
+                            {$image_url = $image.url_3|escape}
+                            {$full_image_url = $image.url_1|escape}
+                            {$image_desc = $image.description|escape}
+                        {else}
+                            {$image_url = $image|escape}
+                        {/if}
+
+                        <a class="product-review__images-link open-popup-gallery__item" href="{$full_image_url}" data-index="{$image@iteration - 1}">
+                            {call image
+                                src=$image_url
+                                alt=$image_desc
+                            }
+                        </a>
+                    {/foreach}
+                </div>
+            {/if}
+            {if $show_comments}
+                <div class="product-review__replies">
+                    {foreach $review.comments as $comment}
+                        <div class="product-review__reply">
+                            {call review review=$comment show_author=$show_author show_title=$show_title show_shop_name=$show_shop_name date_position=$date_position show_reply_button=$show_reply_button show_rating=false}
+                        </div>
+                    {/foreach}
+                </div>
+            {/if}
+        </div>
+    {/function}
+
+    {function posts_thumbs posts=[] size=null show_image=false is_sidebar=false is_slider=false}
+        <div class="posts-thumbs {if $is_slider}posts-thumbs_slider swiper{/if} {if $size}posts-thumbs_size_{$size|escape}{/if}{if $is_sidebar} posts-thumbs_offset-sidebar{/if}">
+            <div class="posts-thumbs__wrapper {if $is_slider}swiper-wrapper swiper-wrapper_overflow-fixed{/if}">
+                {foreach $posts as $post}
+                    {if empty($post.link)}
+                        {$year = $post.datetime|date_format:"%Y"}
+                        {$month = $post.datetime|date_format:"%m"}
+                        {$day = $post.datetime|date_format:"%d"}
+
+                        {$post.link = blogHelper::getUrl($post.blog_id, 'blog/frontend/post',
+                        ['blog_url' => $post['blog_url'], 'post_url' => $post['url'],
+                        'post_year' => $year, 'post_month' => $month, 'post_day' => $day], false)}
+                    {/if}
+                    <div class="posts-thumbs__item {if $is_slider}swiper-slide{/if}">
+                        {$image_url = "{call blog_post_image post=$post}"|trim}
+
+                        {if empty($image_url) && !empty($theme_settings['blog_dummy_image'])}
+                            {$image_url = $theme_settings['blog_dummy_image']}
+                        {/if}
+
+                        {$has_image = !empty($image_url)}
+
+                        <div class="post-thumb {if $size}post-thumb_size_{$size|escape}{/if}">
+                            {if $show_image}
+                                <div class="post-thumb__image-container">
+                                    <a class="post-thumb__image-box image-box{if !$has_image} image-box_fill{else} post-thumb__image-box_full{/if}" href="{$post.link}">
+                                        {if $has_image}
+                                            {call image
+                                                src=$image_url
+                                                alt=$post.title
+                                            }
+                                        {else}
+                                            {call svg_icon icon='no-thumb' width=70 height=70 fill='#686868'}
+                                        {/if}
+                                    </a>
+                                </div>
+                            {/if}
+                            <div class="post-thumb__date-container">
+                                {$post.datetime|wa_datetime:'humandate'}
+                            </div>
+                            <div class="post-thumb__title-container">
+                                <a class="link link_style_hover" href="{$post.link|escape}">{$post.title}</a>
+                            </div>
+                        </div>
+                    </div>
+                {/foreach}
+            </div>
+        </div>
+    {/function}
+
+    {function yt_video video_id=null classes='' video_img=''}
+        {if $video_id}
+            <div class="yt-video {$classes}">
+                <a class="yt-video__link" href="https://youtu.be/{$video_id}">
+                    <picture>
+                        {if !empty($video['img'])}
+                            <img class="yt-video__media" src="{$video_img}">
+                        {else}
+                            <source srcset="https://i.ytimg.com/vi_webp/{$video_id}/hqdefault.webp" type="image/webp">
+                            <img class="yt-video__media" src="https://i.ytimg.com/vi/{$video_id}/hqdefault.jpg">
+                        {/if}
+                    </picture>
+                </a>
+                <button class="yt-video__button yt-video__button_round" type="button" aria-label="Запустить видео">
+                    {call svg_icon classes="yt-video__button-icon" icon='youtube-play-btn' width=68 height=48 fill='currentColor'}
+                </button>
+            </div>
+        {/if}
+    {/function}
+
+    {function fixed_bar}
+    	{$fixed_bar_btns = []}
+        {$fixed_bar_btns_ids = []}
+        {if !$wa->globals('market.fixed_bar_btns')}
+            {call get_fixed_bar_btns}
+        {/if}
+        {$fixed_bar_btns_ids = $wa->globals('market.fixed_bar_btns')}
+
+        {if in_array('home', $fixed_bar_btns_ids)}
+    		{capture assign="icon"}
+    			{call svg_icon icon='home' classes='header-buttons__item-image' width='23' height='23'}
+    		{/capture}
+
+            {$is_active = $wa->param('action') == '' && !$wa->globals('is_auth')}
+
+            {$fixed_bar_btns['home'] = ['name' => _wp('Главная'), 'url' => '/', 'icon'=>$icon, 'icon_classes' => 'fixed-bar__icon_home', 'is_active' => $is_active]}
+    	{/if}
+    	{if $wa->globals('market.theme_exists.shop')}
+    	    {if in_array('catalog', $fixed_bar_btns_ids)}
+    	        {capture assign="icon"}
+    				{call svg_icon icon='catalog' classes='header-buttons__item-image' width='23' height='21' fill='none'}
+    	        {/capture}
+
+    	        {$fixed_bar_btns['catalog'] = ['name' => _wp('Каталог'), 'icon'=>$icon, 'link_classes' => 'fixed-bar__item_catalog']}
+    	    {/if}
+    	    {if in_array('cart', $fixed_bar_btns_ids)}
+                {if !isset($cart_url)}
+                    {$cart_url = $wa->getUrl('shop/frontend/cart')}
+                    {if method_exists($wa->shop, 'checkout')}
+                        {$cart_url = $wa->shop->checkout()->cartUrl()}
+                    {/if}
+                {/if}
+
+                {$cart_count = $wa->shop->cart->count()}
+                {$is_cart_empty = $cart_count === 0}
+
+    	        {capture assign="icon"}
+    				{call svg_icon icon='cart' classes='header-buttons__item-image' width='22' height='22' fill='none'}
+    		        <div class="fixed-bar__counter counter cart-counter{if $is_cart_empty} counter_empty{/if}">
+    	                {$cart_count|default:0}
+    		        </div>
+    	        {/capture}
+
+                {$is_active = $wa->globals('is_checkout')}
+
+    	        {$fixed_bar_btns['cart'] = ['name' => _wp('Cart'), 'url' => $cart_url, 'icon'=>$icon, 'link_classes' => 'fixed-bar__item_cart', 'icon_classes' => 'fixed-bar__icon_cart', 'is_active' => $is_active]}
+    	    {/if}
+    	    {if in_array('favorite', $fixed_bar_btns_ids)}
+                {$favorite_count = intval("{call favorite_count}")|default:0}
+
+    	        {capture assign="icon"}
+    				{call svg_icon icon='favorite' classes='header-buttons__item-image' width='22' height='22' fill='none' stroke_width=2}
+    		        <div class="fixed-bar__counter counter favorite-counter{if empty($favorite_count)} counter_empty{/if}">
+                        {$favorite_count}
+    		        </div>
+    	        {/capture}
+
+                {$is_active = $wa->param('action') == 'search' && $wa->get('list') === 'favorite'}
+
+    	        {$fixed_bar_btns['favorite'] = ['name' => _wp('Favorites'), 'url' => "{$wa->getUrl('shop/frontend/search')|escape}?list=favorite", 'icon'=>$icon, 'link_classes' => 'fixed-bar__item_favorite', 'is_active' => $is_active]}
+    	    {/if}
+    	    {if in_array('compare', $fixed_bar_btns_ids)}
+                {$compare = $wa->shop->compare()|default:[]}
+                {$compare_count = count($compare)|default:0}
+
+    	        {capture assign="icon"}
+    				{call svg_icon icon='compare' classes='header-buttons__item-image' width='22' height='22' fill='none' stroke_width=2}
+    		        <div class="fixed-bar__counter counter compare-counter{if empty($compare_count)} counter_empty{/if}">
+                        {$compare_count}
+    		        </div>
+    	        {/capture}
+
+                {$is_active = $wa->param('action') == 'compare'}
+
+    	        {$fixed_bar_btns['compare'] = ['name' => _wp('Compare'), 'url' => $wa->getUrl('shop/frontend/compare'), 'icon'=>$icon, 'link_classes' => '', 'icon_classes' => '', 'is_active' => $is_active]}
+    	    {/if}
+    	    {if in_array('search', $fixed_bar_btns_ids)}
+                {capture assign="icon"}
+                    {call svg_icon icon='search' width='22' height='22' fill='currentColor'}
+                {/capture}
+
+                {$fixed_bar_btns['search'] = ['name' => _wp('Поиск'), 'icon'=>$icon, 'link_classes' => 'fixed-bar__item_search', 'icon_classes' => '', 'attrs' => $attrs]}
+    	    {/if}
+    	{/if}
+        {if in_array('profile', $fixed_bar_btns_ids)}
+            {$is_enabled_auth = $wa->isAuthEnabled()}
+            {$is_auth = $wa->user()->isAuth()}
+    	    {$profile_name = _wp('Профиль')}
+    	    {$profile_url = ''}
+
+
+            {if $is_auth}
+    	        {$profile_url = $wa->myUrl()}
+            {else}
+    	        {$profile_url = $wa->loginUrl()}
+    	        {$profile_name = _wp('Войти')}
+            {/if}
+
+            {capture assign="icon"}
+    			{call svg_icon icon='user' classes='header-buttons__item-image' width='22' height='22' fill='none'}
+            {/capture}
+
+            {$is_active = $wa->globals('is_my') || $wa->globals('is_auth')}
+
+            {$fixed_bar_btns['profile'] = ['name' => $profile_name, 'url' => $profile_url, 'icon'=>$icon, 'link_classes' => '', 'icon_classes' => '', 'is_active' => $is_active]}
+        {/if}
+
+
+    	<div class="fixed-bar">
+    		<div class="fixed-bar__inner">
+    			<div class="fixed-bar__menu">
+    				{foreach $fixed_bar_btns_ids as $btn}
+    					{if !isset($fixed_bar_btns[$btn])}{continue}{/if}
+    					{$btn_params = $fixed_bar_btns[$btn]}
+
+    					<a class="fixed-bar__item{if $btn_params.is_active|default:false} fixed-bar__item_active{/if} {$btn_params.link_classes|default:''}" href="{$btn_params.url|default:'javascript://'}" {implode(' ', $btn_params.attrs|default:[])}>
+    						<span class="fixed-bar__icon {$btn_params.icon_classes|default:''}">
+                                {$btn_params.icon}
+    						</span>
+    						<span class="fixed-bar__item-name">
+                                {$btn_params.name}
+    						</span>
+    					</a>
+    				{/foreach}
+    			</div>
+    		</div>
+    	</div>
+    {/function}
+
+    {function bonus_block price=null text='' description='' classes=''}
+        {$credit_rate = $wa->shop->settings('affiliate_credit_rate')}
+        {$bonuses_count = 0}
+        {if $credit_rate}
+            {$bonuses_count = $price / $credit_rate}
+        {/if}
+        {if !$description}
+            {$description = $theme_settings['shop_misc_bonuses_hint']}
+        {/if}
+        {if !$text}
+            {if !empty($theme_settings['shop_misc_bonuses_text'])}
+                {$text = $theme_settings['shop_misc_bonuses_text']}
+            {else}
+                {capture assign='text'}
+                    [`Начислим`] <span class="bonus-block__bonuses">+%bonuses% [`бонусов`]</span>
+                {/capture}
+            {/if}
+        {/if}
+
+        {if $bonuses_count > 0}
+            {capture assign='bounses_value_html'}
+                {$precision = 2}
+                {if $theme_settings['shop_misc_bonuses_round']}
+                    {$precision = 0}
+                {/if}
+                <span class="bonus-block__value" data-bonuses-rate="{$credit_rate}">{round($bonuses_count, $precision)}</span>
+            {/capture}
+            {$bonuses_percent = $bonuses_count / $price * 100}
+            <div class="bonus-block icon-box {$classes}{if $description} bonus-block_tooltip tooltip{/if}">
+                <span class="icon-box__icon">
+                    {call svg_icon icon='coins' classes='bonus-block__icon' width=16 height=16 fill='currentColor'}
+                </span>
+                <span class="bonus-block__content icon-box__content">
+                    {$text|trim|replace:'%bonuses%':$bounses_value_html}
+                </span>
+                {if $description}
+                    <span class="bonus-block__tooltip tooltip__content tooltip__content_show-m">
+                        {$description|replace:'%bonuses%':$bounses_value_html}
+                    </span>
+                {/if}
+            </div>
+        {/if}
+
+    {/function}
+
+    {function add_images_section input_name='images' max_post_size=null max_file_size=null max_files=1 classes=''}
+        {capture assign="_file_template"}
+            <div class="file-wrapper">
+                <div class="image-wrapper"></div>
+                <div class="description-wrapper">
+                    <div class="visible">
+                        <a class="pseudo-link pseudo-link_link js-show-textarea" href="javascript:void(0);">[`Добавить описание`]</a>
+                    </div>
+                    <div class="hidden">
+                        <textarea class="textarea js-textarea" placeholder="[`Введите описание`]"></textarea>
+                    </div>
+                </div>
+                <div class="actions">
+                    <div class="action js-delete-file" title="{_w("Удалить")|escape}">
+                        <span class="icon delete">
+                            <svg version="1.1" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 10 10" xml:space="preserve">
+                                <style type="text/css">
+                                    .st0 { fill:none;stroke:rgba(0,0,0,0.5);stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10; }
+                                </style>
+                                <line class="st0" x1="0.5" y1="0.5" x2="9.5" y2="9.5"/>
+                                <line class="st0" x1="9.5" y1="0.5" x2="0.5" y2="9.5"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        {/capture}
+        {capture assign="_error_template"}
+            <div class="error">%text%</div>
+        {/capture}
+        <div class="add-images-section {$classes}" id="js-add-images-section" data-max_post_size="{$max_post_size|escape}" data-max_file_size="{$max_file_size|escape}" data-max_files="{$max_files}" data-template_file="{$_file_template|escape}" data-template_error="{$_error_template|escape}">
+            <div class="image-form-section">
+                <div class="image-form-section__description">
+                    <span class="icon photo">
+                        {call svg_icon icon='no-thumb' width=40 height=35 fill='#CFCFCF' }
+                    </span>
+                    <span class="image-form-section__text">
+                        <a class="pseudo-link pseudo-link_link" href="javascript:void(0);">[`Загрузите фото`]</a> [`или перетащите сюда`]
+                        <span class="image-form-section__hint">{if $max_files > 1}{_wp("до nn изображений")|replace:'nn':$max_files}{/if} PNG, JPEG.</span>
+                    </span>
+                </div>
+                <input class="file-field js-file-field" type="file" name="{$input_name}" multiple>
+            </div>
+
+            <div class="attached-files-section js-attached-files-section"></div>
+
+            <div class="errors-section js-errors-section"></div>
+        </div>
+    {/function}
+
+
+    {if $wa->shop}
+        {include './blocks.products.html'}
+    {/if}
+{/strip}

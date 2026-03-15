@@ -1,0 +1,314 @@
+{strip}
+    {include "./init.html" assign='_'}
+    {$wa->globals('is_show_light_index', true)}
+
+    {if $wa->param('action') != 'cart'}
+        {$breadcrumbs = [['name' => "{_wp("Корзина")}", 'url' => $wa->getUrl('shop/frontend/cart')]]}
+        {$wa->globals('ignore_breadcrumbs_plugin', true)}
+        {$wa->globals('breadcrumbs', $breadcrumbs)}
+        {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Оформление заказа")}"])}
+    {/if}
+
+    {$wa->globals('is_checkout', true)}
+
+    {$is_success = $checkout_current_step === 'success'}
+    {$is_error = $checkout_current_step === 'error'}
+
+    {if $is_success}
+        {include './checkout.success.html' assign='checkout_content'}
+    {elseif $is_error}
+        {include './checkout.error.html' assign='checkout_content'}
+    {else}
+        {$steps = $checkout_steps}
+        {$current_step_id = $checkout_current_step}
+
+        {$step_ids = array_keys($steps)}
+        {$current_step = $steps[$current_step_id]}
+        {$is_first = reset($step_ids) == $current_step_id}
+        {$is_last = end($step_ids) == $current_step_id}
+
+        {$prev_step_id = null}
+
+        {foreach $steps as $step_id => $step}
+            {if $step_id == $current_step_id}
+                {break}
+            {/if}
+
+            {$prev_step_id = $step_id}
+        {/foreach}
+
+        {capture assign='checkout_content'}
+            <div class="checkout-page__steps-container">
+                <div class="checkout-steps">
+                    {foreach $steps as $step_id => $step}
+                        {$is_current = $step_id == $current_step_id}
+                        {$is_after_current = $is_after_current|default:false || $is_current}
+                        {$is_done = !$is_current && !$is_after_current}
+                        {$step_number = $step@iteration}
+                        {$link_href = "{$wa->getUrl('shop/frontend/checkout', ['step' => $step_id])}"}
+
+                        <div class="checkout-steps__step {if $is_current}checkout-steps__step_current{elseif $is_done}checkout-steps__step_done{/if}" data-step_id="{$step_id}" data-step_href="{$link_href}">
+                            {$step_number}. {$step.name}
+                            <svg class="checkout-steps__triangle" version="1.1" baseProfile="full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <polygon points="0,0 100,50 0,100"></polygon>
+                                <line x1="0" y1="0" x2="100" y2="50" stroke-width="2" stroke="#eeeeee"></line>
+                                <line x1="0" y1="100" x2="100" y2="50" stroke-width="2" stroke="#eeeeee"></line>
+                            </svg>
+                        </div>
+                    {/foreach}
+
+                    <div class="checkout-steps__step checkout-steps__step_empty"></div>
+                </div>
+            </div>
+            {$is_after_current = false}
+
+            {foreach $steps as $step_id => $step}
+                {$is_current = $step_id == $current_step_id}
+                {$is_after_current = $is_after_current|default:false || $is_current}
+                {$is_done = !$is_current && !$is_after_current}
+                {$step_number = $step@iteration}
+                {$link_href = "{$wa->getUrl('shop/frontend/checkout', ['step' => $step_id])}"}
+
+                <div class="checkout-page__responsive-step {if $is_current}checkout-page__responsive-step_current{elseif $is_done}checkout-page__responsive-step_done{/if}" data-step_id="{$step_id}" data-step_href="{$link_href}">
+                    <div class="checkout-page__responsive-step-text">
+                        {$step_number|escape}. {$step.name|escape}
+                    </div>
+                    <div class="checkout-page__responsive-step-arrow-container">
+                        <span class="image-box">
+                            {call svg_icon classes="checkout-page__responsive-step-arrow" icon='arrow-right' width=6 height=10 fill='currentColor'}
+                        </span>
+                    </div>
+                </div>
+
+                {if $is_current}
+                    <div class="checkout-page__step-container">
+                        {if $is_last}
+                            <div class="checkout-page__spinner">
+                                <span class="spinner">
+                                    <span class="image-box">
+                                        {call svg_icon classes="spinner " icon='spinner' width=61 height=61 fill='currentColor'}
+                                    </span>
+                                </span>
+
+                            </div>
+                        {/if}
+                        <div class="block">
+                            <div class="block__header checkout-page__step-header">
+                                {if isset($prev_step_id)}
+                                    <a class="link-box link-box_style_gray checkout-page__back-button" data-href="{$wa->getUrl('shop/frontend/checkout', ['step' => $prev_step_id])}">
+                                        <span class="icon-box">
+                                            <span class="icon-box__icon">
+                                                {call svg_icon classes='link-box__icon' icon='dict-arrow-left' width=12 height=12 fill='currentColor'}
+                                            </span>
+                                            <span class="icon-box__content">
+                                                <span class="link-box__link">[`Назад`]</span>
+                                            </span>
+                                        </span>
+                                    </a>
+                                {/if}
+                                <span class="title title_h2">{$current_step.name}</span>
+                            </div>
+                            <div class="block__content">
+                                <div class="checkout-page__container">
+                                    <div class="checkout-page__container-content">
+                                        <form class="checkout-page__form{if $is_last} checkout-page__form_last{/if}" method="post" action="{$wa->getUrl('shop/frontend/checkout')}">
+                                            <div class="checkout-page__step-content" data-step_id="{$current_step_id}">
+                                                {if $current_step_id == 'contactinfo'}
+                                                    {include './checkout.contactinfo.html'}
+                                                {elseif $current_step_id == 'shipping'}
+                                                    {include './checkout.shipping.html'}
+                                                {elseif $current_step_id == 'payment'}
+                                                    {include './checkout.payment.html'}
+                                                {elseif $current_step_id == 'confirmation'}
+                                                    {include './checkout.confirmation.html'}
+                                                {/if}
+                                            </div>
+
+                                            <div class="checkout-page__button-container">
+                                                {if $is_last}
+                                                    <button class="checkout-page__button button button_size_l button_wide">
+                                                        [`Оформить заказ`]
+                                                    </button>
+                                                {else}
+                                                    <button class="checkout-page__button button button_size_l button_wide">
+                                                        <span class="icon-box icon-box_size_l">
+                                                            <span class="icon-box__content">
+                                                                [`Далее`]
+                                                            </span>
+                                                            <span class="icon-box__icon">
+                                                                {call svg_icon icon="arrow-right" width=6 height=10 fill="#ffffff"}
+                                                            </span>
+                                                        </span>
+                                                    </button>
+                                                {/if}
+                                            </div>
+
+                                            <input type="hidden" name="step" value="{$current_step_id}" />
+                                        </form>
+                                    </div>
+                                    <div class="checkout-page__container-summary">
+                                        {* Checkout Summary Start *}
+                                            {$total = $total|default:$wa->shop->cart->total()}
+                                            {$comission = 0}
+                                            {$comission_label = _wp("Комиссия")}
+
+                                            {$subtotal = $subtotal|default:$wa->shop->cart->total(false)}
+                                            {$default_discount = $subtotal - $total}
+                                            {$discount = $discount|default:$default_discount}
+                                            {$shipping = $shipping|default:0}
+                                            {$checkout_data = $wa->storage('shop/checkout')}
+                                            {$shipping_data = $checkout_data['shipping']|default:null}
+
+                                            {if !is_null($shipping_data)}
+                                                {$shipping = $shipping_data['rate']}
+                                            {/if}
+
+                                            {if !is_numeric($shipping)}
+                                                {$shipping = 0}
+                                            {/if}
+
+                                            {$is_free_shipping = false}
+
+                                            {$plugins = $wa->globals('plugins')|default:[]}
+                                            {$is_enabled_freedelivery = $plugins['shop_freedelivery']}
+                                            {$is_enabled_increase = $plugins['shop_increase']}
+
+                                            {if $is_enabled_freedelivery}
+                                                {$freedelivery_shipping_state = shopFreedeliveryPlugin::getFreeShippingState()}
+                                                {if !empty($freedelivery_shipping_state.shipping_methods[$shipping_data.id])}
+                                                    {$freedelivery_current_shipping_state = $freedelivery_shipping_state.shipping_methods[$shipping_data.id]}
+                                                    {$is_free_shipping = $is_free_shipping || !empty($freedelivery_current_shipping_state.free)}
+                                                {/if}
+                                            {/if}
+
+                                            {if $is_enabled_increase}
+                                                {if is_callable(['shopIncreasePlugin', 'getCommission'], false)}
+                                                    {$comission_output = shopIncreasePlugin::getCommission($params, $total)}
+                                                    {if !empty($comission_output['value'])}
+                                                        {$comission = $comission_output['value']|floatval}
+                                                    {/if}
+                                                    {if !empty($comission_output['name'])}
+                                                        {$comission_label = $comission_output['name']}
+                                                    {/if}
+                                                {/if}
+                                            {/if}
+
+                                            {$real_total = $total}
+                                            {if !$is_free_shipping && ($subtotal - $discount == $total)}
+                                                {$total = $total + $shipping}
+                                            {/if}
+
+                                            {$has_shipping = $shipping != 0}
+
+                                            <div class="checkout-summary {if $has_shipping}checkout-summary_has-shipping{/if}" data-total="{$real_total}">
+                                                <div class="checkout-summary__sub-totals">
+                                                    <div class="checkout-summary__sub-total checkout-summary__sub-total_sub-total">
+                                                        <div class="row-value">
+                                                            <div class="row-value__label-container">
+                                                                <span class="row-value__label-text">
+                                                                    {_wp("Подытог")}
+                                                                </span>
+                                                            </div>
+                                                            <div class="row-value__value-container">
+                                                                <span class="row-value__value-text">
+                                                                    {shop_currency_html($subtotal, true)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="checkout-summary__sub-total checkout-summary__sub-total_discount">
+                                                        <div class="row-value">
+                                                            <div class="row-value__label-container">
+                                                                <span class="row-value__label-text">
+                                                                    {_wp("Скидка")}
+                                                                </span>
+                                                            </div>
+                                                            <div class="row-value__value-container">
+                                                                <span class="row-value__value-text">
+                                                                    {shop_currency_html($discount, true)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    {if $comission}
+                                                        <div class="checkout-summary__sub-total checkout-summary__sub-total_comission">
+                                                            <div class="row-value">
+                                                                <div class="row-value__label-container">
+                                                                    <span class="row-value__label-text">
+                                                                        {$comission_label}
+                                                                    </span>
+                                                                </div>
+                                                                <div class="row-value__value-container">
+                                                                    <span class="row-value__value-text">
+                                                                        {shop_currency_html($comission, true)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    {/if}
+                                                    <div class="checkout-summary__sub-total checkout-summary__sub-total_shipping">
+                                                        <div class="row-value">
+                                                            <div class="row-value__label-container">
+                                                                <span class="row-value__label-text">
+                                                                    {_wp("Доставка")}
+                                                                </span>
+                                                            </div>
+                                                            <div class="row-value__value-container">
+                                                                <span class="row-value__value-text">
+                                                                    {if $is_free_shipping}[`Бесплатно`]{else}{shop_currency_html($shipping, true)}{/if}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                                <div class="checkout-summary__total-container">
+                                                    <span class="checkout-summary__total-label">[`Итоговая сумма`]:</span>
+                                                    <span class="checkout-summary__total">{shop_currency_html($total, true)}</span>
+                                                </div>
+                                            </div>
+                                        {* Checkout Summary End *}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
+            {/foreach}
+        {/capture}
+    {/if}
+
+    <div class="content-wrapper__block">
+        <div class="checkout-page block">
+            <div class="block__header">
+                <div class="checkout-page__header-container">
+                    <div class="checkout-page__header-text-container">
+                        <h1 class="title title_h1">[`Оформление заказа`]</h1>
+                    </div>
+                    {if !$is_error && !$is_success}
+                        <div class="checkout-page__cart-link-container">
+                            <a class="link-box link-box_style_gray" href="{$wa->getUrl('shop/frontend/cart')|escape}">
+                                <span class="icon-box">
+                                    <span class="icon-box__icon">
+                                        {call svg_icon icon="dict-arrow-left" width=12 height=12}
+                                    </span>
+                                    <span class="icon-box__content">
+                                        <span class="link-box__link">
+                                            [`Вернуться в корзину`]
+                                        </span>
+                                    </span>
+                                </span>
+                            </a>
+                        </div>
+                    {/if}
+                </div>
+            </div>
+            <div class="block__content">
+                {$checkout_content}
+            </div>
+        </div>
+    </div>
+{/strip}

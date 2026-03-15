@@ -1,0 +1,103 @@
+msgid ""
+msgstr ""
+"Content-Transfer-Encoding: 8bit\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Language: ru\n"
+"Language-Team: shop/plugins/easyseo\n"
+"Last-Translator: shop/plugins/easyseo\n"
+"MIME-Version: 1.0\n"
+"PO-Revision-Date: \n"
+"POT-Creation-Date: 2024-05-13 17:13+0300\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Project-Id-Version: shop/plugins/easyseo\n"
+"X-Generator: Poedit 1.8.11\n"
+"X-Poedit-Basepath: utf-8\n"
+"X-Poedit-KeywordsList: _;gettext;gettext_noop\n"
+"X-Poedit-Language: en_US\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+"X-Poedit-SourceCharset: utf-8\n"
+
+msgid "Easy SEO"
+msgstr "Easy SEO"
+
+msgid "meta title"
+msgstr "meta заголовок"
+
+msgid "meta description"
+msgstr "meta описание"
+
+msgid "description"
+msgstr "описание"
+
+msgid "meta description pagination"
+msgstr "meta описание для страниц с пагинацией"
+
+msgid "description pagination"
+msgstr "описание для страниц с пагинацией"
+
+msgid "Главная страница"
+msgstr "Главная страница"
+
+msgid "Категории"
+msgstr "Категории"
+
+msgid "Товары"
+msgstr "Товары"
+
+msgid "Включить/выключить плагин"
+msgstr ""
+
+msgid "Отключить"
+msgstr ""
+
+msgid "Включить"
+msgstr ""
+
+msgid "Переменные"
+msgstr ""
+
+msgid "свернуть / развернуть блок с подсказсками"
+msgstr ""
+
+msgid "свернуть (выключить) / развернуть"
+msgstr ""
+
+msgid "Meta title"
+msgstr ""
+
+msgid "Meta description"
+msgstr ""
+
+msgid "h1"
+msgstr ""
+
+msgid "{$pagination}"
+msgstr ""
+
+msgid "переменная для подставления, если на странице нет пагинации то выведет пустую строку"
+msgstr ""
+
+msgid "Приоритет"
+msgstr ""
+
+msgid "Всегда заменять значение (иначе заменять только если исходное значение пустое)"
+msgstr ""
+
+msgid "интеграция с плагинами для работы с брендами идет на основе переменных шаблона brand и brands (в частности проверено на плагине productbrands)"
+msgstr ""
+
+msgid "Бренды"
+msgstr ""
+
+msgid "Страница определенного бренда"
+msgstr ""
+
+msgid "Мета настройки"
+msgstr ""
+
+msgid "Кешировать заполненные шаблоны"
+msgstr ""
+
+msgid "Если кеш заполняется слишком быстро то отключите"
+msgstr ""

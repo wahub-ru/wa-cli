@@ -1,0 +1,79 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: photos/plugins/easyseo\n"
+"POT-Creation-Date: 2025-10-09 12:58+0200\n"
+"PO-Revision-Date: \n"
+"Last-Translator: photos/plugins/easyseo\n"
+"Language-Team: photos/plugins/easyseo\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: en_US\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Poedit-Basepath: utf-8\n"
+"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-1: .\n"
+
+msgid "Easy SEO (photos)"
+msgstr "Easy SEO (photos)"
+
+msgid "Easy SEO"
+msgstr ""
+
+msgid "Включить/выключить плагин"
+msgstr "Enable/Disable Plugin"
+
+msgid "Отключить"
+msgstr "Enable"
+
+msgid "Включить"
+msgstr "Disable"
+
+msgid "Переменные"
+msgstr "Variables"
+
+msgid "свернуть / развернуть блок с подсказсками"
+msgstr "collapse/expand the block with hints"
+
+msgid "Страницы"
+msgstr "Pages"
+
+msgid "свернуть (выключить) / развернуть"
+msgstr "collapse (turn off) / expand"
+
+msgid "Meta title"
+msgstr "Meta title"
+
+msgid "Приоритет"
+msgstr "Priority"
+
+msgid "Всегда заменять значение (иначе заменять только если исходное значение пустое)"
+msgstr "Always replace the value (otherwise replace only if the original value is empty)"
+
+msgid "Meta description"
+msgstr "Meta description"
+
+msgid "h1"
+msgstr "h1"
+
+msgid "Альбомы"
+msgstr ""
+
+msgid "{$pagination}"
+msgstr "{$pagination}"
+
+msgid "переменная для подставления, если на странице нет пагинации то выведет пустую строку"
+msgstr ""
+
+msgid "Фотографии"
+msgstr "Photos"
+
+msgid "Мета настройки"
+msgstr "Meta settings"
+
+msgid "Кешировать заполненные шаблоны"
+msgstr "Cache filled templates"
+
+msgid "Если кеш заполняется слишком быстро то отключите"
+msgstr "If the cache fills up too quickly, disable it"

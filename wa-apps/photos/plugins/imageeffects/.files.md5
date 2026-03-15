@@ -1,0 +1,15 @@
+886e7714dc652873fd9656d29f6b5e8a *img/blackandwhite.png
+e020b1824669b68f4168552cdcbf60e9 *img/brightness.png
+e5df6a7de49e50416571034e715aecd9 *img/contrast.png
+faf137e56414509982b555d62e893034 *img/imageeffects.png
+c92182dbef7484277fa4ec759b7a539c *img/sepia.png
+a3dddf11a3bebf3c8207a5db7cbbf130 *lib/actions/photosImageeffectsPluginBackend.controller.php
+b10ef8c84fbb6e1e6c864fc8761dec39 *lib/config/build.php
+41b6671dead9a6845884d5078594dd7c *lib/config/plugin.php
+97c321f6c8179ad9b6c91bf9cea7cc12 *lib/config/settings.php
+3405accb5a075020a6c55dbcccb57dbd *lib/photosImageeffects.plugin.php
+cc3a5f15a6ebee382cb26b167647eab2 *locale/en_US/LC_MESSAGES/photos_imageeffects.mo
+075de5b2e23b704e99ce246a3142870c *locale/en_US/LC_MESSAGES/photos_imageeffects.po
+76cd46eede3d135cbc2ad9e4834c1c24 *locale/ru_RU/LC_MESSAGES/photos_imageeffects.mo
+c82159894ca627ee49a2330b689ff5a2 *locale/ru_RU/LC_MESSAGES/photos_imageeffects.po
+600a42c08883f917503c84bfb5f4aa62 *templates/PhotoToolbar.html

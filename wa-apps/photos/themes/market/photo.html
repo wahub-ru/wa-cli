@@ -1,0 +1,194 @@
+{strip}
+	{* Theme Settings *}
+	{$variant = $theme_settings['photos_variant']}
+
+	{include "{$wa_parent_theme_path}/init.html" assign='_'}
+	{$wa->globals('is_show_breadcrumbs', true)}
+
+	{if $variant === 'sidebar'}
+		{$wa->globals('is_show_sidebar', true)}
+	{/if}
+
+	{$has_album = !empty($album)}
+	{$album_photos = []}
+
+	{if $has_album}
+		{$photos = $wa->photos->photos("album/{$album.id}")}
+		{$header_text = $album.name}
+		{$back_link = $album.frontend_link}
+	{else}
+		{$photos = $wa->photos->photos()}
+		{$header_text = "{_wp("Фотопоток")}"}
+		{$back_link = $wa_app_url}
+		{$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => "{_wp("Фотопоток")}"])}
+	{/if}
+
+	{$contact = $wa->contact($photo.contact_id)}
+	{$photo_offset = array_search($photo.id, array_keys($photos))}
+	{$has_description = !empty($photo.description)}
+	{$has_albums = count($photo.albums) > 0}
+	{$_photo = $wa->photos->photo($photo.id)}
+	{$photo.tags = $_photo.tags}
+	{$has_tags = count($photo.tags) > 0}
+    {$images_size = $wa->photos->config('max_size')|default:'970'}
+    {$images_size = $images_size|cat:'x0'}
+
+	<div class="microdata">
+		<div itemscope itemtype="http://schema.org/ImageObject">
+			<link itemprop="contentUrl" href="{photosPhoto::getPhotoUrl($_photo, $images_size)|escape}" />
+			<link itemprop="url" href="{photosPhoto::getPhotoUrl($_photo, $images_size)|escape}" />
+		</div>
+	</div>
+
+	<div class="photos-photo-page">
+		<div class="block">
+			<div class="block__header">
+				<div class="photos-photo-page__header-container">
+					<div class="photos-photo-page__header-text-container">
+				        <span class="title title_h1">
+                            {$header_text|escape}
+                        </span>
+                    </div>
+                    <div class="photos-photo-page__back-button-container r-hidden-md">
+                        <a class="link-box link-box_style_gray" href="{$back_link|escape}">
+                            <span class="icon-box">
+                                <span class="icon-box__icon">
+                                    {call svg_icon icon="dict-arrow-left" classes="link-box__icon" width=12 height=12}
+                                </span>
+                                <span class="icon-box__content">
+                                    <span class="link-box__link">
+                                        [`Назад`]
+                                    </span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="block__content">
+                <div class="photos-photo-page__photos-container">
+                    <div class="photos-photo-page__main-photos-container image">
+                        <div class="photos-photo-page__main-photos swiper" data-photo_offset="{$photo_offset|escape}">
+                            <div class="photos-photo-page__main-photos-wrapper swiper-wrapper">
+                                {foreach $photos as $_photo}
+                                    {$is_current = $_photo.id == $photo.id}
+
+                                    <div class="photos-photo-page__main-photo swiper-slide" data-photo_url="{$_photo.frontend_link|escape}" data-photo_name="{$_photo.name|escape}" style="background-image: url({photosPhoto::getPhotoUrl($_photo, '970')|escape});">
+                                        <div class="photos-photo-page__main-photo-box image-box image-box_fill">
+                                            {if $is_current}
+                                                <img src="{photosPhoto::getPhotoUrl($_photo, $images_size)|escape}" alt="{$_photo.name|escape}" id="photo" data-photo-id="{$_photo.id}" data-size="{$images_size}" />
+                                            {else}
+                                                <div class="photos-photo-page__main-photo-spinner swiper-lazy-preloader">
+                                                    <span class="spinner">
+                                                        <span class="image-box">
+                                                            {call svg_icon classes="spinner " icon='spinner' width=48 height=48 fill='currentColor'}
+                                                        </span>
+                                                    </span>
+
+                                                </div>
+                                                <img class="photos-photo-page__main-photo-lazy" loading="lazy" src="{photosPhoto::getPhotoUrl($_photo, $images_size)|escape}" data-photo-id="{$_photo.id}" data-size="{$images_size}" alt="{$_photo.name|escape}" />
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                    </div>
+
+                    {$photo_stream}
+
+                    <div class="photos-photo-page__thumbs-container">
+                        <div class="photos-photo-page__thumbs-photos swiper">
+                            <div class="photos-photo-page__thumbs-photos-wrapper swiper-wrapper">
+                                {foreach $photos as $_photo}
+                                    <div class="photos-photo-page__thumb-photo swiper-slide">
+                                        <div class="photos-photo-page__thumb-photo-box image-box image-box_fill">
+                                            <img src="{photosPhoto::getPhotoUrl($_photo, '60x60')|escape}" alt="{$_photo.name|escape}" />
+                                        </div>
+                                    </div>
+                                {/foreach}
+                            </div>
+                        </div>
+                        <div class="photos-photo-page__thumbs-arrow photos-photo-page__thumbs-arrow_prev image-box image-box_fill">
+                            {call svg_icon icon='arrow-left' width=6 height=10 fill='currentColor'}
+                        </div>
+                        <div class="photos-photo-page__thumbs-arrow photos-photo-page__thumbs-arrow_next image-box image-box_fill">
+                            {call svg_icon icon='arrow-right' width=6 height=10 fill='currentColor'}
+                        </div>
+                    </div>
+                </div>
+                <div class="photos-photo-page__info-container">
+                    <div class="photos-photo-page__name-container">
+                        {$photo.name}
+                    </div>
+                    {if $has_description}
+                        <div class="photos-photo-page__description-container">
+                            <div class="content-decorator">
+                                {$photo.description}
+                            </div>
+                        </div>
+                    {/if}
+                    <div class="photos-photo-page__date-container">
+                        <span class="datetime icon-box">
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='date' width=18 height=20 fill='#CFCFCF'}
+                            </span>
+                            <span class="icon-box__content">
+                                {$photo.upload_datetime|wa_datetime:'j f Y / H:i'}
+                            </span>
+                        </span>
+
+                    </div>
+                    <div class="photos-photo-page__info-lines">
+                        <div class="photos-photo-page__info-line">
+                            <span class="photos-photo-page__info-line-name">
+                                [`Автор`]:
+                            </span>
+                            <span class="photos-photo-page__info-line-value">
+                                <a class="link link_style_hover" href="{$wa->getUrl('photos/frontend/', ['author' => $contact.id])}">
+                                    {$contact.name}
+                                </a>
+                            </span>
+                        </div>
+                        {if $has_albums}
+                            {$album_links = []}
+
+                            {foreach $photo.albums as $_album}
+                                {capture append='album_links'}
+                                    <a class="link link_style_hover" href="{$wa->getUrl('photos/frontend/album', ['url' => $_album.full_url])}">{$_album.name}</a>
+                                {/capture}
+                            {/foreach}
+
+                			<div class="photos-photo-page__info-line">
+								<span class="photos-photo-page__info-line-name">
+									[`Альбомы`]:
+								</span>
+								<span class="photos-photo-page__info-line-value">
+									{implode(', ', $album_links)}
+								</span>
+							</div>
+						{/if}
+						{if $has_tags}
+							{$tag_links = []}
+
+							{foreach $photo.tags as $tag}
+								{capture append='tag_links'}
+									<a class="link link_style_hover" href="{$wa->getUrl('photos/frontend/', ['tag' => $tag])}">{$tag}</a>
+								{/capture}
+							{/foreach}
+
+							<div class="photos-photo-page__info-line">
+								<span class="photos-photo-page__info-line-value">
+									[`Теги`]:{' '}
+								</span>
+								<span class="photos-photo-page__info-value">
+									{implode(', ', $tag_links)}
+								</span>
+							</div>
+						{/if}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{/strip}

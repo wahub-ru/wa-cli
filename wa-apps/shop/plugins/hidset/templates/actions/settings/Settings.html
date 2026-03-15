@@ -1,0 +1,65 @@
+{if $is_debug}
+    <script src="{$wa_app_static_url}plugins/hidset/js/vendors/vue/vue.global.js" type="text/javascript"></script>
+{else}
+    <script src="{$wa_app_static_url}plugins/hidset/js/vendors/vue/vue.global.prod.js" type="text/javascript"></script>
+{/if}
+    <link type="text/css" rel="stylesheet" href="{$wa_url}wa-apps/shop/plugins/hidset/css/hidset.css">
+<link type="text/css" rel="stylesheet" href="{$wa_url}wa-apps/shop/plugins/hidset/css/icon.css">
+<div id="hidset-settings">
+    <ul class="tabs" id="hidset-ul" style="white-space:normal;height:auto">
+        <li :class="getLiClass('free')" @click="setLi('free')"><a href="javascript:void(0)"><i class="icon16 ss visibility"></i> [`Скрытые настройки Shop-Script`]</a></li>
+        <li :class="getLiClass('repair')" @click="setLi('repair')"><a href="javascript:void(0)"><i class="icon16 settings"></i> [`Инструменты`]</a></li>
+        <li :class="getLiClass('dimensions')" @click="setLi('dimensions')"><a href="javascript:void(0)"><i class="icon16 view-thumb-list"></i> [`dimensions.php`]</a></li>
+        <li :class="getLiClass('handlers')" @click="setLi('handlers')"><a href="javascript:void(0)"><i class="icon16 plugins"></i> [`Использование хуков`]</a></li>
+        <li :class="getLiClass('cli')" @click="setLi('cli')"><a href="javascript:void(0)"><i class="icon16 text"></i> [`Команды cron`]</a></li>
+    </ul>
+    <div class="tab-content" style="border: 1px solid #ddd;box-sizing: border-box">
+        {literal}
+            <div v-if="!errorText && !doneText" class="alert blue" style="font-weight: bolder; max-width: 1000px;">
+                <table style="margin: 0px; pointer-events: none;">
+                    <tr>
+                        <td><i class="hidset-icon48 attention"></i></td>
+                        <td style="padding-left: 20px;">
+                            Пользователь, помни! Если ты решил изменить какие-то настройки, то ты должен отдавать себе отчет в том, что находишься в трезвом уме,
+                твердой памяти и здравом рассудке, понимаешь что ты делаешь и для чего ты это делаешь. В противном случае может произойти большой "ОЙ"!
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <wow-banner v-if="premium===false && (li==='repair' || li==='cli') && !errorText && !doneText"></wow-banner>
+            <span v-if="errorText && errorText.length" class="alert red" style="font-weight: bolder"><i class="icon16 exclamation"></i> {{errorText}}</span>
+            <span v-if="doneText && doneText.length" class="alert info" style="font-weight: bolder"><i class="icon16 yes"></i> {{doneText}}</span>
+        {/literal}
+        {if $newUi}
+            {include './settings.free.vue'}
+            {include './settings.icons.vue'}
+            {include './settings.repair.vue'}
+            {include './settings.handlers.vue'}
+            {include './settings.dimensions.vue'}
+            {include './settings.cli.vue'}
+        {else}
+            {include './settings.free_old.vue'}
+            {include './settings.icons_old.vue'}
+            {include './settings.repair_old.vue'}
+            {include './settings.handlers_old.vue'}
+            {include './settings.dimensions_old.vue'}
+            {include './settings.cli_old.vue'}
+        {/if}
+        <wow-banner v-if="premium===true && (li==='repair' || li==='cli') && !errorText && !doneText"></wow-banner>
+    </div>
+
+</div>
+<script>
+    $(function () {
+        {if $newUi}
+            {include './actionButton.js'}
+        {else}
+            {include './actionButton_old.js'}
+        {/if}
+        {include './settings.js'}
+    });
+</script>
+<style>
+
+</style>

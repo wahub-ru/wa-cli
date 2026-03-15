@@ -1,0 +1,213 @@
+{strip}
+    {include "{$wa_parent_theme_path}/init.html" assign='_'}
+
+    {* Theme Settings *}
+    {$is_rss_enabled = !!$theme_settings['blog_rss_enabled']}
+    {$variant = $theme_settings['blog_variant']}
+
+    {* Variables *}
+    {$is_show_sidebar = $theme_settings['blog_sidebar_enabled'] && $variant != 'thumbs'}
+    {$wa->globals('is_show_sidebar', $is_show_sidebar)}
+    {$wa->globals('is_show_breadcrumbs', true)}
+
+    {$blog_id = $wa->param('blog_id')}
+    {$blog_name = "{_wp("Блог")}"}
+    {$blog_url = $wa->blog->url()}
+    {$pages_count = $pages|default:1}
+    {$current_page = $wa->get('page', 1)}
+
+    {if $blog_id && !is_array($blog_id)}
+        {$blog = $wa->blog->blog($blog_id)}
+
+        {$blog_name = $blog.name}
+        {$blog_url = $blog.link}
+    {/if}
+
+    {if empty($stream_title)}
+        {$stream_title = $blog_name}
+    {else}
+        {$wa->globals('breadcrumbs', [
+            ['name' => $blog_name, 'url' => $blog_url]
+        ])}
+    {/if}
+
+    {$wa->globals('last_breadcrumb', ['url' => $wa->currentUrl(), 'name' => $stream_title|default:"{_wp("Блог")}"])}
+
+    {* Template *}
+    <div class="blog-stream-page">
+        <div class="block">
+            {if !empty($stream_title)}
+                <div class="block__header">
+                    <div class="blog-stream-page__header-container">
+                        <div class="blog-stream-page__header-text-container">
+                            <h1 class="title title_h1">
+                                {$stream_title|escape}
+                            </h1>
+                        </div>
+                        {if $is_rss_enabled}
+                            <div class="blog-stream-page__rss-container">
+                                <a class="link-box link-box_style_hover" href="{$wa->blog->rssUrl()}" target="_blank">
+                                    <span class="icon-box">
+                                        <span class="icon-box__icon">
+                                            {call svg_icon icon="rss" classes="link-box__icon" width=12 height=12}
+                                        </span>
+                                        <span class="icon-box__content">
+                                            <span class="link-box__link">
+                                                RSS
+                                            </span>
+                                        </span>
+                                    </span>
+                                </a>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/if}
+            <div class="block__content">
+                {if $wa->globals('is_mobile')}
+                    <div class="blog-stream-page__r-filters-container">
+                        {* Responsive Stream Filters Start *}
+                            {* Variables *}
+                            {$plugins = $wa->globals('plugins')}
+                            {$is_install_category = $plugins['blog_category']}
+
+                            {* Template *}
+                            <div class="r-stream-filters">
+                                <div class="r-stream-filters__categories-container">
+                                    {if $is_install_category}
+                                        {$categories = blogCategory::getAll()}
+
+                                        <select class="select-decorator r-blog-category-select" data-fill="1" data-size="l">
+                                            <option value="{$wa_app_url|escape}">
+                                                [`Категория`]
+                                            </option>
+                                            {foreach $categories as $category}
+                                                {$category['link'] = $wa->getUrl('blog/frontend', ['category' => urlencode($category['url'])])}
+                                                {$is_active = $wa->currentUrl() == $category['link']}
+
+                                                <option value="{$category['link']|escape}" {if $is_active}selected="selected"{/if}>
+                                                    {$category['name']|escape}
+                                                </option>
+                                            {/foreach}
+                                        </select>
+                                    {/if}
+                                </div>
+                                <div class="r-stream-filters__timeline-container">
+                                    {$_timeline = $wa->blog->timeline([], ['month' => $wa->param('month'), 'year' => $wa->param('year')])}
+                                    {$timeline = []}
+                                    {$selected_year = null}
+
+                                    {foreach $_timeline as $k => $year_month}
+                                        {if !isset($timeline[$year_month['year']])}
+                                            {$timeline[$year_month['year']] = [
+                                            'year' => $year_month['year'],
+                                            'link' => $year_month['year_link'],
+                                            'month_selected' => $year_month['selected'],
+                                            'selected' => $year_month['year_selected'],
+                                            'months' => []
+                                            ]}
+                                        {/if}
+
+                                        {if $year_month['selected']}
+                                            {$timeline[$year_month['year']]['month_selected'] = $year_month['selected']}
+                                        {/if}
+
+                                        {$timeline[$year_month['year']]['months'][$k] = $year_month}
+                                    {/foreach}
+
+                                    <div class="r-stream-filters__year-container">
+                                        <select class="select-decorator r-blog-year-select" data-fill="true" data-size="l">
+                                            <option value="{$wa_app_url|escape}">[`Год`]</option>
+                                            {foreach $timeline as $year}
+                                                {$is_selected = $year['selected'] || $year['month_selected']}
+
+                                                {if $is_selected}
+                                                    {$selected_year = $year}
+                                                {/if}
+
+                                                <option value="{$year['link']|escape}" {if $is_selected}selected="selected"{/if}>
+                                                    {$year['year']}
+                                                </option>
+                                            {/foreach}
+                                        </select>
+                                    </div>
+
+                                    {if $selected_year}
+                                        <div class="r-stream-filters__month-container">
+                                            <select class="select-decorator r-blog-month-select" data-fill="true" data-size="l">
+                                                <option value="{$selected_year['link']|escape}">[`Весь год`]</option>
+                                                {foreach $selected_year['months'] as $month}
+                                                    {$is_selected = $month['selected']}
+                                                    {$month_name = date('F', gmmktime(0, 0, 0, $month.month, 1))}
+
+                                                    <option value="{$month['link']|escape}" {if $is_selected}selected="selected"{/if}>
+                                                        {_ws($month_name)}
+                                                    </option>
+                                                {/foreach}
+                                            </select>
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {* Responsive Stream Filters End *}
+                    </div>
+                {/if}
+                <div class="blog-stream-page__stream-container">
+                    {* Stream Start *}
+                        {* Theme Settings *}
+                        {$variant = $theme_settings['blog_variant']}
+
+                        {if !empty($posts)}
+                            <div class="blog-stream lazy-load" data-count_pages="{$pages_count|escape}">
+
+                            	<div class="blog-stream__posts-container">
+									{if $variant === 'thumbs'}
+										{call posts_thumbs posts=$posts show_image=true size='s'}
+									{else}
+										{include './posts-primary.html'}
+									{/if}
+								</div>
+
+								{if isset($pages) && $pages > 1}
+									<div class="blog-stream__footer-container">
+										{if $wa->get('page', 1) == 1}
+											<div class="blog-stream__more-button-container">
+												<button class="blog-stream__more-button button button_style_inverse button_size_l" type="button">
+                                                    <span class="icon-box">
+                                                        <span class="icon-box__content">
+                                                            {_wp("Показать ещё")}
+                                                        </span>
+                                                        <span class="icon-box__icon">
+                                                            {call svg_icon icon="dict-arrow-bottom" classes="button__icon" width=12 height=12}
+                                                        </span>
+                                                    </span>
+												</button>
+											</div>
+
+											<div class="blog-stream__spinner-container">
+												<span class="spinner">
+												    <span class="image-box">
+												        {call svg_icon classes="spinner " icon='spinner' width=16 height=16 fill='currentColor'}
+												    </span>
+												</span>
+
+											</div>
+										{/if}
+
+                                        <div class="blog-stream__pagination-container">
+                                            <div class="blog-stream__pagination">
+                                                {call pagination total=$pages}
+                                            </div>
+                                        </div>
+									</div>
+								{/if}
+							</div>
+						{else}
+							<span class="title title_h2">[`Записи не найдены`]</span>
+						{/if}
+					{* Stream End *}
+				</div>
+			</div>
+		</div>
+	</div>
+{/strip}

@@ -1,0 +1,394 @@
+{strip}
+    {* Arguments *}
+    {$sidebar_side = $sidebar_side|default:'left'}
+    {$is_horizontal = $is_horizontal|default:false}
+
+    {* Theme Settings *}
+    {$is_closed_filters = $theme_settings['shop_catalog_filter_close']}
+    {$open_limit = $theme_settings['shop_catalog_filter_open_limit']}
+    {$is_enabled_hint = $theme_settings['shop_catalog_filter_result_tooltip_enabled']}
+    {$is_enabled_hint = $theme_settings['shop_catalog_filter_result_tooltip_enabled']}
+    {$values_limit = $theme_settings['shop_catalog_filter_values_limit']}
+    {$color_values_limit = $theme_settings['shop_catalog_filter_color_values_limit']}
+    {$is_color_values_names = $theme_settings['shop_catalog_filter_feature_color_type']}
+    {$is_top_selected_values = $theme_settings['shop_catalog_filter_selected_values_to_top']|default:false}
+
+    {* Variables *}
+    {$plugins = $wa->globals('plugins')}
+    {$is_enabled_smartfilters = $plugins['shop_smartfilters']}
+    {$is_enabled_seofilter = $plugins['shop_seofilter']}
+    {$is_enabled_fiwex = $plugins['shop_fiwex']}
+
+    {$classes = []}
+    {if $is_enabled_smartfilters}
+        {$classes[] = 'smartfilters-decorator'}
+    {/if}
+
+    {* Template *}
+    <div class="filters filters{if $is_horizontal} filters_horizontal{/if} {implode(' ', $classes)}">
+        {if $is_enabled_hint}
+            <div class="filters__hint{if $sidebar_side === 'right'} filters__hint_left{/if}"></div>
+        {/if}
+
+        <form class="filters__form" id="market_shop_filters">
+            <div class="filters__filters{if $is_horizontal} filters__filters_horizontal{/if}">
+                {foreach $filters as $feature_id => $filter}
+                    {$is_open = !$is_closed_filters || $open_limit == -1 || $filter@iteration <= $open_limit}
+
+                    <div class="filters__filter">
+                        {if $feature_id === 'price'}
+                            {$filter_type = 'price'}
+                        {elseif $filter.type === 'boolean'}
+                            {$filter_type = 'boolean'}
+                        {elseif isset($filter.min)}
+                            {$filter_type = 'range'}
+                        {elseif $filter.type === 'color'}
+                            {$filter_type = 'color-checkbox'}
+                        {else}
+                            {$filter_type = 'checkbox'}
+                        {/if}
+
+                        {if $is_horizontal}
+                            {$is_open = false}
+                        {elseif $feature_id !== 'price'}
+                            {$value = $wa->get($filter.code)}
+                            {$is_empty_value = false}
+
+                            {if is_array($value) && $filter_type === 'range'}
+                                {$is_open = $is_open || (!empty($value['min']) && !empty($value['max']))}
+                            {elseif !empty($value)}
+                                {$is_open = true}
+                            {/if}
+                        {else}
+                            {$is_open = true}
+                        {/if}
+
+                        <div class="filter filter_type_{$filter_type}{if $is_horizontal} filter_horizontal dropdown dropdown_click{else} accordion-block {if $is_open} accordion-block_open{/if}{/if}" data-values_limit="{$values_limit|escape}">
+                            {if $filter_type === 'price'}
+                                {capture assign="unit_filter"}
+                                    {if !empty($fractional_config) && $fractional_config["stock_units_enabled"] && $wa->globals('market.has_premium')}
+                                        {$_v = $wa->get('unit')}
+                                        <span class="filter__unit">
+                                            [`per`]
+                                            {if !empty($formatted_filter_units) && $formatted_filter_units > 0}
+                                                {$selected_val = ''}
+                                                {$options = [
+                                                [
+                                                'label' => $filter_unit.name_short|default:_w("product")|escape,
+                                                'value' => '',
+                                                'selected' => !isset($_v)
+                                                ]
+                                                ]}
+                                                {foreach $formatted_filter_units as $_unit}
+                                                    {$is_selected = isset($_v) && $_v[0] == $_unit.id}
+                                                    {if $is_selected}
+                                                        {$selected_val = $_unit.id}
+                                                    {/if}
+
+                                                    {$options[] = [
+                                                    'label' => $_unit.name_short|escape,
+                                                    'value' => $_unit.id|escape,
+                                                    'selected' => $is_selected
+                                                    ]}
+                                                {/foreach}
+
+                                                {call select select_name='unit' value=$selected_val classes='' block_classes='filter__unit-select' size='s' options=$options}
+                                            {else}
+                                                <span>{$filter_unit.name_short|default:_w("product")|escape}</span>
+                                            {/if}
+                                        </span>
+                                    {/if}
+                                {/capture}
+                                <div class="filter__header{if !$is_horizontal && !$unit_filter} accordion-block__button{/if}">
+                                    <span class="icon-box">
+                                        <span class="icon-box__content">
+                                            <span class="filter__name">[`Цена`]</span>
+                                            <span class="filter__count"></span>
+                                        </span>
+                                        {if $is_horizontal || !$unit_filter}
+                                            <span class="icon-box__icon">
+                                                {call svg_icon classes='filter__toggle-icon' icon='arrow-bottom' width=10 height=6 fill='#333333'}
+                                            </span>
+                                        {/if}
+                                    </span>
+                                    {if !$is_horizontal}
+                                        {$unit_filter}
+                                    {/if}
+                                </div>
+                                <div class="{if $is_horizontal}dropdown__dropdown{else}accordion-block__content{/if}">
+                                    <div class="filter__content">
+                                        {if $is_horizontal}
+                                            {$unit_filter}
+                                        {/if}
+                                        <div class="range-slider" data-min="{floor($filter.min)|escape}" data-max="{ceil($filter.max)|escape}">
+                                            <div class="range-slider__bounds">
+                                                <div class="range-slider__bound">
+                                                    <div class="range-slider__input-wrapper">
+                                                        <input class="range-slider__input range-slider__input-text range-slider__input_min input-text filter__reset-input" name="price_min" placeholder="{floor($filter.min)}" {if $wa->get('price_min')}value="{intval($wa->get('price_min'))}"{/if} />
+                                                    </div>
+                                                </div>
+                                                <div class="range-slider__bound">
+                                                    <div class="range-slider__label">[`to`]</div>
+                                                    <div class="range-slider__input-wrapper">
+                                                        <input class="range-slider__input range-slider__input-text range-slider__input_max input-text filter__reset-input" name="price_max" placeholder="{ceil($filter.max)}" {if $wa->get('price_max')}value="{intval($wa->get('price_max'))}"{/if} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="range-slider__slider-wrapper">
+                                                <div class="ui-slider ui-slider-horizontal range-slider__slider">
+                                                    <div class="ui-slider-range range-slider__slider-range"></div>
+                                                    <span class="ui-slider-handle range-slider__slider-handle"></span>
+                                                    <span class="ui-slider-handle range-slider__slider-handle"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {else}
+                                <div class="filter__header{if !$is_horizontal} accordion-block__button{/if}">
+                                    <span class="icon-box">
+                                        <span class="icon-box__content">
+                                            <span class="filter__name{if $is_enabled_fiwex} fiwex-feat{/if}"{if $is_enabled_fiwex} data-feat_id="{$filter.id}"{/if}>
+                                                {$filter.name}{if isset($filter.unit)}{' '}({$filter.unit.title}){/if}
+                                            </span>
+                                            <span class="filter__count"></span>
+                                        </span>
+                                        <span class="icon-box__icon">
+                                            {call svg_icon classes='filter__toggle-icon' icon='arrow-bottom' width=10 height=6 fill='#333333'}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="{if $is_horizontal}dropdown__dropdown{else}accordion-block__content{/if}">
+                                    <div class="filter__content toggle-block">
+                                        {if $filter_type === 'boolean'}
+                                            {$filter_current_value = $wa->get($filter.code, '')}
+                                            {if is_array($filter_current_value)}
+                                                {$filter_current_value = $filter_current_value[0]}
+                                            {/if}
+                                            <div class="filter__values">
+                                                <div class="filter__value">
+                                                    {$filter_url = null}
+
+                                                    {if $is_enabled_seofilter}
+                                                        {$filter_url = shopSeofilterViewHelper::getFilterUrl($filter.id,'1', $filter.code)}
+                                                    {/if}
+
+                                                    <label class="radio">
+                                                        <input class="radio__control filter__reset-radio" type="radio" name="{$filter.code}" value="1"{if $filter_current_value === '1'}  checked="checked"{/if}/>
+                                                        <span class="radio__mark"></span>
+                                                        <span class="radio__label">
+                                                            {if $filter_url}
+                                                                <a class="link link_clean filter-link" href="{$filter_url}">
+                                                                    [`Yes`]
+                                                                </a>
+                                                            {else}
+                                                                [`Yes`]
+                                                            {/if}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                <div class="filter__value">
+                                                    {$filter_url = null}
+
+                                                    {if $is_enabled_seofilter}
+                                                        {$filter_url = shopSeofilterViewHelper::getFilterUrl($filter.id,'0', $filter.code)}
+                                                    {/if}
+
+                                                    <label class="radio">
+                                                        <input class="radio__control filter__reset-radio" type="radio" name="{$filter.code}" value="0"{if $filter_current_value === '0'}  checked="checked"{/if}/>
+                                                        <span class="radio__mark"></span>
+                                                        <span class="radio__label">
+                                                            {if $filter_url}
+                                                                <a class="link link_clean filter-link" href="{$filter_url}">
+                                                                    [`No`]
+                                                                </a>
+                                                            {else}
+                                                                [`No`]
+                                                            {/if}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                <div class="filter__value">
+                                                    <label class="radio">
+                                                        <input class="radio__control filter__reset-radio filter__reset-radio_default" type="radio" name="{$filter.code}" value=""{if $filter_current_value === ''}  checked="checked"{/if}/>
+                                                        <span class="radio__mark"></span>
+                                                        <span class="radio__label">
+                                                            [`Any`]
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {elseif $filter_type === 'range'}
+                                            {$_v = $wa->get($filter.code)}
+                                            {if !is_array($_v)}
+                                                {$_v = []}
+                                            {/if}
+
+                                            {$_v.min = $_v.min|default:''}
+                                            {$_v.max = $_v.max|default:''}
+
+                                            <div class="range-slider" data-min="{$filter.min|escape}" data-max="{$filter.max|escape}">
+                                                <div class="range-slider__bounds">
+                                                    <div class="range-slider__bound">
+                                                        <div class="range-slider__input-wrapper">
+                                                            <input class="range-slider__input range-slider__input-text range-slider__input_min input-text filter__reset-input" name="{$filter.code}[min]" placeholder="{$filter.min}" {if $_v.min}value="{intval($_v.min)}"{/if} />
+                                                        </div>
+                                                    </div>
+                                                    <div class="range-slider__bound">
+                                                        <div class="range-slider__label">[`to`]</div>
+                                                        <div class="range-slider__input-wrapper">
+                                                            <input class="range-slider__input range-slider__input-text range-slider__input_max input-text filter__reset-input" name="{$filter.code}[max]" placeholder="{$filter.max}" {if $_v.max}value="{intval($_v.max)}"{/if} />
+                                                        </div>
+                                                    </div>
+                                                    {if !empty($filter.unit)}
+                                                        {if $filter.unit.value != $filter.base_unit.value}
+                                                            <input type="hidden" name="{$filter.code}[unit]" value="{$filter.unit.value}" />
+                                                        {/if}
+                                                    {/if}
+                                                </div>
+                                                <div class="range-slider__slider-wrapper">
+                                                    <div class="ui-slider ui-slider-horizontal range-slider__slider">
+                                                        <div class="ui-slider-range range-slider__slider-range"></div>
+                                                        <span class="ui-slider-handle range-slider__slider-handle"></span>
+                                                        <span class="ui-slider-handle range-slider__slider-handle"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {elseif $filter_type === 'checkbox' || $filter_type === 'color-checkbox'}
+                                            {$limit = $values_limit}
+                                            {if $filter_type === 'color-checkbox' && !$is_color_values_names}
+                                                {$limit = $color_values_limit}
+                                            {/if}
+                                            {$selected_values = $wa->get($filter.code, [])}
+                                            {if !is_array($selected_values)}
+                                                {$selected_values = [$selected_values]}
+                                            {/if}
+
+                                            {$hidden_values = []}
+                                            {$limit = max(0, $limit - count($selected_values))}
+
+                                            {foreach $filter.values as $v_id => $v}
+                                                {$is_selected = in_array($v_id, $selected_values)}
+
+                                                {if !$is_selected}
+                                                    {if $limit == 0}
+                                                        {$hidden_values[] = $v_id}
+                                                    {else}
+                                                        {$limit = $limit - 1}
+                                                    {/if}
+                                                {/if}
+                                            {/foreach}
+
+                                            {$has_hidden = count($hidden_values) > 0}
+
+                                            {if $filter.type === 'color' && !$is_color_values_names}
+                                                <div class="filter__values filter__values_horizontal">
+                                                    {foreach $filter.values as $value_id => $value}
+                                                        {$is_selected = in_array($value_id, $selected_values)}
+                                                        {$is_hidden = in_array($value_id, $hidden_values)}
+                                                        {$filter_url = null}
+
+                                                        {if $is_enabled_seofilter}
+                                                            {$filter_url = shopSeofilterViewHelper::getFilterUrl($filter.id, $value_id, $filter.code)}
+                                                        {/if}
+
+                                                        <div class="filter__value filter__value_color{if $is_selected} filter__value_selected{/if}">
+                                                            <span class="tooltip">
+                                                                <span class="tooltip__content tooltip__content_show-m">
+                                                                    {if $filter_url}
+                                                                        <a class="link link_clean" href="{$filter_url}">
+                                                                            {$value.value}
+                                                                        </a>
+                                                                    {else}
+                                                                        {$value.value}
+                                                                    {/if}
+                                                                </span>
+
+                                                                {$is_dark = !!"{call is_dark hex=$value.code}"}
+                                                                <label class="checkbox checkbox_color{if $is_dark} checkbox_color_dark{/if}">
+                                                                    <input class="checkbox__control filter__reset-checkbox" type="checkbox" name="{$filter.code}[]" value="{$value_id}" {if $is_selected}checked="checked"{/if} />
+                                                                    <span class="checkbox__mark" style="background-color: {$value.hex}"></span>
+                                                                </label>
+                                                            </span>
+                                                        </div>
+                                                    {/foreach}
+                                                </div>
+                                            {else}
+                                                {if $has_hidden}
+                                                    <div class="filter__search">
+                                                        <input class="filter__search-field input-text" type="text" placeholder="Поиск значения">
+                                                        <span class="filter__clear-search">
+                                                            {call svg_icon icon='cross' width=12 height=12 fill='currentColor'}
+                                                        </span>
+                                                        <span class="filter__search-icon">
+                                                            {call svg_icon icon='search' width=16 height=16 fill='currentColor'}
+                                                        </span>
+                                                    </div>
+                                                {/if}
+                                                <div class="filter__values{if $is_top_selected_values} filter__values_ordered{/if}" {if $has_hidden}style="max-height: {$values_limit * 37}px"{/if}>
+                                                    {foreach $filter.values as $value_id => $value}
+                                                        {$is_selected = in_array($value_id, $selected_values)}
+                                                        {$is_hidden = in_array($value_id, $hidden_values)}
+                                                        {$filter_url = null}
+
+                                                        {if $is_enabled_seofilter}
+                                                            {$filter_url = shopSeofilterViewHelper::getFilterUrl($filter.id, $value_id, $filter.code)}
+                                                        {/if}
+
+                                                        {capture assign='checkbox_content'}
+
+                                                        {/capture}
+
+                                                        <div class="filter__value{if $is_selected} filter__value_selected filter__value_active{/if} ">
+                                                            <label class="checkbox">
+                                                                <input class="checkbox__control filter__reset-checkbox" type="checkbox" name="{$filter.code}[]" value="{$value_id}" {if $is_selected}checked="checked"{/if} />
+                                                                <span class="checkbox__mark"></span>
+                                                                <span class="checkbox__label{if $is_enabled_fiwex} fiwex-feat-val{/if}"{if $is_enabled_fiwex} data-feat_val_id="{$value_id}" data-fiwex-parent_id="{$filter.id}"{/if}>
+                                                                    {if $filter_url}
+                                                                        <a class="link link_clean filter-link" href="{$filter_url}">
+                                                                            {$value}
+                                                                        </a>
+                                                                    {else}
+                                                                        {$value}
+                                                                    {/if}
+                                                                </span>
+                                                            </label>
+                                                        </div>
+                                                    {/foreach}
+                                                </div>
+                                            {/if}
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/if}
+                        </div>
+                    </div>
+                {/foreach}
+                {if $is_horizontal}
+                    <button class="filters__reset-button button button_style_gray button_fill">
+                        <span class="icon-box icon-box_size_l">
+                            <span class="icon-box__content">
+                                [`Сбросить фильтры`]
+                            </span>
+                            <span class="icon-box__icon">
+                                {call svg_icon icon='cross' width=8 height=8 fill='currentColor'}
+                            </span>
+                        </span>
+                    </button>
+                {/if}
+            </div>
+            {if !$is_horizontal}
+                <div class="filters__footer">
+                    {$is_products_counted = isset($products_count)}
+                    <button class="filters__submit-button button button_fill {if $is_products_counted}filters__submit-button_counted{/if}"{if $is_products_counted} data-products-count="{$products_count}"{/if}>
+                        [`Показать`]
+                    </button>
+
+                    <button class="filters__reset-button button button_style_gray button_fill">
+                        [`Сбросить фильтр`]
+                    </button>
+                </div>
+            {/if}
+        </form>
+    </div>
+{/strip}

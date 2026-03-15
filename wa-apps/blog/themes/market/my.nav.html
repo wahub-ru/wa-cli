@@ -1,0 +1,14 @@
+{strip}
+    {$wa->globals('theme_settings', $theme_settings)}
+    {$wa->globals('wa_active_theme_path', $wa_active_theme_path)}
+    {$wa->globals('wa_parent_theme_path', $wa_parent_theme_path)}
+    {$wa->globals('wa_theme_url', $wa_theme_url)}
+    {$wa->globals('wa_parent_theme_url', $wa_parent_theme_url)}
+    {$wa->globals('wa_theme_version', $wa_theme_version)}
+
+    {if $my_app == $wa->app()}
+        <li class="{if $my_nav_selected == 'profile'}selected{/if}">
+            <a href="{$wa->getUrl('/frontend/my')}">[s`My profile`]</a>
+        </li>
+    {/if}
+{/strip}

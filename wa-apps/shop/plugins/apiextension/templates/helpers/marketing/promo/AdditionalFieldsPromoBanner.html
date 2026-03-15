@@ -1,0 +1,102 @@
+<div id="apiextension">
+    {if !empty($banners)}
+        {foreach $banners as $i => $banner}
+            <div class="field">
+                <div class="name">Ссылка на видео</div>
+                <div class="value">
+                    <input type="text" value="{$banner.apiextension_video|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_video]">
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">Вывод описания</div>
+                <div class="value">
+                    <select name="{$rule_name}[rule_params][banners][{$i}][apiextension_output_des]">
+                        {html_options options=[
+                                'left' => 'Выводить слева',
+                                'right' => 'Выводить справа'
+                            ] selected=$banner.apiextension_output_des|default:'right'}
+                    </select>
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">Текст над заголовком</div>
+                <div class="value">
+                    <input type="text" value="{$banner.apiextension_header|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_header]">
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">Цена от</div>
+                <div class="value">
+                    <input type="text" value="{$banner.apiextension_price|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_price]">
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">Текст кнопки</div>
+                <div class="value">
+                    <input type="text" value="{$banner.apiextension_button|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_button]">
+                </div>
+            </div>
+						<div class="field">
+								<div class="name">Класс кнопки</div>
+								<div class="value">
+										<input type="text" value="{$banner.apiextension_button_class|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_button_class]">
+								</div>
+						</div>
+						<div class="field">
+								<div class="name">Ссылка доп. кнопки</div>
+								<div class="value">
+										<input type="text" value="{$banner.apiextension_button_additional_link|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_button_additional_link]">
+								</div>
+						</div>
+						<div class="field">
+								<div class="name">Текст доп. кнопки</div>
+								<div class="value">
+										<input type="text" value="{$banner.apiextension_button_additional_text|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_button_additional_text]">
+								</div>
+						</div>
+						<div class="field">
+								<div class="name">Класс доп. кнопки</div>
+								<div class="value">
+										<input type="text" value="{$banner.apiextension_button_additional_class|escape|default:''}" name="{$rule_name}[rule_params][banners][{$i}][apiextension_button_additional_class]">
+								</div>
+						</div>
+        {/foreach}
+    {/if}
+</div>
+
+<script>
+    $(function() {
+        let readyPromise = $('#js-promo-page').data('ready'),
+            apiextension = $('#apiextension');
+
+        readyPromise.then((c) => {
+            let banner = $('.s-banners-list[data-name="{$rule_name}"]');
+
+            {foreach $banners as $i => $banner}
+                const title = banner.find('.s-banner-wrapper:eq({$i}) [data-name="[title]"]').closest('.field');
+                const link = banner.find('.s-banner-wrapper:eq({$i}) [data-name="[link]"]').closest('.field');
+                const countdown = banner.find('.s-banner-wrapper:eq({$i}) [data-name="[countdown_datetime][date]"]').closest('.field');
+
+                title
+                    .before(apiextension.find('[name$="[banners][{$i}][apiextension_video]"]').closest('.field'))
+                    .before(apiextension.find('[name$="[banners][{$i}][apiextension_output_des]"]').closest('.field'))
+                    .before(apiextension.find('[name$="[banners][{$i}][apiextension_header]"]').closest('.field'));
+
+                link
+                    .before(apiextension.find('[name$="[banners][{$i}][apiextension_price]"]').closest('.field'))
+                  	.after(apiextension.find('[name$="[banners][{$i}][apiextension_button_class]"]').closest('.field'))
+                    .after(apiextension.find('[name$="[banners][{$i}][apiextension_button]"]').closest('.field'));
+
+
+          			countdown
+                  	.after(apiextension.find('[name$="[banners][{$i}][apiextension_button_additional_class]"]').closest('.field'))
+                  	.after(apiextension.find('[name$="[banners][{$i}][apiextension_button_additional_text]"]').closest('.field'))
+                  	.after(apiextension.find('[name$="[banners][{$i}][apiextension_button_additional_link]"]').closest('.field'));
+
+
+            {/foreach}
+
+            apiextension.remove();
+        })
+    });
+</script>
