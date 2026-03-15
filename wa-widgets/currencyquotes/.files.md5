@@ -1,0 +1,12 @@
+7a66c6093f9ed3dd1f70ec032c6b168f *img/currencyquotes.png
+a285da79a1cf95556e4eb1fd40059097 *lib/.htaccess
+81c1b4707a5110af7b9af96f9d753885 *lib/config/build.php
+291ea690674290d76afa5888fdc0ccbf *lib/config/widget.php
+9f516ce32fa414a4ec0c1424a6709c45 *lib/currencyquotes.widget.php
+a1751e1f10a3b96b05d0401c97e72008 *locale/.htaccess
+6f541fd75310380d28d1dcf08a34050a *locale/en_US/LC_MESSAGES/widget_currencyquotes.mo
+1500f80d38db870d73bf48c08880be76 *locale/en_US/LC_MESSAGES/widget_currencyquotes.po
+5b60672f8e899c00df15bc40172fd660 *locale/ru_RU/LC_MESSAGES/widget_currencyquotes.mo
+bbf3e3ccf9a66568dec37a9f7523a4b5 *locale/ru_RU/LC_MESSAGES/widget_currencyquotes.po
+a285da79a1cf95556e4eb1fd40059097 *templates/.htaccess
+2382a704b1e103160d0b1a2ab8b2dd1c *templates/Default.html
