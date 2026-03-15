@@ -43,6 +43,7 @@
 /wa-apps/*
 
 # Разрешаем только нужные приложения
+!/wa-apps/installer/
 !/wa-apps/site/
 !/wa-apps/blog/
 !/wa-apps/shop/
